@@ -237,7 +237,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.deal.fetch(dealPda);
+        const dealAccount = await program.account.Deal.fetch(dealPda);
       
       // Derive other PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
@@ -352,7 +352,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.deal.fetch(dealPda);
+      const dealAccount = await program.account.Deal.fetch(dealPda);
 
       // Derive PDAs
       const [escrowPda] = PublicKey.findProgramAddressSync(
