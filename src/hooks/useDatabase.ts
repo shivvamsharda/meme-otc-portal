@@ -63,8 +63,25 @@ export const useDatabase = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // If unique constraint violation, return existing deal
+      if (error.code === '23505' && error.message?.includes('deals_deal_id_unique')) {
+        console.log('Deal already exists, fetching existing deal');
+        const existingDeal = await getDealById(dealData.dealId);
+        if (existingDeal) return existingDeal;
+      }
+      throw error;
+    }
     return data;
+  };
+
+  const deleteDeal = async (dealId: number) => {
+    const { error } = await supabase
+      .from('deals')
+      .delete()
+      .eq('deal_id', dealId);
+
+    if (error) throw error;
   };
 
   const updateDealStatus = async (dealId: number, status: string, updates: Partial<DatabaseDeal> = {}) => {
@@ -200,6 +217,7 @@ export const useDatabase = () => {
 
   return {
     createDeal,
+    deleteDeal,
     updateDealStatus,
     updateDealWithTransaction,
     logTransaction,

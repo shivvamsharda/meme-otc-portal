@@ -274,51 +274,52 @@ export const useContract = () => {
       throw new Error("Please connect your wallet first");
     }
 
+    // Prevent duplicate submissions
+    if (isLoading) {
+      console.log("Transaction already in progress, ignoring duplicate request");
+      return;
+    }
+    setIsLoading(true);
+
     console.log("Creating deal with params:", params);
 
-    // Check if deal already exists in database to prevent duplicates
+    // Check if deal already exists in database
     const existingDeal = await database.getDealById(params.dealId);
-    if (existingDeal) {
-      console.log("Deal already exists in database:", existingDeal);
-      
-      if (existingDeal.blockchain_synced && existingDeal.transaction_signature) {
-        toast({
-          title: "Deal Already Created",
-          description: `This deal already exists with signature: ${existingDeal.transaction_signature}`,
-          className: "border-blue-200 bg-blue-50 text-blue-900",
-        });
-        return { success: true, signature: existingDeal.transaction_signature };
-      }
+    if (existingDeal?.blockchain_synced && existingDeal?.transaction_signature) {
+      setIsLoading(false);
+      toast({
+        title: "Deal Already Created",
+        description: `This deal already exists with signature: ${existingDeal.transaction_signature}`,
+        className: "border-blue-200 bg-blue-50 text-blue-900",
+      });
+      return { success: true, signature: existingDeal.transaction_signature };
     }
 
-    // Store deal in database first if it doesn't exist
-    if (!existingDeal) {
-      try {
-        await database.createDeal({
-          dealId: params.dealId,
-          makerAddress: wallet.publicKey.toString(),
-          tokenMintOffered: params.tokenMintOffered,
-          amountOffered: params.amountOffered,
-          tokenMintRequested: params.tokenMintRequested,
-          amountRequested: params.amountRequested,
-          expiryTimestamp: params.expiryTimestamp,
-        });
-        console.log("Deal created in database");
-      } catch (dbError) {
-        console.error("Database error:", dbError);
-        // Continue with blockchain transaction even if database fails
-      }
-    }
-
-    // Log the transaction attempt
-    await database.logTransaction({
-      dealId: params.dealId,
-      transactionType: 'create',
-      userAddress: wallet.publicKey.toString(),
-      status: 'pending'
-    });
-
+    let dealCreatedInDb = false;
+    
     try {
+      // Create deal in database first
+      await database.createDeal({
+        dealId: params.dealId,
+        makerAddress: wallet.publicKey.toString(),
+        tokenMintOffered: params.tokenMintOffered,
+        amountOffered: params.amountOffered,
+        tokenMintRequested: params.tokenMintRequested,
+        amountRequested: params.amountRequested,
+        expiryTimestamp: params.expiryTimestamp,
+      });
+      dealCreatedInDb = true;
+      console.log("Deal created in database");
+
+      // Log the transaction attempt
+      await database.logTransaction({
+        dealId: params.dealId,
+        transactionType: 'create',
+        userAddress: wallet.publicKey.toString(),
+        status: 'pending'
+      });
+
+      // Now proceed with blockchain transaction
       const program = getProgram();
       
       // Derive PDAs
@@ -386,65 +387,69 @@ export const useContract = () => {
         className: "border-green-200 bg-green-50 text-green-900",
       });
 
+      setIsLoading(false);
       return { success: true, signature: tx };
     } catch (error) {
       console.error("Error creating deal:", error);
+      setIsLoading(false);
       
       let errorMessage = "Unknown error occurred";
       let signature = null;
 
-      // Handle "already processed" errors differently
+      // Handle "already processed" errors as SUCCESS
       if (isAlreadyProcessedError(error)) {
-        console.log("Transaction already processed, checking for signature...");
+        console.log("Transaction already processed - treating as success");
         signature = extractSignatureFromError(error);
         
         if (signature) {
           // Update database with the found signature
           await database.updateDealWithTransaction(params.dealId, signature, true);
           await database.updateTransactionStatus(params.dealId, 'create', 'confirmed', signature);
-          
-          toast({
-            title: "Deal Created Successfully!",
-            description: "Your deal was already processed successfully",
-            className: "border-green-200 bg-green-50 text-green-900",
-          });
-          
-          return { success: true, signature };
         } else {
-          errorMessage = "Deal may have been created successfully. Please check your deals.";
-          
-          // Mark as potentially successful
+          // Mark as successful even without signature
           await database.updateDealStatus(params.dealId, 'Open', {
             blockchain_synced: false
           });
-          
-          toast({
-            title: "Deal Possibly Created",
-            description: errorMessage,
-            className: "border-yellow-200 bg-yellow-50 text-yellow-900",
-          });
-          
-          return { success: true, signature: null };
         }
+        
+        toast({
+          title: "Deal Created Successfully!",
+          description: signature ? `Transaction: ${signature}` : "Your deal was processed successfully",
+          className: "border-green-200 bg-green-50 text-green-900",
+        });
+        
+        return { success: true, signature };
       } else {
         errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        
+        // For real errors, clean up database if we created the entry
+        if (dealCreatedInDb) {
+          try {
+            await database.deleteDeal(params.dealId);
+            console.log("Cleaned up failed deal from database");
+          } catch (cleanupError) {
+            console.error("Failed to cleanup deal from database:", cleanupError);
+          }
+        }
+        
+        // Update transaction log with failure
+        await database.updateTransactionStatus(
+          params.dealId, 
+          'create', 
+          'failed', 
+          signature, 
+          errorMessage
+        );
+        
+        toast({
+          title: "Failed to Create Deal",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        throw error;
       }
-      
-      // Update database with failed transaction
-      await database.updateTransactionStatus(
-        params.dealId, 
-        'create', 
-        'failed', 
-        signature, 
-        errorMessage
-      );
-      
-      toast({
-        title: "Failed to Create Deal",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
