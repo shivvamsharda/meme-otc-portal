@@ -16,22 +16,27 @@ export const WalletButton: React.FC<WalletButtonProps> = ({
   children = 'Launch App',
   className = ''
 }) => {
-  const wallet = useWallet();
-  const { connected, publicKey, disconnect } = wallet;
+  const { connected, publicKey, disconnect, wallet } = useWallet();
 
   const baseClasses = variant === 'primary' 
     ? `group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3 ${className}`
     : `group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3 ${className}`;
 
   const handleSignIn = async () => {
-    if (connected && publicKey) {
+    if (connected && publicKey && wallet?.adapter) {
       try {
         console.log('Attempting to sign in with wallet:', publicKey.toString());
+        
+        // Create a wallet object that matches Supabase's expected interface
+        const walletForSupabase = {
+          ...wallet.adapter,
+          signIn: wallet.adapter.signIn?.bind(wallet.adapter)
+        };
         
         const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
           statement: 'I accept the Terms of Service for MemeOTC',
-          wallet: wallet,
+          wallet: walletForSupabase,
         });
 
         if (error) {
