@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { WalletButton } from './WalletButton';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,11 +38,9 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop CTA - refined button */}
+          {/* Desktop CTA - replaced with WalletButton */}
           <div className="hidden md:block">
-            <button className="relative px-8 py-3 bg-gradient-to-r from-primary to-purple-500 rounded-xl font-semibold text-sm text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              Launch App
-            </button>
+            <WalletButton />
           </div>
 
           {/* Mobile Menu Button */}
@@ -67,9 +66,9 @@ const Navbar = () => {
                   {item.name}
                 </a>
               ))}
-              <button className="relative px-8 py-3 bg-gradient-to-r from-primary to-purple-500 rounded-xl font-semibold text-sm text-white shadow-lg mt-4 w-full">
-                Launch App
-              </button>
+              <div className="mt-4">
+                <WalletButton />
+              </div>
             </div>
           </div>
         )}

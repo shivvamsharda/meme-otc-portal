@@ -1,0 +1,28 @@
+
+# The local environment settings
+[api]
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+# Email template settings
+[auth.email]
+
+# Auth settings
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+
+# Web3 Solana authentication
+[auth.web3.solana]
+enabled = true
+
+[edge_functions]
+verify_jwt = true
