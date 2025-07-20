@@ -54,19 +54,17 @@ const CreateDeal = () => {
         return;
       }
 
-      // Validate amounts don't exceed safe limits
-      const maxSafeAmount = 9007199254740991; // JavaScript MAX_SAFE_INTEGER
+      // Simple validation for positive numbers
       const amountOffered = parseFloat(formData.amountOffered);
       const amountRequested = parseFloat(formData.amountRequested);
       
-      // Check if amounts are too large before conversion
-      if (amountOffered > maxSafeAmount / 1e9) {
-        setStep('error', "Offered amount is too large. Please enter a smaller amount.");
+      if (isNaN(amountOffered) || amountOffered <= 0) {
+        setStep('error', "Please enter a valid offered amount");
         return;
       }
       
-      if (amountRequested > maxSafeAmount / 1e9) {
-        setStep('error', "Requested amount is too large. Please enter a smaller amount.");
+      if (isNaN(amountRequested) || amountRequested <= 0) {
+        setStep('error', "Please enter a valid requested amount");
         return;
       }
 
@@ -85,15 +83,9 @@ const CreateDeal = () => {
 
       const expiryTimestamp = Math.floor(Date.now() / 1000) + (parseInt(formData.expiryDays) * 24 * 60 * 60);
       
-      // Convert amounts to base units using string arithmetic to avoid precision issues
+      // Convert amounts to base units (9 decimal places for most SPL tokens)
       const amountOfferedInBaseUnits = Math.floor(amountOffered * 1e9);
       const amountRequestedInBaseUnits = Math.floor(amountRequested * 1e9);
-      
-      // Final validation that converted amounts are valid
-      if (amountOfferedInBaseUnits > maxSafeAmount || amountRequestedInBaseUnits > maxSafeAmount) {
-        setStep('error', "Converted amounts exceed safe limits. Please enter smaller amounts.");
-        return;
-      }
       
       console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
       console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
@@ -238,7 +230,6 @@ const CreateDeal = () => {
                         id="amountOffered"
                         type="number"
                         step="0.000000001"
-                        max="9007199254740"
                         placeholder="0.0"
                         value={formData.amountOffered}
                         onChange={(e) => handleInputChange('amountOffered', e.target.value)}
@@ -246,7 +237,7 @@ const CreateDeal = () => {
                         required
                       />
                       <p className="text-xs text-muted-foreground">
-                        Maximum: 9,007,199,254,740 tokens
+                        Enter any amount for OTC trading
                       </p>
                     </div>
                   </div>
@@ -278,7 +269,6 @@ const CreateDeal = () => {
                         id="amountRequested"
                         type="number"
                         step="0.000000001"
-                        max="9007199254740"
                         placeholder="0.0"
                         value={formData.amountRequested}
                         onChange={(e) => handleInputChange('amountRequested', e.target.value)}
@@ -286,7 +276,7 @@ const CreateDeal = () => {
                         required
                       />
                       <p className="text-xs text-muted-foreground">
-                        Maximum: 9,007,199,254,740 tokens
+                        Enter any amount for OTC trading
                       </p>
                     </div>
                   </div>
