@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "buffer": "buffer",
-      "process": "process/browser",
+      "process": "process",
       "util": "util",
       "crypto": "crypto-browserify",
       "stream": "stream-browserify",
