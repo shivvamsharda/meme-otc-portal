@@ -2,8 +2,8 @@
 import { useMemo, ReactNode } from 'react'
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { clusterApiUrl } from '@solana/web3.js'
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
+import { RPC_URL } from '@/contracts/config'
 
 // Import wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css'
@@ -13,7 +13,7 @@ interface SolanaWalletProviderProps {
 }
 
 export const SolanaWalletProvider = ({ children }: SolanaWalletProviderProps) => {
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
+  const endpoint = useMemo(() => RPC_URL, [])
   
   const wallets = useMemo(
     () => [

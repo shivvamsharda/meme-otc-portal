@@ -7,9 +7,9 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { name: 'Trading Platform', href: '#platform' },
-    { name: 'Supported Tokens', href: '#tokens' },
-    { name: 'Analytics', href: '#analytics' },
+    { name: 'Browse Deals', href: '/deals' },
+    { name: 'Create Deal', href: '/create-deal' },
+    { name: 'My Deals', href: '/my-deals' },
     { name: 'About', href: '#about' }
   ];
 
@@ -20,9 +20,9 @@ const Navbar = () => {
           
           {/* Logo - refined */}
           <div className="flex items-center">
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+            <a href="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
               MEMEOTC
-            </span>
+            </a>
           </div>
 
           {/* Desktop Navigation - cleaner spacing */}
