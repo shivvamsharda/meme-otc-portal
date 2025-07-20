@@ -1,4 +1,3 @@
-=== MEMEOTC_CONTRACT.TS ===
 /**
  * Program IDL in camelCase format in order to be used in JS/TS.
  *
