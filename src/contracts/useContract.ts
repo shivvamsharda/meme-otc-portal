@@ -9,9 +9,6 @@ import { useDatabase } from "@/hooks/useDatabase";
 import { isAlreadyProcessedError, extractSignatureFromError } from "@/utils/dealUtils";
 import { MemeotcContract } from "./memeotc_contract";
 
-// Import the TypeScript IDL as a value, not just a type
-import * as IDLModule from "./memeotc_contract";
-
 export const useContract = () => {
   const { connection } = useConnection();
   const wallet = useWallet();
@@ -30,7 +27,7 @@ export const useContract = () => {
       { commitment: "confirmed" }
     );
 
-    // Create the TypeScript IDL object directly
+    // Create a complete TypeScript IDL object with all required sections
     const tsIDL: MemeotcContract = {
       address: "2yT4Gd7NV9NDcetuoBZsdA317Ko3JAZDGx6RCCaTATfJ",
       metadata: {
@@ -129,9 +126,16 @@ export const useContract = () => {
           args: [{ name: "newFeeBps", type: "u16" }]
         }
       ],
+      // CRITICAL: Add the missing accounts section with discriminators
       accounts: [
-        { name: "Deal", discriminator: [125, 223, 160, 234, 71, 162, 182, 219] },
-        { name: "Platform", discriminator: [77, 92, 204, 58, 187, 98, 91, 12] }
+        { 
+          name: "Deal", 
+          discriminator: [125, 223, 160, 234, 71, 162, 182, 219]
+        },
+        { 
+          name: "Platform", 
+          discriminator: [77, 92, 204, 58, 187, 98, 91, 12]
+        }
       ],
       events: [
         { name: "DealCancelled", discriminator: [229, 189, 86, 176, 134, 151, 43, 152] },
@@ -249,7 +253,7 @@ export const useContract = () => {
       ]
     };
 
-    // Use the TypeScript IDL directly
+    // Use the complete TypeScript IDL directly
     const program = new Program<MemeotcContract>(
       tsIDL,
       provider
