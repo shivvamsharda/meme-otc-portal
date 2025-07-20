@@ -24,14 +24,27 @@ export const WalletButton: React.FC<WalletButtonProps> = ({
     : `group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3 ${className}`;
 
   const handleSignIn = async () => {
-    if (connected && publicKey) {
+    if (connected && publicKey && wallet.signIn) {
       try {
         console.log('Attempting to sign in with wallet:', publicKey.toString());
+        
+        // Create a compatible wallet object for Supabase
+        const supabaseWallet = {
+          ...wallet,
+          signIn: async (input?: any) => {
+            if (!wallet.signIn) {
+              throw new Error('Wallet does not support signIn');
+            }
+            const result = await wallet.signIn(input);
+            // Ensure we return the correct format
+            return Array.isArray(result) ? result : [result];
+          }
+        };
         
         const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
           statement: 'I accept the Terms of Service for MemeOTC',
-          wallet,
+          wallet: supabaseWallet as any,
         });
 
         if (error) {
