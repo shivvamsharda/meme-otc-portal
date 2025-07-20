@@ -19,9 +19,8 @@ const BrowseDeals = () => {
   const loadDeals = async () => {
     setLoading(true);
     try {
-      const allDeals = await getDeals();
-      // Filter for open deals only
-      const openDeals = allDeals.filter(deal => 'Open' in deal.status);
+      // Get only open deals from database
+      const openDeals = await getDeals(true);
       setDeals(openDeals);
     } catch (error) {
       console.error('Failed to load deals:', error);

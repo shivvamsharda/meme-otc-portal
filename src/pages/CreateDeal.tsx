@@ -38,7 +38,8 @@ const CreateDeal = () => {
     setLoading(true);
     
     try {
-      const dealId = Math.floor(Math.random() * 1000000); // Generate random deal ID
+      // Generate unique deal ID using timestamp + random component
+      const dealId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
       const expiryTimestamp = Math.floor(Date.now() / 1000) + (parseInt(formData.expiryDays) * 24 * 60 * 60);
       
       await createDeal({
