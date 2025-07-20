@@ -27,16 +27,10 @@ export const WalletButton: React.FC<WalletButtonProps> = ({
       try {
         console.log('Attempting to sign in with wallet:', publicKey.toString());
         
-        // Create a wallet object that matches Supabase's expected interface
-        const walletForSupabase = {
-          ...wallet.adapter,
-          signIn: wallet.adapter.signIn?.bind(wallet.adapter)
-        };
-        
         const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
           statement: 'I accept the Terms of Service for MemeOTC',
-          wallet: walletForSupabase,
+          wallet: wallet.adapter,
         });
 
         if (error) {
