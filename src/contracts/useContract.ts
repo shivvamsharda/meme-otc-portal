@@ -128,7 +128,6 @@ export const useContract = () => {
           args: [{ name: "newFeeBps", type: "u16" }]
         }
       ],
-      // FIXED: Changed account names from PascalCase to camelCase to match Anchor's runtime behavior
       accounts: [
         { 
           name: "deal", 
@@ -269,6 +268,25 @@ export const useContract = () => {
     return program;
   };
 
+  const cleanupOrphanedDeals = async () => {
+    try {
+      console.log("Cleaning up orphaned deals...");
+      const orphanedDeals = await database.getDeals(false);
+      const dealsToCleanup = orphanedDeals.filter(deal => 
+        !deal.transaction_signature || !deal.blockchain_synced
+      );
+      
+      console.log(`Found ${dealsToCleanup.length} orphaned deals to cleanup`);
+      
+      for (const deal of dealsToCleanup) {
+        await database.deleteDeal(deal.deal_id);
+        console.log(`Cleaned up orphaned deal ${deal.deal_id}`);
+      }
+    } catch (error) {
+      console.error("Error cleaning up orphaned deals:", error);
+    }
+  };
+
   const createDeal = async (params: CreateDealParams) => {
     if (!isAuthenticated || !wallet.publicKey) {
       throw new Error("Please connect your wallet first");
@@ -282,8 +300,50 @@ export const useContract = () => {
     setIsLoading(true);
 
     console.log("Creating deal with params:", params);
+    console.log("Current timestamp:", Math.floor(Date.now() / 1000));
+    console.log("Expiry timestamp:", params.expiryTimestamp);
 
-    // Check if deal already exists in database
+    // Add validation for expiry timestamp
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    if (params.expiryTimestamp <= currentTimestamp) {
+      setIsLoading(false);
+      toast({
+        title: "Invalid Expiry Time",
+        description: "Expiry time must be in the future",
+        variant: "destructive",
+      });
+      throw new Error("Expiry time must be in the future");
+    }
+
+    // Add bounds checking (min 1 hour, max 365 days)
+    const oneHour = 60 * 60;
+    const oneYear = 365 * 24 * 60 * 60;
+    const timeDiff = params.expiryTimestamp - currentTimestamp;
+    
+    if (timeDiff < oneHour) {
+      setIsLoading(false);
+      toast({
+        title: "Expiry Too Soon",
+        description: "Deal must expire at least 1 hour in the future",
+        variant: "destructive",
+      });
+      throw new Error("Deal must expire at least 1 hour in the future");
+    }
+    
+    if (timeDiff > oneYear) {
+      setIsLoading(false);
+      toast({
+        title: "Expiry Too Far",
+        description: "Deal cannot expire more than 1 year in the future",
+        variant: "destructive",
+      });
+      throw new Error("Deal cannot expire more than 1 year in the future");
+    }
+
+    // Clean up any orphaned deals first
+    await cleanupOrphanedDeals();
+
+    // Check if deal already exists in database with successful blockchain transaction
     const existingDeal = await database.getDealById(params.dealId);
     if (existingDeal?.blockchain_synced && existingDeal?.transaction_signature) {
       setIsLoading(false);
@@ -295,31 +355,12 @@ export const useContract = () => {
       return { success: true, signature: existingDeal.transaction_signature };
     }
 
-    let dealCreatedInDb = false;
+    let transactionSignature = null;
     
     try {
-      // Create deal in database first
-      await database.createDeal({
-        dealId: params.dealId,
-        makerAddress: wallet.publicKey.toString(),
-        tokenMintOffered: params.tokenMintOffered,
-        amountOffered: params.amountOffered,
-        tokenMintRequested: params.tokenMintRequested,
-        amountRequested: params.amountRequested,
-        expiryTimestamp: params.expiryTimestamp,
-      });
-      dealCreatedInDb = true;
-      console.log("Deal created in database");
-
-      // Log the transaction attempt
-      await database.logTransaction({
-        dealId: params.dealId,
-        transactionType: 'create',
-        userAddress: wallet.publicKey.toString(),
-        status: 'pending'
-      });
-
-      // Now proceed with blockchain transaction
+      // STEP 1: Do blockchain transaction FIRST
+      console.log("Step 1: Submitting blockchain transaction...");
+      
       const program = getProgram();
       
       // Derive PDAs
@@ -349,16 +390,14 @@ export const useContract = () => {
         wallet.publicKey
       );
 
-      console.log("Submitting blockchain transaction...");
-
       // Create deal transaction with proper BN handling for large numbers
-      const tx = await program.methods
+      transactionSignature = await program.methods
         .createDeal(
           new BN(params.dealId),
           new PublicKey(params.tokenMintOffered),
-          new BN(params.amountOffered.toString()), // Convert to string for BN
+          new BN(params.amountOffered.toString()),
           new PublicKey(params.tokenMintRequested),
-          new BN(params.amountRequested.toString()), // Convert to string for BN
+          new BN(params.amountRequested.toString()),
           new BN(params.expiryTimestamp)
         )
         .accounts({
@@ -375,71 +414,90 @@ export const useContract = () => {
         } as any)
         .rpc();
 
-      console.log("Blockchain transaction successful:", tx);
+      console.log("Step 1 SUCCESS: Blockchain transaction completed:", transactionSignature);
 
-      // Update database with successful transaction
-      await database.updateDealWithTransaction(params.dealId, tx, true);
-      await database.updateTransactionStatus(params.dealId, 'create', 'confirmed', tx);
+      // STEP 2: Only create database entry after blockchain success
+      console.log("Step 2: Creating database entry after blockchain success...");
+      
+      await database.createDeal({
+        dealId: params.dealId,
+        makerAddress: wallet.publicKey.toString(),
+        tokenMintOffered: params.tokenMintOffered,
+        amountOffered: params.amountOffered,
+        tokenMintRequested: params.tokenMintRequested,
+        amountRequested: params.amountRequested,
+        expiryTimestamp: params.expiryTimestamp,
+      });
+
+      // Update database with transaction signature
+      await database.updateDealWithTransaction(params.dealId, transactionSignature, true);
+      
+      console.log("Step 2 SUCCESS: Database entry created");
 
       toast({
         title: "Deal Created Successfully!",
-        description: `Transaction: ${tx}`,
+        description: `Transaction: ${transactionSignature}`,
         className: "border-green-200 bg-green-50 text-green-900",
       });
 
       setIsLoading(false);
-      return { success: true, signature: tx };
+      return { success: true, signature: transactionSignature };
+
     } catch (error) {
-      console.error("Error creating deal:", error);
+      console.error("Error in deal creation:", error);
       setIsLoading(false);
       
       let errorMessage = "Unknown error occurred";
-      let signature = null;
+      let foundSignature = null;
 
       // Handle "already processed" errors as SUCCESS
       if (isAlreadyProcessedError(error)) {
         console.log("Transaction already processed - treating as success");
-        signature = extractSignatureFromError(error);
+        foundSignature = extractSignatureFromError(error);
         
-        if (signature) {
-          // Update database with the found signature
-          await database.updateDealWithTransaction(params.dealId, signature, true);
-          await database.updateTransactionStatus(params.dealId, 'create', 'confirmed', signature);
-        } else {
-          // Mark as successful even without signature
-          await database.updateDealStatus(params.dealId, 'Open', {
-            blockchain_synced: false
+        // For "already processed", create database entry since blockchain succeeded
+        try {
+          console.log("Creating database entry for already processed transaction...");
+          await database.createDeal({
+            dealId: params.dealId,
+            makerAddress: wallet.publicKey.toString(),
+            tokenMintOffered: params.tokenMintOffered,
+            amountOffered: params.amountOffered,
+            tokenMintRequested: params.tokenMintRequested,
+            amountRequested: params.amountRequested,
+            expiryTimestamp: params.expiryTimestamp,
           });
+          
+          if (foundSignature) {
+            await database.updateDealWithTransaction(params.dealId, foundSignature, true);
+          } else {
+            await database.updateDealStatus(params.dealId, 'Open', {
+              blockchain_synced: true
+            });
+          }
+          
+          console.log("Database entry created for already processed transaction");
+        } catch (dbError) {
+          console.error("Error creating database entry for processed transaction:", dbError);
         }
         
         toast({
           title: "Deal Created Successfully!",
-          description: signature ? `Transaction: ${signature}` : "Your deal was processed successfully",
+          description: foundSignature ? `Transaction: ${foundSignature}` : "Your deal was processed successfully",
           className: "border-green-200 bg-green-50 text-green-900",
         });
         
-        return { success: true, signature };
+        return { success: true, signature: foundSignature };
       } else {
+        // For real blockchain failures, don't create database entry at all
         errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         
-        // For real errors, clean up database if we created the entry
-        if (dealCreatedInDb) {
-          try {
-            await database.deleteDeal(params.dealId);
-            console.log("Cleaned up failed deal from database");
-          } catch (cleanupError) {
-            console.error("Failed to cleanup deal from database:", cleanupError);
-          }
+        // Handle specific program errors
+        if (errorMessage.includes("custom program error: 0x1")) {
+          errorMessage = "Invalid expiry timestamp. Please check that your expiry time is valid and in the future.";
         }
         
-        // Update transaction log with failure
-        await database.updateTransactionStatus(
-          params.dealId, 
-          'create', 
-          'failed', 
-          signature, 
-          errorMessage
-        );
+        console.error("Real blockchain transaction failure:", errorMessage);
         
         toast({
           title: "Failed to Create Deal",
@@ -448,8 +506,6 @@ export const useContract = () => {
         });
         throw error;
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -780,5 +836,6 @@ export const useContract = () => {
     getDeals,
     getMyDeals,
     isLoading,
+    cleanupOrphanedDeals,
   };
 };

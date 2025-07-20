@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -68,6 +69,13 @@ const CreateDeal = () => {
         return;
       }
 
+      // Enhanced expiry validation
+      const expiryDays = parseInt(formData.expiryDays);
+      if (isNaN(expiryDays) || expiryDays < 1 || expiryDays > 365) {
+        setStep('error', "Expiry days must be between 1 and 365");
+        return;
+      }
+
       setStep('creating_db');
 
       // Generate unique deal ID using actual wallet address
@@ -81,7 +89,21 @@ const CreateDeal = () => {
         return;
       }
 
-      const expiryTimestamp = Math.floor(Date.now() / 1000) + (parseInt(formData.expiryDays) * 24 * 60 * 60);
+      // Enhanced expiry timestamp calculation with buffer
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      const bufferSeconds = 60; // 1 minute buffer to account for transaction time
+      const expiryTimestamp = currentTimestamp + bufferSeconds + (expiryDays * 24 * 60 * 60);
+      
+      console.log("Timestamp validation:");
+      console.log("Current timestamp:", currentTimestamp);
+      console.log("Expiry timestamp:", expiryTimestamp);
+      console.log("Time difference (hours):", (expiryTimestamp - currentTimestamp) / 3600);
+      
+      // Additional validation before submitting
+      if (expiryTimestamp <= currentTimestamp) {
+        setStep('error', "Expiry time must be in the future");
+        return;
+      }
       
       // Convert amounts to base units (9 decimal places for most SPL tokens)
       const amountOfferedInBaseUnits = Math.floor(amountOffered * 1e9);
@@ -127,7 +149,7 @@ const CreateDeal = () => {
   const getStepMessage = () => {
     switch (txState.step) {
       case 'validating': return 'Validating deal parameters...';
-      case 'creating_db': return 'Preparing deal data...';
+      case 'creating_db': return 'Preparing blockchain transaction...';
       case 'submitting_tx': return 'Submitting to blockchain...';
       case 'confirming': return 'Confirming transaction...';
       case 'complete': return 'Deal created successfully!';
@@ -243,7 +265,6 @@ const CreateDeal = () => {
                   </div>
                 </div>
 
-                {/* Token Requested Section */}
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Coins className="w-4 h-4" />
@@ -282,7 +303,7 @@ const CreateDeal = () => {
                   </div>
                 </div>
 
-                {/* Expiry Section */}
+                {/* Enhanced Expiry Section */}
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
@@ -295,14 +316,14 @@ const CreateDeal = () => {
                       id="expiryDays"
                       type="number"
                       min="1"
-                      max="30"
+                      max="365"
                       value={formData.expiryDays}
                       onChange={(e) => handleInputChange('expiryDays', e.target.value)}
                       disabled={txState.isLoading}
                       required
                     />
                     <p className="text-sm text-muted-foreground">
-                      Deal will expire in {formData.expiryDays} day(s)
+                      Deal will expire in {formData.expiryDays} day(s) (between 1 and 365 days allowed)
                     </p>
                   </div>
                 </div>
