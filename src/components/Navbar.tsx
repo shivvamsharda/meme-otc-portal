@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Menu, X, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import WalletButton from './WalletButton';
-import { NetworkIndicator } from './NetworkIndicator';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
@@ -43,7 +42,6 @@ const Navbar = () => {
 
           {/* Desktop CTA - refined buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <NetworkIndicator />
             <Link to="/listings">
               <Button variant="outline" className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
