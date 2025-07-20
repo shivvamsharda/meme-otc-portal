@@ -1,3 +1,4 @@
+
 /**
  * Program IDL in camelCase format in order to be used in JS/TS.
  *
@@ -558,7 +559,7 @@ export type MemeotcContract = {
   ],
   "accounts": [
     {
-      "name": "Deal",
+      "name": "deal",
       "discriminator": [
         125,
         223,
@@ -571,7 +572,7 @@ export type MemeotcContract = {
       ]
     },
     {
-      "name": "Platform",
+      "name": "platform",
       "discriminator": [
         77,
         92,
@@ -692,7 +693,7 @@ export type MemeotcContract = {
   ],
   "types": [
     {
-      "name": "Deal",
+      "name": "deal",
       "type": {
         "kind": "struct",
         "fields": [
@@ -856,7 +857,7 @@ export type MemeotcContract = {
       }
     },
     {
-      "name": "Platform",
+      "name": "platform",
       "type": {
         "kind": "struct",
         "fields": [
