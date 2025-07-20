@@ -157,7 +157,7 @@ export const useContract = () => {
       ],
       types: [
         {
-          name: "Deal",
+          name: "deal",
           type: {
             kind: "struct",
             fields: [
@@ -228,7 +228,7 @@ export const useContract = () => {
           }
         },
         {
-          name: "Platform",
+          name: "platform",
           type: {
             kind: "struct",
             fields: [
