@@ -1,6 +1,5 @@
 
-import { Play } from 'lucide-react';
-import WalletButton from './WalletButton';
+import { ArrowRight, Play } from 'lucide-react';
 
 const Hero = () => {
   return (
@@ -8,9 +7,9 @@ const Hero = () => {
       {/* Clean dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
       
-      {/* Enhanced Floating Memecoin Avatars - Dynamic movement patterns */}
+      {/* Floating Memecoin Avatars - All consistent size and style */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* BONK - Top left - Standard float animation */}
+        {/* BONK - Top left */}
         <div className="absolute top-24 left-16 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm">
           <img 
             src="/lovable-uploads/c20442fe-b06a-40f4-9fb4-fad85a5bf1cd.png" 
@@ -19,8 +18,8 @@ const Hero = () => {
           />
         </div>
         
-        {/* WIF/dogwifhat - Top right - Alternative float pattern */}
-        <div className="absolute top-32 right-20 w-16 h-16 rounded-full animate-float-alt shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white" style={{ animationDelay: '-2s' }}>
+        {/* WIF/dogwifhat - Top right */}
+        <div className="absolute top-32 right-20 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white" style={{ animationDelay: '-1s' }}>
           <img 
             src="/lovable-uploads/5158b8e4-ca6d-4434-aad7-7c33ccd68cbb.png" 
             alt="dogwifhat" 
@@ -28,8 +27,8 @@ const Hero = () => {
           />
         </div>
         
-        {/* PEPE - Bottom left - Slow float pattern */}
-        <div className="absolute bottom-40 left-12 w-16 h-16 rounded-full animate-float-slow shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-5s' }}>
+        {/* PEPE - Bottom left */}
+        <div className="absolute bottom-40 left-12 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-3s' }}>
           <img 
             src="/lovable-uploads/5c1b6715-c4bd-462d-8f6e-fbfb61a8f071.png" 
             alt="PEPE" 
@@ -37,8 +36,8 @@ const Hero = () => {
           />
         </div>
         
-        {/* POPCAT - Bottom right - Standard float with delay */}
-        <div className="absolute bottom-32 right-16 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-7s' }}>
+        {/* POPCAT - Bottom right */}
+        <div className="absolute bottom-32 right-16 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-2s' }}>
           <img 
             src="/lovable-uploads/147e08a4-6b9c-4e42-bcf1-0f36f73682d3.png" 
             alt="POPCAT" 
@@ -46,8 +45,8 @@ const Hero = () => {
           />
         </div>
         
-        {/* JUP (Jupiter) - Middle right - Alternative float pattern */}
-        <div className="absolute top-1/2 right-12 w-16 h-16 rounded-full animate-float-alt shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-3s' }}>
+        {/* JUP (Jupiter) - Middle right */}
+        <div className="absolute top-1/2 right-12 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-4s' }}>
           <img 
             src="/lovable-uploads/c25e50ad-f670-47cb-9103-898ce9cb25f5.png" 
             alt="Jupiter" 
@@ -94,9 +93,10 @@ const Hero = () => {
 
           {/* CTA Buttons - styled like reference */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <WalletButton variant="primary">
-              Start Trading
-            </WalletButton>
+            <button className="group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3">
+              <span>Start Trading</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+            </button>
             
             <button className="group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3">
               <Play className="w-5 h-5" />
