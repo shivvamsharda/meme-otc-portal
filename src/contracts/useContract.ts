@@ -8,11 +8,13 @@ import { toast } from "@/hooks/use-toast";
 import { useDatabase } from "@/hooks/useDatabase";
 import { isAlreadyProcessedError, extractSignatureFromError } from "@/utils/dealUtils";
 import { MemeotcContract } from "./memeotc_contract";
+import { useState } from "react";
 
 export const useContract = () => {
   const { connection } = useConnection();
   const wallet = useWallet();
   const database = useDatabase();
+  const [isLoading, setIsLoading] = useState(false);
 
   const isAuthenticated = wallet.connected && wallet.publicKey;
 
@@ -568,6 +570,10 @@ export const useContract = () => {
       throw new Error("Please connect your wallet first");
     }
 
+    // Prevent duplicate submissions
+    if (isLoading) return;
+    setIsLoading(true);
+
     // Log the transaction attempt
     await database.logTransaction({
       dealId,
@@ -637,7 +643,31 @@ export const useContract = () => {
 
       return { success: true, signature: tx };
     } catch (error) {
-      console.error("Error cancelling deal:", error);
+      console.log("Cancel deal error:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
+      // Check if this is actually a success (already processed)
+      if (errorMessage.includes("already been processed") || errorMessage.includes("already processed")) {
+        console.log("Transaction was already processed successfully");
+        
+        // Update database as successful
+        await database.updateDealStatus(dealId, 'Cancelled', {
+          blockchain_synced: true
+        });
+        await database.updateTransactionStatus(dealId, 'cancel', 'confirmed');
+        
+        toast({
+          title: "Deal Cancelled Successfully!",
+          description: "Your deal has been cancelled.",
+          className: "border-green-200 bg-green-50 text-green-900",
+        });
+        
+        return { success: true, signature: null };
+      }
+      
+      // This is an actual error
+      console.error("Actual error cancelling deal:", error);
       
       // Update database with failed transaction
       await database.updateTransactionStatus(
@@ -645,15 +675,17 @@ export const useContract = () => {
         'cancel', 
         'failed', 
         undefined, 
-        error instanceof Error ? error.message : "Unknown error occurred"
+        errorMessage
       );
       
       toast({
         title: "Failed to Cancel Deal",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -742,5 +774,6 @@ export const useContract = () => {
     cancelDeal,
     getDeals,
     getMyDeals,
+    isLoading,
   };
 };

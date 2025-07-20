@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,11 +14,10 @@ const DealDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { publicKey } = useWallet();
-  const { getDeals, acceptDeal, cancelDeal, isAuthenticated } = useContract();
+  const { getDeals, acceptDeal, cancelDeal, isAuthenticated, isLoading } = useContract();
   const [deal, setDeal] = useState<Deal | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
 
   const loadDeal = async () => {
     if (!id) return;
@@ -55,16 +53,14 @@ const DealDetails = () => {
   };
 
   const handleCancelDeal = async () => {
-    if (!deal || !isAuthenticated) return;
+    if (!deal || !isAuthenticated || isLoading) return;
     
-    setCancelling(true);
     try {
       await cancelDeal(deal.dealId);
       await loadDeal(); // Refresh deal data
     } catch (error) {
-      console.error('Failed to cancel deal:', error);
-    } finally {
-      setCancelling(false);
+      // Error handling is now done in the useContract hook
+      console.log('Cancel deal completed');
     }
   };
 
@@ -345,11 +341,11 @@ const DealDetails = () => {
                       <Button
                         variant="destructive"
                         onClick={handleCancelDeal}
-                        disabled={cancelling}
+                        disabled={isLoading}
                         className="w-full flex items-center gap-2"
                       >
                         <X className="w-4 h-4" />
-                        {cancelling ? 'Cancelling...' : 'Cancel Deal'}
+                        {isLoading ? 'Cancelling...' : 'Cancel Deal'}
                       </Button>
                     )}
 
