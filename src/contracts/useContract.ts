@@ -126,14 +126,14 @@ export const useContract = () => {
           args: [{ name: "newFeeBps", type: "u16" }]
         }
       ],
-      // CRITICAL: Add the missing accounts section with discriminators
+      // FIXED: Changed account names from PascalCase to camelCase to match Anchor's runtime behavior
       accounts: [
         { 
-          name: "Deal", 
+          name: "deal", 
           discriminator: [125, 223, 160, 234, 71, 162, 182, 219]
         },
         { 
-          name: "Platform", 
+          name: "platform", 
           discriminator: [77, 92, 204, 58, 187, 98, 91, 12]
         }
       ],
@@ -262,7 +262,7 @@ export const useContract = () => {
     // Debug logging to verify program structure
     console.log("Program methods available:", Object.keys(program.methods));
     console.log("Program account available:", !!program.account);
-    console.log("Program account Deal available:", !!program.account.Deal);
+    console.log("Program account deal available:", !!program.account.deal);
 
     return program;
   };
@@ -468,7 +468,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.Deal.fetch(dealPda);
+      const dealAccount = await program.account.deal.fetch(dealPda);
       
       // Derive other PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
@@ -581,7 +581,7 @@ export const useContract = () => {
       
       console.log("Cancel deal - program methods available:", Object.keys(program.methods));
       console.log("Cancel deal - program.account available:", !!program.account);
-      console.log("Cancel deal - program.account.Deal available:", !!program.account.Deal);
+      console.log("Cancel deal - program.account.deal available:", !!program.account.deal);
       
       // Get the deal account first - FIXED: use lowercase 'deal'
       const [dealPda] = PublicKey.findProgramAddressSync(
@@ -589,7 +589,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.Deal.fetch(dealPda);
+      const dealAccount = await program.account.deal.fetch(dealPda);
 
       // Derive PDAs
       const [escrowPda] = PublicKey.findProgramAddressSync(
