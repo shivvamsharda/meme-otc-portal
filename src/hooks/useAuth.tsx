@@ -2,6 +2,8 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
+import { toast } from '@/hooks/use-toast'
+import { CheckCircle } from 'lucide-react'
 
 interface AuthContextType {
   user: User | null
@@ -41,6 +43,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
+
+        // Show success toast when user signs in
+        if (event === 'SIGNED_IN' && session?.user) {
+          toast({
+            title: "Successfully signed in!",
+            description: `Welcome to MemeOTC`,
+            className: "border-green-200 bg-green-50 text-green-900",
+          })
+        }
       }
     )
 

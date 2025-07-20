@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
 export const WalletButton = () => {
   const wallet = useWallet()
@@ -13,6 +14,11 @@ export const WalletButton = () => {
   const handleSolanaSignIn = async () => {
     if (!wallet.connected || !wallet.signMessage || !wallet.publicKey) {
       console.error('Wallet not connected or does not support message signing')
+      toast({
+        title: "Wallet Error",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      })
       return
     }
 
@@ -28,6 +34,11 @@ export const WalletButton = () => {
       })
     } catch (error) {
       console.error('Error signing in with Solana:', error)
+      toast({
+        title: "Sign-in Failed",
+        description: "Failed to sign in with Solana wallet. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
