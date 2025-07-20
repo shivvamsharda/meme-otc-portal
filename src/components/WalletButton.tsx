@@ -24,15 +24,23 @@ export const WalletButton: React.FC<WalletButtonProps> = ({
     : `group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3 ${className}`;
 
   const handleSignIn = async () => {
-    if (connected && window.solana && publicKey) {
+    if (connected && publicKey) {
       try {
-        await supabase.auth.signInWithWeb3({
+        console.log('Attempting to sign in with wallet:', publicKey.toString());
+        
+        const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
           statement: 'I accept the Terms of Service for MemeOTC',
-          wallet: window.solana,
+          wallet: wallet,
         });
+
+        if (error) {
+          console.error('Error signing in with Web3:', error);
+        } else {
+          console.log('Successfully signed in with Web3:', data);
+        }
       } catch (error) {
-        console.error('Error signing in:', error);
+        console.error('Error during Web3 sign in:', error);
       }
     }
   };
