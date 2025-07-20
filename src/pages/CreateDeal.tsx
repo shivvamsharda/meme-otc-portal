@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import Navbar from '@/components/Navbar';
 
 const CreateDeal = () => {
   const navigate = useNavigate();
+  const { publicKey } = useWallet();
   const { createDeal, isAuthenticated } = useContract();
   const { state: txState, setStep, reset } = useTransactionState();
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const CreateDeal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !publicKey) {
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your wallet to create a deal",
@@ -55,11 +56,20 @@ const CreateDeal = () => {
 
       setStep('creating_db');
 
-      // Generate unique deal ID using wallet address for better uniqueness
-      const dealId = generateUniqueDealId(isAuthenticated.toString());
+      // Generate unique deal ID using actual wallet address
+      const walletAddress = publicKey.toString();
+      const dealId = generateUniqueDealId(walletAddress);
+      
+      // Validate the generated deal ID
+      if (isNaN(dealId) || dealId <= 0) {
+        console.error("Invalid deal ID generated:", dealId);
+        setStep('error', "Failed to generate valid deal ID. Please try again.");
+        return;
+      }
+
       const expiryTimestamp = Math.floor(Date.now() / 1000) + (parseInt(formData.expiryDays) * 24 * 60 * 60);
       
-      console.log("Creating deal with ID:", dealId);
+      console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
 
       setStep('submitting_tx');
 

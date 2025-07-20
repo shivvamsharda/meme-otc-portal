@@ -1,15 +1,41 @@
 
 import { PublicKey } from '@solana/web3.js';
 
-// Generate a more robust unique deal ID
+// Generate a more robust unique deal ID with validation
 export const generateUniqueDealId = (walletAddress: string): number => {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const addressHash = walletAddress.slice(-8); // Last 8 chars of address
-  const random = Math.floor(Math.random() * 1000);
-  
-  // Combine timestamp, address hash, and random for uniqueness
-  const addressNum = parseInt(addressHash, 16) % 10000;
-  return timestamp * 10000 + addressNum + random;
+  // Validate wallet address input
+  if (!walletAddress || typeof walletAddress !== 'string' || walletAddress.length < 8) {
+    console.warn("Invalid wallet address provided, using timestamp-only ID");
+    return Date.now();
+  }
+
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const addressHash = walletAddress.slice(-8); // Last 8 chars of address
+    const random = Math.floor(Math.random() * 1000);
+    
+    // Combine timestamp, address hash, and random for uniqueness
+    const addressNum = parseInt(addressHash, 16) % 10000;
+    
+    // Validate that we got a valid number from the hex parsing
+    if (isNaN(addressNum)) {
+      console.warn("Failed to parse address hash, using timestamp-only ID");
+      return timestamp * 1000 + random;
+    }
+    
+    const dealId = timestamp * 10000 + addressNum + random;
+    
+    // Final validation
+    if (isNaN(dealId) || dealId <= 0) {
+      console.error("Generated invalid deal ID, falling back to timestamp");
+      return Date.now();
+    }
+    
+    return dealId;
+  } catch (error) {
+    console.error("Error generating deal ID:", error);
+    return Date.now(); // Fallback to simple timestamp
+  }
 };
 
 // Check if error is due to already processed transaction
