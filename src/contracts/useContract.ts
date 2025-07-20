@@ -6,6 +6,7 @@ import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useDatabase } from "@/hooks/useDatabase";
+import { isAlreadyProcessedError, extractSignatureFromError } from "@/utils/dealUtils";
 import IDL from "./memeotc_contract.json";
 import { MemeotcContract } from "./memeotc_contract";
 
@@ -40,16 +41,41 @@ export const useContract = () => {
       throw new Error("Please connect your wallet first");
     }
 
-    // Store deal in database first
-    await database.createDeal({
-      dealId: params.dealId,
-      makerAddress: wallet.publicKey.toString(),
-      tokenMintOffered: params.tokenMintOffered,
-      amountOffered: params.amountOffered,
-      tokenMintRequested: params.tokenMintRequested,
-      amountRequested: params.amountRequested,
-      expiryTimestamp: params.expiryTimestamp,
-    });
+    console.log("Creating deal with params:", params);
+
+    // Check if deal already exists in database to prevent duplicates
+    const existingDeal = await database.getDealById(params.dealId);
+    if (existingDeal) {
+      console.log("Deal already exists in database:", existingDeal);
+      
+      if (existingDeal.blockchain_synced && existingDeal.transaction_signature) {
+        toast({
+          title: "Deal Already Created",
+          description: `This deal already exists with signature: ${existingDeal.transaction_signature}`,
+          className: "border-blue-200 bg-blue-50 text-blue-900",
+        });
+        return { success: true, signature: existingDeal.transaction_signature };
+      }
+    }
+
+    // Store deal in database first if it doesn't exist
+    if (!existingDeal) {
+      try {
+        await database.createDeal({
+          dealId: params.dealId,
+          makerAddress: wallet.publicKey.toString(),
+          tokenMintOffered: params.tokenMintOffered,
+          amountOffered: params.amountOffered,
+          tokenMintRequested: params.tokenMintRequested,
+          amountRequested: params.amountRequested,
+          expiryTimestamp: params.expiryTimestamp,
+        });
+        console.log("Deal created in database");
+      } catch (dbError) {
+        console.error("Database error:", dbError);
+        // Continue with blockchain transaction even if database fails
+      }
+    }
 
     // Log the transaction attempt
     await database.logTransaction({
@@ -89,6 +115,8 @@ export const useContract = () => {
         wallet.publicKey
       );
 
+      console.log("Submitting blockchain transaction...");
+
       // Create deal transaction
       const tx = await program.methods
         .createDeal(
@@ -113,6 +141,8 @@ export const useContract = () => {
         } as any)
         .rpc();
 
+      console.log("Blockchain transaction successful:", tx);
+
       // Update database with successful transaction
       await database.updateDealWithTransaction(params.dealId, tx, true);
       await database.updateTransactionStatus(params.dealId, 'create', 'confirmed', tx);
@@ -127,18 +157,58 @@ export const useContract = () => {
     } catch (error) {
       console.error("Error creating deal:", error);
       
+      let errorMessage = "Unknown error occurred";
+      let signature = null;
+
+      // Handle "already processed" errors differently
+      if (isAlreadyProcessedError(error)) {
+        console.log("Transaction already processed, checking for signature...");
+        signature = extractSignatureFromError(error);
+        
+        if (signature) {
+          // Update database with the found signature
+          await database.updateDealWithTransaction(params.dealId, signature, true);
+          await database.updateTransactionStatus(params.dealId, 'create', 'confirmed', signature);
+          
+          toast({
+            title: "Deal Created Successfully!",
+            description: "Your deal was already processed successfully",
+            className: "border-green-200 bg-green-50 text-green-900",
+          });
+          
+          return { success: true, signature };
+        } else {
+          errorMessage = "Deal may have been created successfully. Please check your deals.";
+          
+          // Mark as potentially successful
+          await database.updateDealStatus(params.dealId, 'Open', {
+            blockchain_synced: false
+          });
+          
+          toast({
+            title: "Deal Possibly Created",
+            description: errorMessage,
+            className: "border-yellow-200 bg-yellow-50 text-yellow-900",
+          });
+          
+          return { success: true, signature: null };
+        }
+      } else {
+        errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      }
+      
       // Update database with failed transaction
       await database.updateTransactionStatus(
         params.dealId, 
         'create', 
         'failed', 
-        undefined, 
-        error instanceof Error ? error.message : "Unknown error occurred"
+        signature, 
+        errorMessage
       );
       
       toast({
         title: "Failed to Create Deal",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -167,7 +237,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.Deal.fetch(dealPda);
+      const dealAccount = await program.account.deal.fetch(dealPda);
       
       // Derive other PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
@@ -282,7 +352,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.Deal.fetch(dealPda);
+      const dealAccount = await program.account.deal.fetch(dealPda);
 
       // Derive PDAs
       const [escrowPda] = PublicKey.findProgramAddressSync(

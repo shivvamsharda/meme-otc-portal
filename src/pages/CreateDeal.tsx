@@ -5,16 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useContract } from '@/contracts/useContract';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Coins, Calendar, DollarSign } from 'lucide-react';
+import { useTransactionState } from '@/hooks/useTransactionState';
+import { generateUniqueDealId, validateDealParams } from '@/utils/dealUtils';
+import { ArrowLeft, Coins, Calendar, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const CreateDeal = () => {
   const navigate = useNavigate();
   const { createDeal, isAuthenticated } = useContract();
-  const [loading, setLoading] = useState(false);
+  const { state: txState, setStep, reset } = useTransactionState();
   const [formData, setFormData] = useState({
     tokenMintOffered: '',
     amountOffered: '',
@@ -35,14 +36,34 @@ const CreateDeal = () => {
       return;
     }
 
-    setLoading(true);
-    
+    // Prevent double submission
+    if (txState.isLoading) {
+      console.log("Transaction already in progress, ignoring duplicate request");
+      return;
+    }
+
+    reset();
+    setStep('validating');
+
     try {
-      // Generate unique deal ID using timestamp + random component
-      const dealId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+      // Validate form data
+      const validationError = validateDealParams(formData);
+      if (validationError) {
+        setStep('error', validationError);
+        return;
+      }
+
+      setStep('creating_db');
+
+      // Generate unique deal ID using wallet address for better uniqueness
+      const dealId = generateUniqueDealId(isAuthenticated.toString());
       const expiryTimestamp = Math.floor(Date.now() / 1000) + (parseInt(formData.expiryDays) * 24 * 60 * 60);
       
-      await createDeal({
+      console.log("Creating deal with ID:", dealId);
+
+      setStep('submitting_tx');
+
+      const result = await createDeal({
         dealId,
         tokenMintOffered: formData.tokenMintOffered,
         amountOffered: parseFloat(formData.amountOffered) * 1e9, // Convert to lamports
@@ -51,22 +72,47 @@ const CreateDeal = () => {
         expiryTimestamp,
       });
 
-      toast({
-        title: "Deal Created!",
-        description: "Your OTC deal has been created successfully",
-        className: "border-green-200 bg-green-50 text-green-900",
-      });
-
-      navigate('/deals');
+      if (result.success) {
+        setStep('complete', undefined, result.signature);
+        
+        // Auto-navigate after successful creation
+        setTimeout(() => {
+          navigate('/deals');
+        }, 2000);
+      }
     } catch (error) {
       console.error('Failed to create deal:', error);
-    } finally {
-      setLoading(false);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setStep('error', errorMessage);
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Reset transaction state when form changes
+    if (txState.step !== 'idle') {
+      reset();
+    }
+  };
+
+  const getStepMessage = () => {
+    switch (txState.step) {
+      case 'validating': return 'Validating deal parameters...';
+      case 'creating_db': return 'Preparing deal data...';
+      case 'submitting_tx': return 'Submitting to blockchain...';
+      case 'confirming': return 'Confirming transaction...';
+      case 'complete': return 'Deal created successfully!';
+      case 'error': return txState.error || 'An error occurred';
+      default: return '';
+    }
+  };
+
+  const getStepIcon = () => {
+    switch (txState.step) {
+      case 'complete': return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'error': return <AlertCircle className="w-4 h-4 text-red-600" />;
+      default: return <Loader2 className="w-4 h-4 animate-spin" />;
+    }
   };
 
   return (
@@ -81,6 +127,7 @@ const CreateDeal = () => {
               size="sm"
               onClick={() => navigate(-1)}
               className="flex items-center gap-2"
+              disabled={txState.isLoading}
             >
               <ArrowLeft className="w-4 h-4" />
               Back
@@ -90,6 +137,31 @@ const CreateDeal = () => {
               <p className="text-muted-foreground">Set up a new over-the-counter trade</p>
             </div>
           </div>
+
+          {/* Transaction Status */}
+          {txState.step !== 'idle' && (
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  {getStepIcon()}
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${
+                      txState.step === 'complete' ? 'text-green-700' :
+                      txState.step === 'error' ? 'text-red-700' : 
+                      'text-blue-700'
+                    }`}>
+                      {getStepMessage()}
+                    </p>
+                    {txState.signature && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Signature: {txState.signature.slice(0, 20)}...
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -118,6 +190,7 @@ const CreateDeal = () => {
                         placeholder="Enter token mint address"
                         value={formData.tokenMintOffered}
                         onChange={(e) => handleInputChange('tokenMintOffered', e.target.value)}
+                        disabled={txState.isLoading}
                         required
                       />
                     </div>
@@ -131,6 +204,7 @@ const CreateDeal = () => {
                         placeholder="0.0"
                         value={formData.amountOffered}
                         onChange={(e) => handleInputChange('amountOffered', e.target.value)}
+                        disabled={txState.isLoading}
                         required
                       />
                     </div>
@@ -152,6 +226,7 @@ const CreateDeal = () => {
                         placeholder="Enter token mint address"
                         value={formData.tokenMintRequested}
                         onChange={(e) => handleInputChange('tokenMintRequested', e.target.value)}
+                        disabled={txState.isLoading}
                         required
                       />
                     </div>
@@ -165,6 +240,7 @@ const CreateDeal = () => {
                         placeholder="0.0"
                         value={formData.amountRequested}
                         onChange={(e) => handleInputChange('amountRequested', e.target.value)}
+                        disabled={txState.isLoading}
                         required
                       />
                     </div>
@@ -187,6 +263,7 @@ const CreateDeal = () => {
                       max="30"
                       value={formData.expiryDays}
                       onChange={(e) => handleInputChange('expiryDays', e.target.value)}
+                      disabled={txState.isLoading}
                       required
                     />
                     <p className="text-sm text-muted-foreground">
@@ -204,10 +281,17 @@ const CreateDeal = () => {
 
                 <Button 
                   type="submit" 
-                  disabled={loading || !isAuthenticated}
+                  disabled={txState.isLoading || !isAuthenticated}
                   className="w-full"
                 >
-                  {loading ? 'Creating Deal...' : 'Create Deal'}
+                  {txState.isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {getStepMessage()}
+                    </>
+                  ) : (
+                    'Create Deal'
+                  )}
                 </Button>
                 
                 {!isAuthenticated && (

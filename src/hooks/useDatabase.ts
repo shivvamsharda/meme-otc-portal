@@ -136,6 +136,8 @@ export const useDatabase = () => {
       .update(updates)
       .eq('deal_id', dealId)
       .eq('transaction_type', transactionType)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .select()
       .single();
 
@@ -176,11 +178,11 @@ export const useDatabase = () => {
       .from('deals')
       .select('*')
       .eq('deal_id', dealId)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      if (error.code === 'PGRST116') return null; // No rows found
-      throw error;
+      console.error('Error fetching deal by ID:', error);
+      return null;
     }
     return data;
   };
