@@ -350,14 +350,14 @@ export const useContract = () => {
 
       console.log("Submitting blockchain transaction...");
 
-      // Create deal transaction
+      // Create deal transaction with proper BN handling for large numbers
       const tx = await program.methods
         .createDeal(
           new BN(params.dealId),
           new PublicKey(params.tokenMintOffered),
-          new BN(params.amountOffered),
+          new BN(params.amountOffered.toString()), // Convert to string for BN
           new PublicKey(params.tokenMintRequested),
-          new BN(params.amountRequested),
+          new BN(params.amountRequested.toString()), // Convert to string for BN
           new BN(params.expiryTimestamp)
         )
         .accounts({
