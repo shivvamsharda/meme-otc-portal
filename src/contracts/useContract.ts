@@ -7,7 +7,6 @@ import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useDatabase } from "@/hooks/useDatabase";
 import { isAlreadyProcessedError, extractSignatureFromError } from "@/utils/dealUtils";
-import IDL from "./memeotc_contract.json";
 import { MemeotcContract } from "./memeotc_contract";
 
 export const useContract = () => {
@@ -28,8 +27,111 @@ export const useContract = () => {
       { commitment: "confirmed" }
     );
 
+    // Use the TypeScript IDL which has the correct camelCase method names
     const program = new Program<MemeotcContract>(
-      IDL as MemeotcContract, 
+      {
+        address: "2yT4Gd7NV9NDcetuoBZsdA317Ko3JAZDGx6RCCaTATfJ",
+        metadata: {
+          name: "memeotcContract",
+          version: "0.1.0",
+          spec: "0.1.0",
+          description: "Created with Anchor"
+        },
+        instructions: [
+          {
+            name: "acceptDeal",
+            discriminator: [76, 156, 34, 30, 129, 136, 76, 244],
+            accounts: [
+              { name: "platform", writable: true },
+              { name: "deal", writable: true },
+              { name: "escrowAccount", writable: true },
+              { name: "escrowAuthority" },
+              { name: "taker", writable: true, signer: true },
+              { name: "takerTokenAccountRequested", writable: true },
+              { name: "takerTokenAccountOffered", writable: true },
+              { name: "makerTokenAccountRequested", writable: true },
+              { name: "platformFeeAccount", writable: true },
+              { name: "tokenProgram" }
+            ],
+            args: []
+          },
+          {
+            name: "cancelDeal",
+            discriminator: [158, 86, 193, 45, 168, 111, 48, 29],
+            accounts: [
+              { name: "deal", writable: true },
+              { name: "escrowAccount", writable: true },
+              { name: "escrowAuthority" },
+              { name: "maker", writable: true, signer: true },
+              { name: "makerTokenAccount", writable: true },
+              { name: "tokenProgram" }
+            ],
+            args: []
+          },
+          {
+            name: "createDeal",
+            discriminator: [198, 212, 144, 151, 97, 56, 149, 113],
+            accounts: [
+              { name: "platform", writable: true },
+              { name: "deal", writable: true },
+              { name: "escrowAccount", writable: true },
+              { name: "escrowAuthority" },
+              { name: "maker", writable: true, signer: true },
+              { name: "makerTokenAccount", writable: true },
+              { name: "tokenMintOffered" },
+              { name: "tokenMintRequested" },
+              { name: "tokenProgram" },
+              { name: "systemProgram" }
+            ],
+            args: [
+              { name: "dealId", type: "u64" },
+              { name: "tokenMintOffered", type: "pubkey" },
+              { name: "amountOffered", type: "u64" },
+              { name: "tokenMintRequested", type: "pubkey" },
+              { name: "amountRequested", type: "u64" },
+              { name: "expiryTimestamp", type: "i64" }
+            ]
+          }
+        ],
+        accounts: [
+          { name: "Deal", discriminator: [125, 223, 160, 234, 71, 162, 182, 219] },
+          { name: "Platform", discriminator: [77, 92, 204, 58, 187, 98, 91, 12] }
+        ],
+        types: [
+          {
+            name: "Deal",
+            type: {
+              kind: "struct",
+              fields: [
+                { name: "dealId", type: "u64" },
+                { name: "maker", type: "pubkey" },
+                { name: "taker", type: "pubkey" },
+                { name: "tokenMintOffered", type: "pubkey" },
+                { name: "amountOffered", type: "u64" },
+                { name: "tokenMintRequested", type: "pubkey" },
+                { name: "amountRequested", type: "u64" },
+                { name: "status", type: { defined: { name: "DealStatus" } } },
+                { name: "createdAt", type: "i64" },
+                { name: "expiryTimestamp", type: "i64" },
+                { name: "completedAt", type: "i64" },
+                { name: "escrowBump", type: "u8" }
+              ]
+            }
+          },
+          {
+            name: "DealStatus",
+            type: {
+              kind: "enum",
+              variants: [
+                { name: "Open" },
+                { name: "InProgress" },
+                { name: "Completed" },
+                { name: "Cancelled" }
+              ]
+            }
+          }
+        ]
+      } as MemeotcContract,
       provider
     );
 
@@ -237,7 +339,7 @@ export const useContract = () => {
         program.programId
       );
 
-        const dealAccount = await program.account.Deal.fetch(dealPda);
+      const dealAccount = await program.account.Deal.fetch(dealPda);
       
       // Derive other PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
@@ -276,6 +378,8 @@ export const useContract = () => {
         dealAccount.tokenMintOffered,
         platformPda
       );
+
+      console.log("Accepting deal with program methods:", program.methods);
 
       const tx = await program.methods
         .acceptDeal()
@@ -346,6 +450,8 @@ export const useContract = () => {
     try {
       const program = getProgram();
       
+      console.log("Cancel deal - program methods available:", Object.keys(program.methods));
+      
       // Get the deal account first
       const [dealPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("deal"), new BN(dealId).toArrayLike(Buffer, "le", 8)],
@@ -370,6 +476,8 @@ export const useContract = () => {
         dealAccount.tokenMintOffered,
         wallet.publicKey
       );
+
+      console.log("Calling cancelDeal method...");
 
       const tx = await program.methods
         .cancelDeal()
