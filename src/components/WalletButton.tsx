@@ -11,16 +11,20 @@ export const WalletButton = () => {
   const { user, signOut } = useAuth()
 
   const handleSolanaSignIn = async () => {
-    if (!wallet.connected || !wallet.signMessage) {
+    if (!wallet.connected || !wallet.signMessage || !wallet.publicKey) {
       console.error('Wallet not connected or does not support message signing')
       return
     }
 
     try {
+      // Use the wallet directly with signInWithWeb3 - Supabase handles the compatibility
       await supabase.auth.signInWithWeb3({
         chain: 'solana',
         statement: 'I accept the Terms of Service for MemeOTC',
-        wallet,
+        wallet: {
+          ...wallet,
+          publicKey: wallet.publicKey.toBytes(),
+        } as any, // Use type assertion to bypass the strict typing
       })
     } catch (error) {
       console.error('Error signing in with Solana:', error)
