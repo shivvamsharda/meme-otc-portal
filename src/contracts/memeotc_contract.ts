@@ -504,3 +504,400 @@ export type MemeotcContract = {
       ]
     },
     {
+      "name": "updatePlatformFee",
+      "docs": [
+        "Update platform fee (only platform authority)"
+      ],
+      "discriminator": [
+        162,
+        97,
+        186,
+        47,
+        93,
+        113,
+        176,
+        243
+      ],
+      "accounts": [
+        {
+          "name": "platform",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "platform"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "newFeeBps",
+          "type": "u16"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Deal",
+      "discriminator": [
+        125,
+        223,
+        160,
+        234,
+        71,
+        162,
+        182,
+        219
+      ]
+    },
+    {
+      "name": "Platform",
+      "discriminator": [
+        77,
+        92,
+        204,
+        58,
+        187,
+        98,
+        91,
+        12
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "DealCancelled",
+      "discriminator": [
+        229,
+        189,
+        86,
+        176,
+        134,
+        151,
+        43,
+        152
+      ]
+    },
+    {
+      "name": "DealCompleted",
+      "discriminator": [
+        3,
+        185,
+        99,
+        192,
+        252,
+        161,
+        216,
+        28
+      ]
+    },
+    {
+      "name": "DealCreated",
+      "discriminator": [
+        27,
+        18,
+        50,
+        52,
+        104,
+        175,
+        46,
+        101
+      ]
+    },
+    {
+      "name": "PlatformFeeUpdated",
+      "discriminator": [
+        210,
+        134,
+        201,
+        4,
+        92,
+        228,
+        80,
+        26
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount provided"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidExpiry",
+      "msg": "Invalid expiry timestamp"
+    },
+    {
+      "code": 6002,
+      "name": "DealNotOpen",
+      "msg": "Deal is not open for acceptance"
+    },
+    {
+      "code": 6003,
+      "name": "DealExpired",
+      "msg": "Deal has expired"
+    },
+    {
+      "code": 6004,
+      "name": "DealAlreadyTaken",
+      "msg": "Deal has already been taken"
+    },
+    {
+      "code": 6005,
+      "name": "Unauthorized",
+      "msg": "Unauthorized action"
+    },
+    {
+      "code": 6006,
+      "name": "FeeTooHigh",
+      "msg": "Platform fee is too high"
+    },
+    {
+      "code": 6007,
+      "name": "CannotAcceptOwnDeal",
+      "msg": "Cannot accept your own deal"
+    },
+    {
+      "code": 6008,
+      "name": "SameTokenMints",
+      "msg": "Offered and requested token mints cannot be the same"
+    },
+    {
+      "code": 6009,
+      "name": "PlatformPaused",
+      "msg": "Platform is currently paused"
+    }
+  ],
+  "types": [
+    {
+      "name": "Deal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dealId",
+            "type": "u64"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "taker",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenMintOffered",
+            "type": "pubkey"
+          },
+          {
+            "name": "amountOffered",
+            "type": "u64"
+          },
+          {
+            "name": "tokenMintRequested",
+            "type": "pubkey"
+          },
+          {
+            "name": "amountRequested",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "DealStatus"
+              }
+            }
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "expiryTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "completedAt",
+            "type": "i64"
+          },
+          {
+            "name": "escrowBump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dealId",
+            "type": "u64"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dealId",
+            "type": "u64"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "taker",
+            "type": "pubkey"
+          },
+          {
+            "name": "amountOffered",
+            "type": "u64"
+          },
+          {
+            "name": "amountRequested",
+            "type": "u64"
+          },
+          {
+            "name": "platformFee",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dealId",
+            "type": "u64"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenOffered",
+            "type": "pubkey"
+          },
+          {
+            "name": "amountOffered",
+            "type": "u64"
+          },
+          {
+            "name": "tokenRequested",
+            "type": "pubkey"
+          },
+          {
+            "name": "amountRequested",
+            "type": "u64"
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "InProgress"
+          },
+          {
+            "name": "Completed"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Platform",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "totalDeals",
+            "type": "u64"
+          },
+          {
+            "name": "completedDeals",
+            "type": "u64"
+          },
+          {
+            "name": "platformFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "isPaused",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlatformFeeUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "oldFee",
+            "type": "u16"
+          },
+          {
+            "name": "newFee",
+            "type": "u16"
+          }
+        ]
+      }
+    }
+  ]
+};

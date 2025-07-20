@@ -1,12 +1,12 @@
-
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Program, AnchorProvider, Idl, BN } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
+import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import IDL from "./memeotc_contract.json";
+import { MemeotcContract } from "./memeotc_contract";
 
 export const useContract = () => {
   const { connection } = useConnection();
@@ -25,9 +25,8 @@ export const useContract = () => {
       { commitment: "confirmed" }
     );
 
-    const program = new Program(
-      IDL as Idl, 
-      MEMEOTC_CONFIG.programId,
+    const program = new Program<MemeotcContract>(
+      IDL as MemeotcContract, 
       provider
     );
 
@@ -90,7 +89,7 @@ export const useContract = () => {
           tokenMintRequested: new PublicKey(params.tokenMintRequested),
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-        })
+        } as any)
         .rpc();
 
       toast({
@@ -125,7 +124,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.deal.fetch(dealPda);
+      const dealAccount = await program.account.Deal.fetch(dealPda);
       
       // Derive other PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
@@ -178,7 +177,7 @@ export const useContract = () => {
           makerTokenAccountRequested: makerTokenAccountRequested,
           platformFeeAccount: platformFeeAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
-        })
+        } as any)
         .rpc();
 
       toast({
@@ -213,7 +212,7 @@ export const useContract = () => {
         program.programId
       );
 
-      const dealAccount = await program.account.deal.fetch(dealPda);
+      const dealAccount = await program.account.Deal.fetch(dealPda);
 
       // Derive PDAs
       const [escrowPda] = PublicKey.findProgramAddressSync(
@@ -241,7 +240,7 @@ export const useContract = () => {
           maker: wallet.publicKey,
           makerTokenAccount: makerTokenAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
-        })
+        } as any)
         .rpc();
 
       toast({
@@ -267,7 +266,7 @@ export const useContract = () => {
       const program = getProgram();
       
       // Fetch all deal accounts
-      const dealAccounts = await program.account.deal.all();
+      const dealAccounts = await program.account.Deal.all();
       
       return dealAccounts.map((account) => ({
         dealId: account.account.dealId.toNumber(),
