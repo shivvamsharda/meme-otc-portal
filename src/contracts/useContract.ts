@@ -670,10 +670,10 @@ export const useContract = () => {
       });
 
       // Check if token accounts exist and create them if needed
-      console.log("Checking if ALL required token accounts exist...");
+      console.log("Checking if ALL required token accounts exist including platform fee...");
       const preInstructions = [];
 
-      // Check taker's offered token account (what they're providing) - FIXED MINT
+      // Check taker's offered token account (what they're providing)
       const offeredAccountInfo = await connection.getAccountInfo(takerTokenAccountOffered);
       if (!offeredAccountInfo) {
         console.log("Creating taker's offered token account...");
@@ -681,7 +681,7 @@ export const useContract = () => {
           wallet.publicKey, // payer
           takerTokenAccountOffered, // ata address
           wallet.publicKey, // owner
-          tokenMintRequested, // FIXED: mint that taker is providing (requested token)
+          tokenMintRequested, // mint that taker is providing (requested token)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
@@ -690,7 +690,7 @@ export const useContract = () => {
         console.log("Taker's offered token account exists");
       }
 
-      // Check taker's requested token account (what they're receiving) - FIXED MINT
+      // Check taker's requested token account (what they're receiving)
       const requestedAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
       if (!requestedAccountInfo) {
         console.log("Creating taker's requested token account...");
@@ -698,7 +698,7 @@ export const useContract = () => {
           wallet.publicKey, // payer
           takerTokenAccountRequested, // ata address
           wallet.publicKey, // owner
-          tokenMintOffered, // FIXED: mint that taker is receiving (offered token)
+          tokenMintOffered, // mint that taker is receiving (offered token)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
@@ -724,9 +724,26 @@ export const useContract = () => {
         console.log("Maker's requested token account already exists");
       }
 
+      // Check platform fee account
+      const platformFeeAccountInfo = await connection.getAccountInfo(platformFeeAccount);
+      if (!platformFeeAccountInfo) {
+        console.log("Creating platform fee account...");
+        const createPlatformFeeATA = createAssociatedTokenAccountInstruction(
+          wallet.publicKey, // taker pays
+          platformFeeAccount, // platform fee account address
+          MEMEOTC_CONFIG.platformPda, // platform authority owns it
+          tokenMintOffered, // for the offered token (what platform receives as fee)
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        preInstructions.push(createPlatformFeeATA);
+      } else {
+        console.log("Platform fee account already exists");
+      }
+
       // Create all needed token accounts
       if (preInstructions.length > 0) {
-        console.log(`Creating ${preInstructions.length} token accounts (including maker's if needed)...`);
+        console.log(`Creating ${preInstructions.length} token accounts (including platform fee)...`);
         const setupTx = new Transaction().add(...preInstructions);
         const setupSig = await wallet.sendTransaction(setupTx, connection);
         await connection.confirmTransaction(setupSig, 'confirmed');
