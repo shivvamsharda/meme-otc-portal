@@ -66,8 +66,17 @@ export const validateDealParams = (params: {
   expiryDays: string;
 }): string | null => {
   try {
+    // Always validate the offered token mint address (user input)
     new PublicKey(params.tokenMintOffered);
-    new PublicKey(params.tokenMintRequested);
+    
+    // Only validate requested token mint if it's not "native" (SOL)
+    if (params.tokenMintRequested !== "native") {
+      try {
+        new PublicKey(params.tokenMintRequested);
+      } catch {
+        return "Invalid requested token mint address";
+      }
+    }
     
     if (parseFloat(params.amountOffered) <= 0) return "Offered amount must be greater than 0";
     if (parseFloat(params.amountRequested) <= 0) return "Requested amount must be greater than 0";
@@ -75,6 +84,6 @@ export const validateDealParams = (params: {
     
     return null;
   } catch {
-    return "Invalid token mint address";
+    return "Invalid offered token mint address";
   }
 };
