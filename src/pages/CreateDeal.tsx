@@ -101,7 +101,7 @@ const CreateDeal = () => {
         return;
       }
 
-      setStep('creating_db');
+      setStep('updating_db');
 
       // Generate unique deal ID using actual wallet address
       const walletAddress = publicKey.toString();
@@ -177,7 +177,7 @@ const CreateDeal = () => {
   const getStepMessage = () => {
     switch (txState.step) {
       case 'validating': return 'Validating deal parameters...';
-      case 'creating_db': return 'Preparing blockchain transaction...';
+      case 'updating_db': return 'Preparing blockchain transaction...';
       case 'submitting_tx': return 'Submitting to blockchain...';
       case 'confirming': return 'Confirming transaction...';
       case 'complete': return 'Deal created successfully!';
