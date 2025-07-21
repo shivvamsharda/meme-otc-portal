@@ -1,7 +1,5 @@
-import { PublicKey } from '@solana/web3.js';
 
-// Wrapped SOL mint address that the smart contract expects
-export const NATIVE_SOL_MINT = "So11111111111111111111111111111111111111112";
+import { PublicKey } from '@solana/web3.js';
 
 // Generate a more robust unique deal ID with validation
 export const generateUniqueDealId = (walletAddress: string): number => {
@@ -59,14 +57,6 @@ export const extractSignatureFromError = (error: any): string | null => {
   return signatureMatch ? signatureMatch[1] : null;
 };
 
-// Resolve mint address - converts "native" to actual SOL mint address
-export const resolveMintAddress = (mintAddress: string): string => {
-  if (mintAddress === "native") {
-    return NATIVE_SOL_MINT;
-  }
-  return mintAddress;
-};
-
 // Validate deal parameters before submission
 export const validateDealParams = (params: {
   tokenMintOffered: string;
@@ -76,17 +66,8 @@ export const validateDealParams = (params: {
   expiryDays: string;
 }): string | null => {
   try {
-    // Always validate the offered token mint address (user input)
     new PublicKey(params.tokenMintOffered);
-    
-    // Only validate requested token mint if it's not "native" (SOL)
-    if (params.tokenMintRequested !== "native") {
-      try {
-        new PublicKey(params.tokenMintRequested);
-      } catch {
-        return "Invalid requested token mint address";
-      }
-    }
+    new PublicKey(params.tokenMintRequested);
     
     if (parseFloat(params.amountOffered) <= 0) return "Offered amount must be greater than 0";
     if (parseFloat(params.amountRequested) <= 0) return "Requested amount must be greater than 0";
@@ -94,6 +75,6 @@ export const validateDealParams = (params: {
     
     return null;
   } catch {
-    return "Invalid offered token mint address";
+    return "Invalid token mint address";
   }
 };
