@@ -1,8 +1,8 @@
 
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
@@ -670,7 +670,81 @@ export const useContract = () => {
         platformFeeAccount: platformFeeAccount.toString()
       });
 
-      console.log("Accepting deal with program methods:", program.methods);
+      // Check if token accounts exist and create them if needed
+      console.log("Checking if token accounts exist...");
+      const preInstructions = [];
+
+      // Check taker's offered token account (what they're providing)
+      try {
+        const offeredAccountInfo = await connection.getAccountInfo(takerTokenAccountOffered);
+        if (!offeredAccountInfo) {
+          console.log("Creating taker's offered token account...");
+          const createOfferedATA = createAssociatedTokenAccountInstruction(
+            wallet.publicKey, // payer
+            takerTokenAccountOffered, // ata address
+            wallet.publicKey, // owner
+            tokenMintRequested, // mint
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          );
+          preInstructions.push(createOfferedATA);
+        } else {
+          console.log("Taker's offered token account exists");
+        }
+      } catch (error) {
+        console.log("Error checking offered token account, will create:", error);
+        const createOfferedATA = createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          takerTokenAccountOffered,
+          wallet.publicKey,
+          tokenMintRequested,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        preInstructions.push(createOfferedATA);
+      }
+
+      // Check taker's requested token account (what they're receiving)
+      try {
+        const requestedAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
+        if (!requestedAccountInfo) {
+          console.log("Creating taker's requested token account...");
+          const createRequestedATA = createAssociatedTokenAccountInstruction(
+            wallet.publicKey, // payer
+            takerTokenAccountRequested, // ata address
+            wallet.publicKey, // owner
+            tokenMintOffered, // mint
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          );
+          preInstructions.push(createRequestedATA);
+        } else {
+          console.log("Taker's requested token account exists");
+        }
+      } catch (error) {
+        console.log("Error checking requested token account, will create:", error);
+        const createRequestedATA = createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          takerTokenAccountRequested,
+          wallet.publicKey,
+          tokenMintOffered,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        preInstructions.push(createRequestedATA);
+      }
+
+      // Create token accounts if needed
+      if (preInstructions.length > 0) {
+        console.log(`Creating ${preInstructions.length} token accounts...`);
+        const setupTx = new Transaction().add(...preInstructions);
+        const setupSig = await wallet.sendTransaction(setupTx, connection);
+        await connection.confirmTransaction(setupSig, 'confirmed');
+        console.log("Token accounts created successfully:", setupSig);
+      }
+
+      // Now proceed with accept deal transaction
+      console.log("Executing accept deal transaction...");
 
       const tx = await program.methods
         .acceptDeal()
@@ -719,6 +793,8 @@ export const useContract = () => {
           errorMessage = "Token validation failed - deal may contain corrupted data";
         } else if (error.message.includes("Wallet public key is not on curve")) {
           errorMessage = "Wallet connection issue - please reconnect your wallet";
+        } else if (error.message.includes("AccountNotInitialized")) {
+          errorMessage = "Token account creation failed - please try again";
         } else {
           errorMessage = error.message;
         }
