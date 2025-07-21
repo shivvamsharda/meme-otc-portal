@@ -514,6 +514,25 @@ export const useContract = () => {
       throw new Error("Please connect your wallet first");
     }
 
+    // Validate wallet public key before proceeding
+    console.log("Validating wallet connection...");
+    console.log("Wallet public key:", wallet.publicKey.toString());
+    console.log("Wallet publicKey type:", typeof wallet.publicKey);
+    console.log("Is PublicKey instance:", wallet.publicKey instanceof PublicKey);
+
+    // Validate wallet public key is on curve
+    try {
+      if (!PublicKey.isOnCurve(wallet.publicKey.toBytes())) {
+        console.error("Wallet public key is not on curve:", wallet.publicKey.toString());
+        throw new Error("Wallet public key is not on curve - please reconnect your wallet");
+      }
+    } catch (error) {
+      console.error("Error validating wallet public key:", error);
+      throw new Error("Invalid wallet public key - please reconnect your wallet");
+    }
+
+    console.log("Wallet public key validation passed");
+
     // Log the transaction attempt
     await database.logTransaction({
       dealId,
@@ -597,15 +616,20 @@ export const useContract = () => {
         program.programId
       );
 
-      // Get token accounts with validated token mints
+      // Get token accounts with validated inputs
+      console.log("Getting associated token addresses...");
+      console.log("Using wallet public key:", wallet.publicKey.toString());
+      console.log("Using token mint offered:", tokenMintOffered.toString());
+      console.log("Using token mint requested:", tokenMintRequested.toString());
+
       const takerTokenAccountRequested = await getAssociatedTokenAddress(
         tokenMintOffered,  // Use validated PublicKey
-        wallet.publicKey
+        wallet.publicKey   // Use validated wallet public key
       );
 
       const takerTokenAccountOffered = await getAssociatedTokenAddress(
         tokenMintRequested,  // Use validated PublicKey
-        wallet.publicKey
+        wallet.publicKey     // Use validated wallet public key
       );
 
       const makerTokenAccountRequested = await getAssociatedTokenAddress(
@@ -619,7 +643,7 @@ export const useContract = () => {
         platformPda
       );
 
-      console.log("Token accounts derived successfully:", {
+      console.log("Associated token addresses derived successfully:", {
         takerTokenAccountRequested: takerTokenAccountRequested.toString(),
         takerTokenAccountOffered: takerTokenAccountOffered.toString(),
         makerTokenAccountRequested: makerTokenAccountRequested.toString(),
@@ -665,14 +689,16 @@ export const useContract = () => {
       
       let errorMessage = "Unknown error occurred";
       
-      // Handle specific token-related errors
+      // Handle specific wallet-related errors
       if (error instanceof Error) {
         if (error.message.includes("TokenOwnerOffCurveError") || error.message.includes("off curve")) {
-          errorMessage = "Invalid token address in deal - tokens may be corrupted or not supported";
+          errorMessage = "Wallet connection issue - please disconnect and reconnect your wallet";
         } else if (error.message.includes("Invalid token mint")) {
           errorMessage = "Deal contains invalid token addresses";
         } else if (error.message.includes("Unable to validate curve")) {
           errorMessage = "Token validation failed - deal may contain corrupted data";
+        } else if (error.message.includes("Wallet public key is not on curve")) {
+          errorMessage = "Wallet connection issue - please reconnect your wallet";
         } else {
           errorMessage = error.message;
         }
