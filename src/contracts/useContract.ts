@@ -1,7 +1,8 @@
+
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
@@ -616,34 +617,53 @@ export const useContract = () => {
         program.programId
       );
 
-      // Get token accounts with validated inputs
-      console.log("Getting associated token addresses...");
+      // Manual ATA derivation to avoid TokenOwnerOffCurveError
+      console.log("Getting associated token addresses using manual derivation...");
       console.log("Using wallet public key:", wallet.publicKey.toString());
       console.log("Using token mint offered:", tokenMintOffered.toString());
       console.log("Using token mint requested:", tokenMintRequested.toString());
 
-      const takerTokenAccountRequested = await getAssociatedTokenAddress(
-        tokenMintOffered,  // Use validated PublicKey
-        wallet.publicKey   // Use validated wallet public key
+      // Manual ATA derivation for taker (receives offered token)
+      const [takerTokenAccountRequested] = PublicKey.findProgramAddressSync(
+        [
+          wallet.publicKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          tokenMintOffered.toBuffer(),
+        ],
+        ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      const takerTokenAccountOffered = await getAssociatedTokenAddress(
-        tokenMintRequested,  // Use validated PublicKey
-        wallet.publicKey     // Use validated wallet public key
+      // Manual ATA derivation for taker (provides requested token)
+      const [takerTokenAccountOffered] = PublicKey.findProgramAddressSync(
+        [
+          wallet.publicKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          tokenMintRequested.toBuffer(),
+        ],
+        ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      const makerTokenAccountRequested = await getAssociatedTokenAddress(
-        tokenMintRequested,  // Use validated PublicKey
-        dealAccount.maker
+      // Manual ATA derivation for maker (receives requested token)
+      const [makerTokenAccountRequested] = PublicKey.findProgramAddressSync(
+        [
+          dealAccount.maker.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          tokenMintRequested.toBuffer(),
+        ],
+        ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // Platform fee account (using maker's offered token)
-      const platformFeeAccount = await getAssociatedTokenAddress(
-        tokenMintOffered,  // Use validated PublicKey
-        platformPda
+      // Platform fee account (using offered token mint)
+      const [platformFeeAccount] = PublicKey.findProgramAddressSync(
+        [
+          platformPda.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          tokenMintOffered.toBuffer(),
+        ],
+        ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      console.log("Associated token addresses derived successfully:", {
+      console.log("Successfully derived ATAs using manual derivation:", {
         takerTokenAccountRequested: takerTokenAccountRequested.toString(),
         takerTokenAccountOffered: takerTokenAccountOffered.toString(),
         makerTokenAccountRequested: makerTokenAccountRequested.toString(),
@@ -692,7 +712,7 @@ export const useContract = () => {
       // Handle specific wallet-related errors
       if (error instanceof Error) {
         if (error.message.includes("TokenOwnerOffCurveError") || error.message.includes("off curve")) {
-          errorMessage = "Wallet connection issue - please disconnect and reconnect your wallet";
+          errorMessage = "Token derivation failed - please try again or contact support";
         } else if (error.message.includes("Invalid token mint")) {
           errorMessage = "Deal contains invalid token addresses";
         } else if (error.message.includes("Unable to validate curve")) {
