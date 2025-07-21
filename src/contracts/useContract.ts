@@ -600,13 +600,18 @@ export const useContract = () => {
         requested: tokenMintRequested.toString()
       });
 
-      // Derive PDAs with proper logging
+      // Derive PDAs with proper logging - ALWAYS derive platform PDA dynamically
       console.log("Deriving PDAs for constraint verification...");
       
       const [platformPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("platform")],
         program.programId
       );
+
+      console.log("=== PLATFORM PDA CONSISTENCY CHECK ===");
+      console.log("Dynamically derived platform PDA:", platformPda.toString());
+      console.log("Config platform PDA:", MEMEOTC_CONFIG.platformPda.toString());
+      console.log("Platform PDAs match:", platformPda.equals(MEMEOTC_CONFIG.platformPda));
 
       const [escrowPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("escrow"), new BN(dealId).toArrayLike(Buffer, "le", 8)],
@@ -631,22 +636,22 @@ export const useContract = () => {
       console.log("Using token mint offered:", tokenMintOffered.toString());
       console.log("Using token mint requested:", tokenMintRequested.toString());
 
-      // Manual ATA derivation with correct mint assignments
+      // CORRECTED: Manual ATA derivation with correct mint assignments
       const [takerTokenAccountRequested] = PublicKey.findProgramAddressSync(
         [
           wallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintRequested.toBuffer(), // What taker pays (SOL/USDC/USDT)
+          tokenMintRequested.toBuffer(), // CORRECT: What taker pays (SOL/USDC/USDT)
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // Manual ATA derivation for taker (receives offered token)
+      // CORRECTED: Manual ATA derivation for taker (receives offered token)
       const [takerTokenAccountOffered] = PublicKey.findProgramAddressSync(
         [
           wallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintOffered.toBuffer(), // What taker receives (memecoin)
+          tokenMintOffered.toBuffer(), // CORRECT: What taker receives (memecoin)
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
@@ -661,19 +666,24 @@ export const useContract = () => {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // Platform fee account (using offered token mint)
+      // FIXED: Platform fee account using DYNAMICALLY DERIVED platform PDA (not config)
       const [platformFeeAccount] = PublicKey.findProgramAddressSync(
         [
-          platformPda.toBuffer(),
+          platformPda.toBuffer(), // Use dynamically derived platform PDA consistently
           TOKEN_PROGRAM_ID.toBuffer(),
           tokenMintOffered.toBuffer(),
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
+      console.log("=== PLATFORM FEE ACCOUNT DERIVATION VERIFICATION ===");
+      console.log("Platform PDA used for derivation:", platformPda.toString());
+      console.log("Token mint offered:", tokenMintOffered.toString());
+      console.log("Derived platform fee account:", platformFeeAccount.toString());
+
       console.log("CORRECTED account assignment:", {
-        takerTokenAccountRequested: takerTokenAccountRequested.toString(), // What taker pays
-        takerTokenAccountOffered: takerTokenAccountOffered.toString(), // What taker receives
+        takerTokenAccountRequested: takerTokenAccountRequested.toString(), // What taker pays (SOL)
+        takerTokenAccountOffered: takerTokenAccountOffered.toString(), // What taker receives (memecoin)
         makerTokenAccountRequested: makerTokenAccountRequested.toString(),
         platformFeeAccount: platformFeeAccount.toString(),
         requestedMint: tokenMintRequested.toString(), // Should be SOL for this deal
@@ -738,19 +748,20 @@ export const useContract = () => {
         console.log("Maker's requested token account already exists");
       }
 
-      // Check platform fee account
+      // FIXED: Check platform fee account using CONSISTENT platform PDA
       const platformFeeAccountInfo = await connection.getAccountInfo(platformFeeAccount);
       if (!platformFeeAccountInfo) {
-        console.log("Creating platform fee account...");
+        console.log("Creating platform fee account with DYNAMICALLY DERIVED platform PDA...");
         const createPlatformFeeATA = createAssociatedTokenAccountInstruction(
           wallet.publicKey, // taker pays
           platformFeeAccount, // platform fee account address
-          MEMEOTC_CONFIG.platformPda, // platform authority owns it
+          platformPda, // FIXED: Use dynamically derived platform PDA consistently
           tokenMintOffered, // for the offered token (what platform receives as fee)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
         preInstructions.push(createPlatformFeeATA);
+        console.log("Platform fee account creation instruction - Owner PDA:", platformPda.toString());
       } else {
         console.log("Platform fee account already exists");
       }
@@ -789,7 +800,7 @@ export const useContract = () => {
           throw new Error(`Insufficient SOL. Need ${amountNeeded / 1e9} SOL + fees`);
         }
         
-        // Transfer SOL to the CORRECT wrapped SOL account
+        // CORRECTED: Transfer SOL to the CORRECT wrapped SOL account (takerTokenAccountRequested)
         console.log("Wrapping SOL for payment into CORRECT account...");
         
         const wrapInstructions = [];
@@ -798,14 +809,14 @@ export const useContract = () => {
         wrapInstructions.push(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
-            toPubkey: takerTokenAccountRequested, // Use the correct account
+            toPubkey: takerTokenAccountRequested, // CORRECT: Use the account for what taker pays
             lamports: amountNeeded,
           })
         );
         
         // Sync native instruction to wrap the SOL
         wrapInstructions.push(
-          createSyncNativeInstruction(takerTokenAccountRequested) // Use the correct account
+          createSyncNativeInstruction(takerTokenAccountRequested) // CORRECT: Use the account for what taker pays
         );
         
         // Execute wrapping transaction
@@ -822,7 +833,7 @@ export const useContract = () => {
         console.log("Verifying wrapped SOL balance after wrapping...");
         
         try {
-          const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountRequested); // Use the correct account
+          const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountRequested); // CORRECT: Use the account for what taker pays
           console.log("Wrapped SOL balance:", tokenAccountBalance.value.uiAmount, "SOL");
           console.log("Wrapped SOL balance (raw):", tokenAccountBalance.value.amount);
           
@@ -924,6 +935,13 @@ export const useContract = () => {
       
       console.log("=== ALL CONSTRAINT VERIFICATION COMPLETED ===");
 
+      console.log("=== FINAL ACCOUNT VERIFICATION BEFORE TRANSACTION ===");
+      console.log("Platform PDA (for constraint matching):", platformPda.toString());
+      console.log("Platform fee account:", platformFeeAccount.toString());
+      console.log("Taker requested (pays with):", takerTokenAccountRequested.toString());
+      console.log("Taker offered (receives):", takerTokenAccountOffered.toString());
+      console.log("Maker requested (receives):", makerTokenAccountRequested.toString());
+
       // Now proceed with accept deal transaction
       console.log("Executing accept deal with verified constraints...");
 
@@ -973,7 +991,8 @@ export const useContract = () => {
         console.error("1. Token account ownership");
         console.error("2. Token mint matching");  
         console.error("3. Account initialization");
-        errorMessage = "Smart contract constraint violation - token account ownership or mint mismatch";
+        console.error("4. Platform fee account derivation consistency");
+        errorMessage = "Smart contract constraint violation - account derivation or ownership mismatch";
       } else if (error instanceof Error) {
         if (error.message.includes("TokenOwnerOffCurveError") || error.message.includes("off curve")) {
           errorMessage = "Token derivation failed - please try again or contact support";
