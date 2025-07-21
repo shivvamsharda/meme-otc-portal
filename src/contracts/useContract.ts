@@ -525,7 +525,7 @@ export const useContract = () => {
     try {
       const program = getProgram();
       
-      // First, get the deal account to access its data - FIXED: use lowercase 'deal'
+      // First, get the deal account to access its data
       const [dealPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("deal"), new BN(dealId).toArrayLike(Buffer, "le", 8)],
         program.programId
@@ -533,6 +533,54 @@ export const useContract = () => {
 
       const dealAccount = await program.account.deal.fetch(dealPda);
       
+      console.log("Deal account data:", {
+        dealId,
+        tokenMintOffered: dealAccount.tokenMintOffered.toString(),
+        tokenMintRequested: dealAccount.tokenMintRequested.toString(),
+        maker: dealAccount.maker.toString()
+      });
+
+      // Validate token mint addresses before using them
+      let tokenMintOffered, tokenMintRequested;
+      
+      try {
+        // Check if they are already PublicKey objects or need conversion
+        if (dealAccount.tokenMintOffered instanceof PublicKey) {
+          tokenMintOffered = dealAccount.tokenMintOffered;
+        } else {
+          tokenMintOffered = new PublicKey(dealAccount.tokenMintOffered);
+        }
+        
+        if (dealAccount.tokenMintRequested instanceof PublicKey) {
+          tokenMintRequested = dealAccount.tokenMintRequested;
+        } else {
+          tokenMintRequested = new PublicKey(dealAccount.tokenMintRequested);
+        }
+      } catch (error) {
+        console.error("Error creating PublicKey from token mints:", error);
+        throw new Error("Invalid token mint address format in deal");
+      }
+
+      // Validate they are valid PublicKeys on curve
+      try {
+        if (!PublicKey.isOnCurve(tokenMintOffered.toBytes())) {
+          console.error("Token mint offered is not on curve:", tokenMintOffered.toString());
+          throw new Error("Token mint offered is not on curve - invalid address");
+        }
+        if (!PublicKey.isOnCurve(tokenMintRequested.toBytes())) {
+          console.error("Token mint requested is not on curve:", tokenMintRequested.toString());
+          throw new Error("Token mint requested is not on curve - invalid address");
+        }
+      } catch (error) {
+        console.error("Error validating token mints:", error);
+        throw new Error("Invalid token mint addresses - unable to validate curve");
+      }
+
+      console.log("Token mints validated successfully:", {
+        offered: tokenMintOffered.toString(),
+        requested: tokenMintRequested.toString()
+      });
+
       // Derive other PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("platform")],
@@ -549,27 +597,34 @@ export const useContract = () => {
         program.programId
       );
 
-      // Get token accounts
+      // Get token accounts with validated token mints
       const takerTokenAccountRequested = await getAssociatedTokenAddress(
-        dealAccount.tokenMintOffered,
+        tokenMintOffered,  // Use validated PublicKey
         wallet.publicKey
       );
 
       const takerTokenAccountOffered = await getAssociatedTokenAddress(
-        dealAccount.tokenMintRequested,
+        tokenMintRequested,  // Use validated PublicKey
         wallet.publicKey
       );
 
       const makerTokenAccountRequested = await getAssociatedTokenAddress(
-        dealAccount.tokenMintRequested,
+        tokenMintRequested,  // Use validated PublicKey
         dealAccount.maker
       );
 
       // Platform fee account (using maker's offered token)
       const platformFeeAccount = await getAssociatedTokenAddress(
-        dealAccount.tokenMintOffered,
+        tokenMintOffered,  // Use validated PublicKey
         platformPda
       );
+
+      console.log("Token accounts derived successfully:", {
+        takerTokenAccountRequested: takerTokenAccountRequested.toString(),
+        takerTokenAccountOffered: takerTokenAccountOffered.toString(),
+        makerTokenAccountRequested: makerTokenAccountRequested.toString(),
+        platformFeeAccount: platformFeeAccount.toString()
+      });
 
       console.log("Accepting deal with program methods:", program.methods);
 
@@ -608,18 +663,33 @@ export const useContract = () => {
     } catch (error) {
       console.error("Error accepting deal:", error);
       
+      let errorMessage = "Unknown error occurred";
+      
+      // Handle specific token-related errors
+      if (error instanceof Error) {
+        if (error.message.includes("TokenOwnerOffCurveError") || error.message.includes("off curve")) {
+          errorMessage = "Invalid token address in deal - tokens may be corrupted or not supported";
+        } else if (error.message.includes("Invalid token mint")) {
+          errorMessage = "Deal contains invalid token addresses";
+        } else if (error.message.includes("Unable to validate curve")) {
+          errorMessage = "Token validation failed - deal may contain corrupted data";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       // Update database with failed transaction
       await database.updateTransactionStatus(
         dealId, 
         'accept', 
         'failed', 
         undefined, 
-        error instanceof Error ? error.message : "Unknown error occurred"
+        errorMessage
       );
       
       toast({
         title: "Failed to Accept Deal",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -650,7 +720,7 @@ export const useContract = () => {
       console.log("Cancel deal - program.account available:", !!program.account);
       console.log("Cancel deal - program.account.deal available:", !!program.account.deal);
       
-      // Get the deal account first - FIXED: use lowercase 'deal'
+      // Get the deal account first
       const [dealPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("deal"), new BN(dealId).toArrayLike(Buffer, "le", 8)],
         program.programId
