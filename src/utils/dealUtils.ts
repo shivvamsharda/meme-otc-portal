@@ -1,5 +1,6 @@
 
 import { PublicKey } from '@solana/web3.js';
+import { DEVNET_ACCEPTED_TOKENS } from '@/contracts/tokens';
 
 // Generate a more robust unique deal ID with validation
 export const generateUniqueDealId = (walletAddress: string): number => {
@@ -71,10 +72,22 @@ export const validateDealParams = (params: {
     
     if (parseFloat(params.amountOffered) <= 0) return "Offered amount must be greater than 0";
     if (parseFloat(params.amountRequested) <= 0) return "Requested amount must be greater than 0";
-    if (parseInt(params.expiryDays) < 1 || parseInt(params.expiryDays) > 30) return "Expiry must be between 1-30 days";
+    if (parseInt(params.expiryDays) < 1 || parseInt(params.expiryDays) > 365) return "Expiry must be between 1-365 days";
     
     return null;
   } catch {
     return "Invalid token mint address";
   }
+};
+
+// Get token symbol from mint address
+export const getTokenSymbol = (mintAddress: string): string => {
+  const token = DEVNET_ACCEPTED_TOKENS.find(t => t.mint === mintAddress);
+  return token ? token.symbol : 'Unknown Token';
+};
+
+// Get token display name from mint address
+export const getTokenDisplayName = (mintAddress: string): string => {
+  const token = DEVNET_ACCEPTED_TOKENS.find(t => t.mint === mintAddress);
+  return token ? `${token.symbol} (${token.name})` : `Unknown Token (${mintAddress.slice(0, 8)}...)`;
 };

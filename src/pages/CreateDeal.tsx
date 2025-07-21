@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useContract } from '@/contracts/useContract';
 import { toast } from '@/hooks/use-toast';
 import { useTransactionState } from '@/hooks/useTransactionState';
 import { generateUniqueDealId, validateDealParams } from '@/utils/dealUtils';
+import { DEVNET_ACCEPTED_TOKENS, getTokenBySymbol } from '@/contracts/tokens';
 import { ArrowLeft, Coins, Calendar, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
@@ -21,7 +23,7 @@ const CreateDeal = () => {
   const [formData, setFormData] = useState({
     tokenMintOffered: '',
     amountOffered: '',
-    tokenMintRequested: '',
+    requestedTokenSymbol: '',
     amountRequested: '',
     expiryDays: '7',
   });
@@ -38,6 +40,15 @@ const CreateDeal = () => {
       return;
     }
 
+    if (!formData.requestedTokenSymbol) {
+      toast({
+        title: "Payment Token Required",
+        description: "Please select a payment token (SOL, USDC, or USDT)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Prevent double submission
     if (txState.isLoading) {
       console.log("Transaction already in progress, ignoring duplicate request");
@@ -48,8 +59,22 @@ const CreateDeal = () => {
     setStep('validating');
 
     try {
+      const requestedTokenData = getTokenBySymbol(formData.requestedTokenSymbol);
+      if (!requestedTokenData) {
+        setStep('error', "Invalid payment token selected");
+        return;
+      }
+
       // Validate form data
-      const validationError = validateDealParams(formData);
+      const validationParams = {
+        tokenMintOffered: formData.tokenMintOffered,
+        amountOffered: formData.amountOffered,
+        tokenMintRequested: requestedTokenData.mint,
+        amountRequested: formData.amountRequested,
+        expiryDays: formData.expiryDays
+      };
+
+      const validationError = validateDealParams(validationParams);
       if (validationError) {
         setStep('error', validationError);
         return;
@@ -105,12 +130,15 @@ const CreateDeal = () => {
         return;
       }
       
-      // Convert amounts to base units (9 decimal places for most SPL tokens)
-      const amountOfferedInBaseUnits = Math.floor(amountOffered * 1e9);
-      const amountRequestedInBaseUnits = Math.floor(amountRequested * 1e9);
+      // Convert amounts to base units using appropriate decimals
+      // Assume 9 decimals for offered token (most SPL tokens use 9)
+      const amountOfferedInBaseUnits = Math.floor(amountOffered * Math.pow(10, 9));
+      // Use actual decimals for requested token
+      const amountRequestedInBaseUnits = Math.floor(amountRequested * Math.pow(10, requestedTokenData.decimals));
       
       console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
       console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
+      console.log("Requested token:", requestedTokenData.symbol, "with mint:", requestedTokenData.mint);
 
       setStep('submitting_tx');
 
@@ -118,7 +146,7 @@ const CreateDeal = () => {
         dealId,
         tokenMintOffered: formData.tokenMintOffered,
         amountOffered: amountOfferedInBaseUnits,
-        tokenMintRequested: formData.tokenMintRequested,
+        tokenMintRequested: requestedTokenData.mint,
         amountRequested: amountRequestedInBaseUnits,
         expiryTimestamp,
       });
@@ -221,33 +249,36 @@ const CreateDeal = () => {
                 Deal Details
               </CardTitle>
               <CardDescription>
-                Create a new OTC deal by specifying what you're offering and what you want in return.
+                Sell any token and accept SOL, USDC, or USDT as payment.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Token Offered Section */}
+                {/* Token Offered Section - Manual Input */}
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    What You're Offering
+                    Token You're Selling
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="tokenMintOffered">Token Mint Address</Label>
                       <Input
                         id="tokenMintOffered"
-                        placeholder="Enter token mint address"
+                        placeholder="Enter token mint address (e.g., 8m38bz481d1du6KD7nhzMfejg31khNDJmTEz1GP7bfpG)"
                         value={formData.tokenMintOffered}
                         onChange={(e) => handleInputChange('tokenMintOffered', e.target.value)}
                         disabled={txState.isLoading}
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Enter the mint address of any Solana token/memecoin you want to sell
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="amountOffered">Amount</Label>
+                      <Label htmlFor="amountOffered">Amount You're Selling</Label>
                       <Input
                         id="amountOffered"
                         type="number"
@@ -258,47 +289,63 @@ const CreateDeal = () => {
                         disabled={txState.isLoading}
                         required
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Enter any amount for OTC trading
-                      </p>
                     </div>
                   </div>
                 </div>
 
+                {/* Token Requested Section - Dropdown Only */}
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Coins className="w-4 h-4" />
-                    What You Want
+                    What You Want in Return
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="tokenMintRequested">Token Mint Address</Label>
-                      <Input
-                        id="tokenMintRequested"
-                        placeholder="Enter token mint address"
-                        value={formData.tokenMintRequested}
-                        onChange={(e) => handleInputChange('tokenMintRequested', e.target.value)}
+                      <Label htmlFor="requestedTokenSymbol">Payment Token</Label>
+                      <Select 
+                        value={formData.requestedTokenSymbol}
+                        onValueChange={(value) => handleInputChange('requestedTokenSymbol', value)}
                         disabled={txState.isLoading}
                         required
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose payment token" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DEVNET_ACCEPTED_TOKENS.map(token => (
+                            <SelectItem key={token.symbol} value={token.symbol}>
+                              <div className="flex items-center justify-between w-full">
+                                <span className="font-medium">{token.symbol}</span>
+                                <span className="text-sm text-muted-foreground ml-2">{token.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Choose SOL, USDC, or USDT as payment
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="amountRequested">Amount</Label>
-                      <Input
-                        id="amountRequested"
-                        type="number"
-                        step="0.000000001"
-                        placeholder="0.0"
-                        value={formData.amountRequested}
-                        onChange={(e) => handleInputChange('amountRequested', e.target.value)}
-                        disabled={txState.isLoading}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Enter any amount for OTC trading
-                      </p>
+                      <Label htmlFor="amountRequested">Amount You Want</Label>
+                      <div className="flex">
+                        <Input
+                          id="amountRequested"
+                          type="number"
+                          step="0.000001"
+                          placeholder="0.0"
+                          value={formData.amountRequested}
+                          onChange={(e) => handleInputChange('amountRequested', e.target.value)}
+                          disabled={txState.isLoading}
+                          required
+                          className="rounded-r-none"
+                        />
+                        <div className="px-4 py-2 bg-muted border border-input border-l-0 rounded-r-md text-muted-foreground text-sm flex items-center min-w-[80px]">
+                          {formData.requestedTokenSymbol || 'Select token'}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
