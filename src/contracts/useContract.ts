@@ -1,3 +1,4 @@
+
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
@@ -6,7 +7,7 @@ import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useDatabase } from "@/hooks/useDatabase";
-import { isAlreadyProcessedError, extractSignatureFromError } from "@/utils/dealUtils";
+import { isAlreadyProcessedError, extractSignatureFromError, resolveMintAddress } from "@/utils/dealUtils";
 import { MemeotcContract } from "./memeotc_contract";
 import { useState } from "react";
 
@@ -363,6 +364,17 @@ export const useContract = () => {
       
       const program = getProgram();
       
+      // Resolve mint addresses before creating PublicKey objects
+      const resolvedTokenMintOffered = resolveMintAddress(params.tokenMintOffered);
+      const resolvedTokenMintRequested = resolveMintAddress(params.tokenMintRequested);
+      
+      console.log("Resolved mint addresses:", {
+        offered: resolvedTokenMintOffered,
+        requested: resolvedTokenMintRequested,
+        originalOffered: params.tokenMintOffered,
+        originalRequested: params.tokenMintRequested
+      });
+      
       // Derive PDAs
       const [platformPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("platform")],
@@ -384,9 +396,26 @@ export const useContract = () => {
         program.programId
       );
 
+      // Create PublicKey objects from resolved addresses
+      let tokenMintOfferedPubkey, tokenMintRequestedPubkey;
+      
+      try {
+        tokenMintOfferedPubkey = new PublicKey(resolvedTokenMintOffered);
+        tokenMintRequestedPubkey = new PublicKey(resolvedTokenMintRequested);
+      } catch (error) {
+        console.error("Error creating PublicKey from resolved addresses:", error);
+        setIsLoading(false);
+        toast({
+          title: "Invalid Token Address",
+          description: "Failed to process token mint addresses. Please check the addresses and try again.",
+          variant: "destructive",
+        });
+        throw new Error("Invalid token mint address format");
+      }
+
       // Get maker's token account
       const makerTokenAccount = await getAssociatedTokenAddress(
-        new PublicKey(params.tokenMintOffered),
+        tokenMintOfferedPubkey,
         wallet.publicKey
       );
 
@@ -394,9 +423,9 @@ export const useContract = () => {
       transactionSignature = await program.methods
         .createDeal(
           new BN(params.dealId),
-          new PublicKey(params.tokenMintOffered),
+          tokenMintOfferedPubkey,
           new BN(params.amountOffered.toString()),
-          new PublicKey(params.tokenMintRequested),
+          tokenMintRequestedPubkey,
           new BN(params.amountRequested.toString()),
           new BN(params.expiryTimestamp)
         )
@@ -407,8 +436,8 @@ export const useContract = () => {
           escrowAuthority: escrowAuthority,
           maker: wallet.publicKey,
           makerTokenAccount: makerTokenAccount,
-          tokenMintOffered: new PublicKey(params.tokenMintOffered),
-          tokenMintRequested: new PublicKey(params.tokenMintRequested),
+          tokenMintOffered: tokenMintOfferedPubkey,
+          tokenMintRequested: tokenMintRequestedPubkey,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         } as any)
@@ -419,12 +448,13 @@ export const useContract = () => {
       // STEP 2: Only create database entry after blockchain success
       console.log("Step 2: Creating database entry after blockchain success...");
       
+      // Store resolved addresses in database for consistency
       await database.createDeal({
         dealId: params.dealId,
         makerAddress: wallet.publicKey.toString(),
-        tokenMintOffered: params.tokenMintOffered,
+        tokenMintOffered: resolvedTokenMintOffered,
         amountOffered: params.amountOffered,
-        tokenMintRequested: params.tokenMintRequested,
+        tokenMintRequested: resolvedTokenMintRequested,
         amountRequested: params.amountRequested,
         expiryTimestamp: params.expiryTimestamp,
       });
@@ -450,6 +480,15 @@ export const useContract = () => {
       let errorMessage = "Unknown error occurred";
       let foundSignature = null;
 
+      // Handle specific PublicKey errors
+      if (error instanceof Error && error.message.includes("Invalid public key input")) {
+        errorMessage = "Invalid token mint address format. Please check the token addresses and try again.";
+        console.error("PublicKey creation failed with resolved addresses:", {
+          offered: resolveMintAddress(params.tokenMintOffered),
+          requested: resolveMintAddress(params.tokenMintRequested)
+        });
+      }
+
       // Handle "already processed" errors as SUCCESS
       if (isAlreadyProcessedError(error)) {
         console.log("Transaction already processed - treating as success");
@@ -461,9 +500,9 @@ export const useContract = () => {
           await database.createDeal({
             dealId: params.dealId,
             makerAddress: wallet.publicKey.toString(),
-            tokenMintOffered: params.tokenMintOffered,
+            tokenMintOffered: resolveMintAddress(params.tokenMintOffered),
             amountOffered: params.amountOffered,
-            tokenMintRequested: params.tokenMintRequested,
+            tokenMintRequested: resolveMintAddress(params.tokenMintRequested),
             amountRequested: params.amountRequested,
             expiryTimestamp: params.expiryTimestamp,
           });

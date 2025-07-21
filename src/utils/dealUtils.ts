@@ -1,5 +1,7 @@
-
 import { PublicKey } from '@solana/web3.js';
+
+// Wrapped SOL mint address that the smart contract expects
+export const NATIVE_SOL_MINT = "So11111111111111111111111111111111111111112";
 
 // Generate a more robust unique deal ID with validation
 export const generateUniqueDealId = (walletAddress: string): number => {
@@ -55,6 +57,14 @@ export const extractSignatureFromError = (error: any): string | null => {
   const message = error?.message || '';
   const signatureMatch = message.match(/signature[:\s]+([A-Za-z0-9]{87,88})/i);
   return signatureMatch ? signatureMatch[1] : null;
+};
+
+// Resolve mint address - converts "native" to actual SOL mint address
+export const resolveMintAddress = (mintAddress: string): string => {
+  if (mintAddress === "native") {
+    return NATIVE_SOL_MINT;
+  }
+  return mintAddress;
 };
 
 // Validate deal parameters before submission
