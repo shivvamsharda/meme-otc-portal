@@ -1,7 +1,7 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createSyncNativeInstruction } from "@solana/spl-token";
 import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
@@ -782,6 +782,55 @@ export const useContract = () => {
       const takerAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
       if (takerAccountInfo) {
         console.log("Taker's requested token account info verified");
+      }
+
+      // Check if the requested token is wrapped SOL and handle wrapping
+      const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+      const isWrappedSOL = tokenMintRequested.toString() === WSOL_MINT;
+      
+      if (isWrappedSOL) {
+        console.log("Deal requires wrapped SOL payment. Checking SOL balance...");
+        
+        // Get user's SOL balance
+        const solBalance = await connection.getBalance(wallet.publicKey);
+        console.log("User SOL balance:", solBalance / 1e9, "SOL");
+        
+        // Get the amount needed (from deal)
+        const amountNeeded = dealAccount.amountRequested.toNumber();
+        console.log("Amount needed:", amountNeeded / 1e9, "SOL");
+        
+        if (solBalance < amountNeeded + 10000000) { // +0.01 SOL for fees
+          throw new Error(`Insufficient SOL. Need ${amountNeeded / 1e9} SOL + fees`);
+        }
+        
+        // Transfer SOL to wrapped SOL account and sync
+        console.log("Wrapping SOL for payment...");
+        
+        const wrapInstructions = [];
+        
+        // Transfer SOL to the wrapped SOL account
+        wrapInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: wallet.publicKey,
+            toPubkey: takerTokenAccountOffered,
+            lamports: amountNeeded,
+          })
+        );
+        
+        // Sync native instruction to wrap the SOL
+        wrapInstructions.push(
+          createSyncNativeInstruction(takerTokenAccountOffered)
+        );
+        
+        // Execute wrapping transaction
+        const wrapTx = new Transaction().add(...wrapInstructions);
+        const wrapSig = await wallet.sendTransaction(wrapTx, connection);
+        await connection.confirmTransaction(wrapSig, 'confirmed');
+        
+        console.log("SOL wrapped successfully:", wrapSig);
+        
+        // Wait a moment for the wrap to settle
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
       // Now proceed with accept deal transaction
