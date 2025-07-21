@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +7,15 @@ import { useContract } from '@/contracts/useContract';
 import { Deal } from '@/contracts/types';
 import { Coins, Clock, TrendingUp, RefreshCw } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { useTransactionState } from '@/hooks/useTransactionState';
+import { toast } from '@/hooks/use-toast';
 
 const BrowseDeals = () => {
   const navigate = useNavigate();
   const { getDeals, acceptDeal, isAuthenticated } = useContract();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [acceptingDeal, setAcceptingDeal] = useState<number | null>(null);
+  const { state: txState, setStep, reset: resetTxState, getStepMessage } = useTransactionState();
 
   const loadDeals = async () => {
     setLoading(true);
@@ -38,14 +39,41 @@ const BrowseDeals = () => {
       return;
     }
 
-    setAcceptingDeal(dealId);
+    // Prevent duplicate submissions
+    if (txState.isLoading) {
+      console.log("Transaction already in progress, ignoring duplicate request");
+      return;
+    }
+
+    resetTxState();
+    setStep('validating');
+
     try {
-      await acceptDeal(dealId);
-      await loadDeals(); // Refresh deals list
+      const result = await acceptDeal(dealId, setStep);
+      
+      if (result.success) {
+        setStep('complete', undefined, result.signature);
+        
+        // Show success toast
+        toast({
+          title: "Deal Accepted Successfully!",
+          description: `Transaction: ${result.signature}`,
+          className: "border-green-200 bg-green-50 text-green-900",
+        });
+
+        // Refresh deals list after successful transaction
+        await loadDeals();
+      }
     } catch (error) {
       console.error('Failed to accept deal:', error);
-    } finally {
-      setAcceptingDeal(null);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setStep('error', errorMessage);
+      
+      toast({
+        title: "Failed to Accept Deal",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -171,10 +199,10 @@ const BrowseDeals = () => {
                   <div className="space-y-2">
                     <Button
                       onClick={() => handleAcceptDeal(deal.dealId)}
-                      disabled={!isAuthenticated || acceptingDeal === deal.dealId}
+                      disabled={!isAuthenticated || txState.isLoading}
                       className="w-full"
                     >
-                      {acceptingDeal === deal.dealId ? 'Accepting...' : 'Accept Deal'}
+                      {txState.isLoading ? getStepMessage(txState.step) : 'Accept Deal'}
                     </Button>
                     
                     <Button
@@ -190,6 +218,13 @@ const BrowseDeals = () => {
                     <p className="text-xs text-muted-foreground text-center">
                       Connect wallet to accept deals
                     </p>
+                  )}
+
+                  {/* Transaction Progress */}
+                  {txState.isLoading && (
+                    <div className="text-xs text-center text-muted-foreground">
+                      {getStepMessage(txState.step)}
+                    </div>
                   )}
                 </CardContent>
               </Card>

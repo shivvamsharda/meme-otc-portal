@@ -1,6 +1,6 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createSyncNativeInstruction } from "@solana/spl-token";
 import { MEMEOTC_CONFIG } from "./config";
 import { CreateDealParams, Deal } from "./types";
@@ -509,7 +509,7 @@ export const useContract = () => {
     }
   };
 
-  const acceptDeal = async (dealId: number) => {
+  const acceptDeal = async (dealId: number, setStep?: (step: string, error?: string, signature?: string) => void) => {
     if (!isAuthenticated || !wallet.publicKey) {
       throw new Error("Please connect your wallet first");
     }
@@ -517,8 +517,6 @@ export const useContract = () => {
     // Validate wallet public key before proceeding
     console.log("Validating wallet connection...");
     console.log("Wallet public key:", wallet.publicKey.toString());
-    console.log("Wallet publicKey type:", typeof wallet.publicKey);
-    console.log("Is PublicKey instance:", wallet.publicKey instanceof PublicKey);
 
     // Validate wallet public key is on curve
     try {
@@ -542,6 +540,7 @@ export const useContract = () => {
     });
 
     try {
+      setStep?.('validating');
       const program = getProgram();
       
       // First, get the deal account to access its data
@@ -600,18 +599,13 @@ export const useContract = () => {
         requested: tokenMintRequested.toString()
       });
 
-      // Derive PDAs with proper logging - ALWAYS derive platform PDA dynamically
+      // Derive PDAs with proper logging
       console.log("Deriving PDAs for constraint verification...");
       
       const [platformPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("platform")],
         program.programId
       );
-
-      console.log("=== PLATFORM PDA CONSISTENCY CHECK ===");
-      console.log("Dynamically derived platform PDA:", platformPda.toString());
-      console.log("Config platform PDA:", MEMEOTC_CONFIG.platformPda.toString());
-      console.log("Platform PDAs match:", platformPda.equals(MEMEOTC_CONFIG.platformPda));
 
       const [escrowPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("escrow"), new BN(dealId).toArrayLike(Buffer, "le", 8)],
@@ -632,26 +626,22 @@ export const useContract = () => {
 
       // Getting associated token addresses with CORRECTED derivation
       console.log("Getting associated token addresses with CORRECTED derivation...");
-      console.log("Using wallet public key:", wallet.publicKey.toString());
-      console.log("Using token mint offered:", tokenMintOffered.toString());
-      console.log("Using token mint requested:", tokenMintRequested.toString());
 
-      // CORRECTED: Manual ATA derivation with correct mint assignments
+      // Manual ATA derivation with correct mint assignments
       const [takerTokenAccountRequested] = PublicKey.findProgramAddressSync(
         [
           wallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintRequested.toBuffer(), // CORRECT: What taker pays (SOL/USDC/USDT)
+          tokenMintRequested.toBuffer(), // What taker pays (SOL/USDC/USDT)
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // CORRECTED: Manual ATA derivation for taker (receives offered token)
       const [takerTokenAccountOffered] = PublicKey.findProgramAddressSync(
         [
           wallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintOffered.toBuffer(), // CORRECT: What taker receives (memecoin)
+          tokenMintOffered.toBuffer(), // What taker receives (memecoin)
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
@@ -691,10 +681,8 @@ export const useContract = () => {
         offeredMint: tokenMintOffered.toString() // Should be memecoin for this deal
       });
 
-      // Verify account constraints before transaction
-      console.log("Verifying account constraints before transaction...");
-
       // Check if token accounts exist and create them if needed
+      setStep?.('creating_accounts');
       console.log("Checking if ALL required token accounts exist including platform fee...");
       const preInstructions = [];
 
@@ -768,17 +756,54 @@ export const useContract = () => {
         console.log("Platform fee account already exists");
       }
 
-      // Create all needed token accounts
+      // Create all needed token accounts with fresh blockhash
       if (preInstructions.length > 0) {
-        console.log(`Creating ${preInstructions.length} token accounts (including platform fee)...`);
+        console.log(`Creating ${preInstructions.length} token accounts with fresh blockhash...`);
+        
+        // Get fresh blockhash for this transaction
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+        
         const setupTx = new Transaction().add(...preInstructions);
+        setupTx.recentBlockhash = blockhash;
+        setupTx.feePayer = wallet.publicKey;
+        
         const setupSig = await wallet.sendTransaction(setupTx, connection);
-        await connection.confirmTransaction(setupSig, 'confirmed');
+        
+        // Wait for confirmation with timeout
+        const confirmation = await connection.confirmTransaction({
+          signature: setupSig,
+          blockhash,
+          lastValidBlockHeight
+        }, 'confirmed');
+        
+        if (confirmation.value.err) {
+          throw new Error(`Account creation failed: ${confirmation.value.err}`);
+        }
+        
         console.log("ALL token accounts created successfully:", setupSig);
         
-        // Add delay to ensure accounts are properly created
-        console.log("Waiting 2 seconds for account creation to settle...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Verify accounts were created
+        console.log("Verifying account creation...");
+        for (let i = 0; i < 3; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check all required accounts exist
+          const allAccountsExist = await Promise.all([
+            connection.getAccountInfo(takerTokenAccountRequested),
+            connection.getAccountInfo(takerTokenAccountOffered),
+            connection.getAccountInfo(makerTokenAccountRequested),
+            connection.getAccountInfo(platformFeeAccount)
+          ]);
+          
+          if (allAccountsExist.every(account => account !== null)) {
+            console.log("All accounts verified successfully");
+            break;
+          }
+          
+          if (i === 2) {
+            throw new Error("Account creation verification failed after retries");
+          }
+        }
       } else {
         console.log("All required token accounts already exist");
       }
@@ -788,6 +813,7 @@ export const useContract = () => {
       const isWrappedSOL = tokenMintRequested.toString() === WSOL_MINT;
       
       if (isWrappedSOL) {
+        setStep?.('wrapping_sol');
         console.log("Deal requires wrapped SOL payment. Checking SOL balance...");
         
         // Get user's SOL balance
@@ -802,153 +828,87 @@ export const useContract = () => {
           throw new Error(`Insufficient SOL. Need ${amountNeeded / 1e9} SOL + fees`);
         }
         
-        // CORRECTED: Transfer SOL to the CORRECT wrapped SOL account (takerTokenAccountRequested)
-        console.log("Wrapping SOL for payment into CORRECT account...");
+        console.log("Wrapping SOL for payment with fresh blockhash...");
+        
+        // Get fresh blockhash for wrapping transaction
+        const { blockhash: wrapBlockhash, lastValidBlockHeight: wrapLastValid } = await connection.getLatestBlockhash('confirmed');
         
         const wrapInstructions = [];
         
-        // Transfer SOL to the CORRECT wrapped SOL account (takerTokenAccountRequested)
+        // Transfer SOL to the wrapped SOL account
         wrapInstructions.push(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
-            toPubkey: takerTokenAccountRequested, // CORRECT: Use the account for what taker pays
+            toPubkey: takerTokenAccountRequested,
             lamports: amountNeeded,
           })
         );
         
         // Sync native instruction to wrap the SOL
         wrapInstructions.push(
-          createSyncNativeInstruction(takerTokenAccountRequested) // CORRECT: Use the account for what taker pays
+          createSyncNativeInstruction(takerTokenAccountRequested)
         );
         
-        // Execute wrapping transaction
+        // Execute wrapping transaction with fresh blockhash
         const wrapTx = new Transaction().add(...wrapInstructions);
+        wrapTx.recentBlockhash = wrapBlockhash;
+        wrapTx.feePayer = wallet.publicKey;
+        
         const wrapSig = await wallet.sendTransaction(wrapTx, connection);
-        await connection.confirmTransaction(wrapSig, 'confirmed');
+        
+        // Wait for wrap confirmation
+        const wrapConfirmation = await connection.confirmTransaction({
+          signature: wrapSig,
+          blockhash: wrapBlockhash,
+          lastValidBlockHeight: wrapLastValid
+        }, 'confirmed');
+        
+        if (wrapConfirmation.value.err) {
+          throw new Error(`SOL wrapping failed: ${wrapConfirmation.value.err}`);
+        }
         
         console.log("SOL wrapped successfully:", wrapSig);
         
-        // Wait a moment for the wrap to settle
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // VERIFY WRAPPED SOL BALANCE AFTER WRAPPING
-        console.log("Verifying wrapped SOL balance after wrapping...");
-        
-        try {
-          const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountRequested); // CORRECT: Use the account for what taker pays
-          console.log("Wrapped SOL balance:", tokenAccountBalance.value.uiAmount, "SOL");
-          console.log("Wrapped SOL balance (raw):", tokenAccountBalance.value.amount);
-          
-          const requiredAmount = dealAccount.amountRequested.toString();
-          const actualBalance = tokenAccountBalance.value.amount;
-          
-          console.log("Required amount:", requiredAmount);
-          console.log("Actual balance:", actualBalance);
-          
-          if (BigInt(actualBalance) < BigInt(requiredAmount)) {
-            throw new Error(`Insufficient wrapped SOL balance. Need: ${requiredAmount}, Have: ${actualBalance}`);
+        // Verify wrapped SOL balance
+        let attempts = 0;
+        while (attempts < 5) {
+          try {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1)));
+            
+            const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountRequested);
+            console.log("Wrapped SOL balance:", tokenAccountBalance.value.uiAmount, "SOL");
+            
+            const requiredAmount = dealAccount.amountRequested.toString();
+            const actualBalance = tokenAccountBalance.value.amount;
+            
+            if (BigInt(actualBalance) >= BigInt(requiredAmount)) {
+              console.log("✓ Wrapped SOL balance verification passed");
+              break;
+            }
+            
+            attempts++;
+            if (attempts === 5) {
+              throw new Error(`Insufficient wrapped SOL balance after wrapping. Need: ${requiredAmount}, Have: ${actualBalance}`);
+            }
+          } catch (balanceError) {
+            attempts++;
+            if (attempts === 5) {
+              console.error("Error checking wrapped SOL balance:", balanceError);
+              throw new Error(`Failed to verify wrapped SOL balance: ${balanceError.message}`);
+            }
           }
-          
-          console.log("✓ Wrapped SOL balance verification passed");
-        } catch (balanceError) {
-          console.error("Error checking wrapped SOL balance:", balanceError);
-          throw new Error(`Failed to verify wrapped SOL balance: ${balanceError.message}`);
         }
       }
 
-      // COMPREHENSIVE CONSTRAINT VERIFICATION FOR BOTH ACCOUNTS WITH CORRECTED LOGIC
-      console.log("=== COMPREHENSIVE CONSTRAINT VERIFICATION ===");
-      
-      // Verify taker's requested token account (what taker provides/pays with)
-      console.log("Verifying taker's REQUESTED token account (provides/pays with)...");
-      try {
-        const takerRequestedInfo = await connection.getParsedAccountInfo(takerTokenAccountRequested);
-        if (takerRequestedInfo.value?.data && 'parsed' in takerRequestedInfo.value.data) {
-          const parsedData = takerRequestedInfo.value.data.parsed.info;
-          
-          console.log("Taker REQUESTED account details:", {
-            address: takerTokenAccountRequested.toString(),
-            owner: parsedData.owner,
-            mint: parsedData.mint,
-            balance: parsedData.tokenAmount.amount,
-            expectedOwner: wallet.publicKey.toString(),
-            expectedMint: tokenMintRequested.toString() // Should be wrapped SOL
-          });
-          
-          // Verify constraints for requested account
-          if (parsedData.owner !== wallet.publicKey.toString()) {
-            throw new Error(`REQUESTED account owner mismatch: ${parsedData.owner} vs ${wallet.publicKey.toString()}`);
-          }
-          
-          if (parsedData.mint !== tokenMintRequested.toString()) {
-            throw new Error(`REQUESTED account mint mismatch: ${parsedData.mint} vs ${tokenMintRequested.toString()}`);
-          }
-          
-          // Verify sufficient balance for the trade
-          const requiredAmount = dealAccount.amountRequested.toString();
-          const actualBalance = parsedData.tokenAmount.amount;
-          
-          if (BigInt(actualBalance) < BigInt(requiredAmount)) {
-            throw new Error(`REQUESTED account insufficient balance. Need: ${requiredAmount}, Have: ${actualBalance}`);
-          }
-          
-          console.log("✓ Taker REQUESTED account constraints and balance verified");
-        } else {
-          console.log("⚠️ Taker REQUESTED account is not initialized or not a token account");
-        }
-      } catch (error) {
-        console.error("Error verifying taker REQUESTED account:", error);
-        throw new Error(`Taker REQUESTED account verification failed: ${error.message}`);
-      }
-      
-      // Verify taker's offered token account (what taker receives)
-      console.log("Verifying taker's OFFERED token account (receives tokens)...");
-      try {
-        const takerOfferedInfo = await connection.getParsedAccountInfo(takerTokenAccountOffered);
-        if (takerOfferedInfo.value?.data && 'parsed' in takerOfferedInfo.value.data) {
-          const parsedData = takerOfferedInfo.value.data.parsed.info;
-          
-          console.log("Taker OFFERED account details:", {
-            address: takerTokenAccountOffered.toString(),
-            owner: parsedData.owner,
-            mint: parsedData.mint,
-            balance: parsedData.tokenAmount.amount,
-            expectedOwner: wallet.publicKey.toString(),
-            expectedMint: tokenMintOffered.toString() // Should be memecoin
-          });
-          
-          // Verify constraints for offered account
-          if (parsedData.owner !== wallet.publicKey.toString()) {
-            throw new Error(`OFFERED account owner mismatch: ${parsedData.owner} vs ${wallet.publicKey.toString()}`);
-          }
-          
-          if (parsedData.mint !== tokenMintOffered.toString()) {
-            throw new Error(`OFFERED account mint mismatch: ${parsedData.mint} vs ${tokenMintOffered.toString()}`);
-          }
-          
-          console.log("✓ Taker OFFERED account constraints verified");
-        } else {
-          console.log("⚠️ Taker OFFERED account is not initialized or not a token account");
-        }
-      } catch (error) {
-        console.error("Error verifying taker OFFERED account:", error);
-        throw new Error(`Taker OFFERED account verification failed: ${error.message}`);
-      }
-      
-      console.log("=== ALL CONSTRAINT VERIFICATION COMPLETED ===");
+      // Now proceed with accept deal transaction using fresh blockhash
+      setStep?.('submitting_tx');
+      console.log("Executing accept deal with FIXED platform fee account constraints and fresh blockhash...");
 
-      console.log("=== FINAL ACCOUNT VERIFICATION BEFORE TRANSACTION ===");
-      console.log("Platform PDA (for constraint matching):", platformPda.toString());
-      console.log("Platform fee account (FIXED):", platformFeeAccount.toString());
-      console.log("Platform fee token mint (FIXED):", tokenMintRequested.toString());
-      console.log("Taker requested (pays with):", takerTokenAccountRequested.toString());
-      console.log("Taker offered (receives):", takerTokenAccountOffered.toString());
-      console.log("Maker requested (receives):", makerTokenAccountRequested.toString());
+      // Get fresh blockhash for the main transaction
+      const { blockhash: dealBlockhash, lastValidBlockHeight: dealLastValid } = await connection.getLatestBlockhash('confirmed');
 
-      // Now proceed with accept deal transaction
-      console.log("Executing accept deal with FIXED platform fee account constraints...");
-
-      const tx = await program.methods
+      // Build the accept deal instruction
+      const acceptDealIx = await program.methods
         .acceptDeal()
         .accounts({
           platform: platformPda,
@@ -962,9 +922,34 @@ export const useContract = () => {
           platformFeeAccount: platformFeeAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
         } as any)
-        .rpc();
+        .instruction();
+
+      // Create transaction with fresh blockhash
+      const dealTx = new Transaction().add(acceptDealIx);
+      dealTx.recentBlockhash = dealBlockhash;
+      dealTx.feePayer = wallet.publicKey;
+
+      // Send and confirm transaction
+      const tx = await wallet.sendTransaction(dealTx, connection);
+      
+      setStep?.('confirming');
+      console.log("Transaction submitted, waiting for confirmation:", tx);
+
+      // Wait for transaction confirmation with timeout
+      const confirmation = await connection.confirmTransaction({
+        signature: tx,
+        blockhash: dealBlockhash,
+        lastValidBlockHeight: dealLastValid
+      }, 'confirmed');
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      }
+
+      console.log("Transaction confirmed successfully:", tx);
 
       // Update database with successful transaction
+      setStep?.('updating_db');
       await database.updateDealStatus(dealId, 'Completed', {
         taker_address: wallet.publicKey.toString(),
         completed_at: new Date().toISOString(),
@@ -975,27 +960,27 @@ export const useContract = () => {
 
       console.log("Deal accepted successfully:", tx);
 
-      toast({
-        title: "Deal Accepted Successfully!",
-        description: `Transaction: ${tx}`,
-        className: "border-green-200 bg-green-50 text-green-900",
-      });
-
       return { success: true, signature: tx };
     } catch (error) {
       console.error("Error accepting deal:", error);
-      console.error("Constraint error details:", error);
       
       let errorMessage = "Unknown error occurred";
       
-      // Add more specific error info
-      if (error instanceof Error && error.message.includes("ConstraintRaw")) {
-        console.error("The smart contract found a constraint violation. Check:");
-        console.error("1. Token account ownership");
-        console.error("2. Token mint matching");  
-        console.error("3. Account initialization");
-        console.error("4. Platform fee account derivation consistency");
-        errorMessage = "Smart contract constraint violation - account derivation or ownership mismatch";
+      // Handle "already processed" errors as SUCCESS
+      if (isAlreadyProcessedError(error)) {
+        console.log("Transaction already processed - treating as success");
+        const foundSignature = extractSignatureFromError(error);
+        
+        // Update database as successful
+        await database.updateDealStatus(dealId, 'Completed', {
+          taker_address: wallet.publicKey.toString(),
+          completed_at: new Date().toISOString(),
+          transaction_signature: foundSignature,
+          blockchain_synced: true
+        });
+        await database.updateTransactionStatus(dealId, 'accept', 'confirmed', foundSignature);
+        
+        return { success: true, signature: foundSignature };
       } else if (error instanceof Error) {
         if (error.message.includes("TokenOwnerOffCurveError") || error.message.includes("off curve")) {
           errorMessage = "Token derivation failed - please try again or contact support";
@@ -1021,12 +1006,7 @@ export const useContract = () => {
         errorMessage
       );
       
-      toast({
-        title: "Failed to Accept Deal",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      throw error;
+      throw new Error(errorMessage);
     }
   };
 

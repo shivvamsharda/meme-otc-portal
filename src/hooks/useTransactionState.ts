@@ -6,7 +6,7 @@ export interface TransactionState {
   error: string | null;
   success: boolean;
   signature: string | null;
-  step: 'idle' | 'validating' | 'creating_db' | 'submitting_tx' | 'confirming' | 'complete' | 'error';
+  step: 'idle' | 'validating' | 'creating_accounts' | 'wrapping_sol' | 'submitting_tx' | 'confirming' | 'updating_db' | 'complete' | 'error';
 }
 
 export const useTransactionState = () => {
@@ -39,9 +39,33 @@ export const useTransactionState = () => {
     });
   }, []);
 
+  const getStepMessage = useCallback((step: TransactionState['step']) => {
+    switch (step) {
+      case 'validating':
+        return 'Validating transaction...';
+      case 'creating_accounts':
+        return 'Creating token accounts...';
+      case 'wrapping_sol':
+        return 'Wrapping SOL...';
+      case 'submitting_tx':
+        return 'Submitting transaction...';
+      case 'confirming':
+        return 'Confirming transaction...';
+      case 'updating_db':
+        return 'Updating database...';
+      case 'complete':
+        return 'Transaction completed successfully!';
+      case 'error':
+        return 'Transaction failed';
+      default:
+        return '';
+    }
+  }, []);
+
   return {
     state,
     setStep,
-    reset
+    reset,
+    getStepMessage
   };
 };
