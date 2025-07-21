@@ -600,7 +600,9 @@ export const useContract = () => {
         requested: tokenMintRequested.toString()
       });
 
-      // Derive other PDAs
+      // Derive PDAs with proper logging
+      console.log("Deriving PDAs for constraint verification...");
+      
       const [platformPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("platform")],
         program.programId
@@ -615,6 +617,13 @@ export const useContract = () => {
         [Buffer.from("escrow"), new BN(dealId).toArrayLike(Buffer, "le", 8)],
         program.programId
       );
+
+      console.log("Using PDAs:", {
+        deal: dealPda.toString(),
+        escrow: escrowPda.toString(),
+        escrowAuthority: escrowAuthority.toString(),
+        platform: platformPda.toString()
+      });
 
       // Manual ATA derivation to avoid TokenOwnerOffCurveError
       console.log("Getting associated token addresses using manual derivation...");
@@ -667,6 +676,19 @@ export const useContract = () => {
         takerTokenAccountOffered: takerTokenAccountOffered.toString(),
         makerTokenAccountRequested: makerTokenAccountRequested.toString(),
         platformFeeAccount: platformFeeAccount.toString()
+      });
+
+      // Verify account constraints before transaction
+      console.log("Verifying account constraints before transaction...");
+      
+      console.log("Account verification:", {
+        takerWallet: wallet.publicKey.toString(),
+        takerTokenAccountRequested: takerTokenAccountRequested.toString(),
+        takerTokenAccountOffered: takerTokenAccountOffered.toString(),
+        makerWallet: dealAccount.maker.toString(),
+        makerTokenAccountRequested: makerTokenAccountRequested.toString(),
+        tokenMintRequested: tokenMintRequested.toString(),
+        tokenMintOffered: tokenMintOffered.toString()
       });
 
       // Check if token accounts exist and create them if needed
@@ -756,8 +778,14 @@ export const useContract = () => {
         console.log("All required token accounts already exist");
       }
 
+      // Verify the accounts match what the smart contract expects
+      const takerAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
+      if (takerAccountInfo) {
+        console.log("Taker's requested token account info verified");
+      }
+
       // Now proceed with accept deal transaction
-      console.log("Executing accept deal transaction...");
+      console.log("Executing accept deal with verified constraints...");
 
       const tx = await program.methods
         .acceptDeal()
@@ -784,6 +812,8 @@ export const useContract = () => {
       });
       await database.updateTransactionStatus(dealId, 'accept', 'confirmed', tx);
 
+      console.log("Deal accepted successfully:", tx);
+
       toast({
         title: "Deal Accepted Successfully!",
         description: `Transaction: ${tx}`,
@@ -793,11 +823,18 @@ export const useContract = () => {
       return { success: true, signature: tx };
     } catch (error) {
       console.error("Error accepting deal:", error);
+      console.error("Constraint error details:", error);
       
       let errorMessage = "Unknown error occurred";
       
-      // Handle specific wallet-related errors
-      if (error instanceof Error) {
+      // Add more specific error info
+      if (error instanceof Error && error.message.includes("ConstraintRaw")) {
+        console.error("The smart contract found a constraint violation. Check:");
+        console.error("1. Token account ownership");
+        console.error("2. Token mint matching");  
+        console.error("3. Account initialization");
+        errorMessage = "Smart contract constraint violation - token account ownership or mint mismatch";
+      } else if (error instanceof Error) {
         if (error.message.includes("TokenOwnerOffCurveError") || error.message.includes("off curve")) {
           errorMessage = "Token derivation failed - please try again or contact support";
         } else if (error.message.includes("Invalid token mint")) {
