@@ -666,20 +666,21 @@ export const useContract = () => {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // FIXED: Platform fee account using DYNAMICALLY DERIVED platform PDA (not config)
+      // FIXED: Platform fee account using tokenMintRequested (what the taker pays with)
       const [platformFeeAccount] = PublicKey.findProgramAddressSync(
         [
-          platformPda.toBuffer(), // Use dynamically derived platform PDA consistently
+          platformPda.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintOffered.toBuffer(),
+          tokenMintRequested.toBuffer(), // FIXED: Use requested token (SOL/USDC/USDT) for platform fee
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      console.log("=== PLATFORM FEE ACCOUNT DERIVATION VERIFICATION ===");
+      console.log("=== PLATFORM FEE ACCOUNT DERIVATION FIXED ===");
       console.log("Platform PDA used for derivation:", platformPda.toString());
-      console.log("Token mint offered:", tokenMintOffered.toString());
+      console.log("Token mint for platform fee (FIXED):", tokenMintRequested.toString());
       console.log("Derived platform fee account:", platformFeeAccount.toString());
+      console.log("Platform collects fees in:", tokenMintRequested.toString(), "(what taker pays)");
 
       console.log("CORRECTED account assignment:", {
         takerTokenAccountRequested: takerTokenAccountRequested.toString(), // What taker pays (SOL)
@@ -748,20 +749,21 @@ export const useContract = () => {
         console.log("Maker's requested token account already exists");
       }
 
-      // FIXED: Check platform fee account using CONSISTENT platform PDA
+      // FIXED: Check platform fee account using CORRECT token mint (requested token)
       const platformFeeAccountInfo = await connection.getAccountInfo(platformFeeAccount);
       if (!platformFeeAccountInfo) {
-        console.log("Creating platform fee account with DYNAMICALLY DERIVED platform PDA...");
+        console.log("Creating platform fee account with CORRECT token mint (requested token)...");
         const createPlatformFeeATA = createAssociatedTokenAccountInstruction(
           wallet.publicKey, // taker pays
           platformFeeAccount, // platform fee account address
-          platformPda, // FIXED: Use dynamically derived platform PDA consistently
-          tokenMintOffered, // for the offered token (what platform receives as fee)
+          platformPda, // platform owns the fee account
+          tokenMintRequested, // FIXED: Platform collects fees in the requested token (SOL/USDC/USDT)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
         preInstructions.push(createPlatformFeeATA);
         console.log("Platform fee account creation instruction - Owner PDA:", platformPda.toString());
+        console.log("Platform fee account creation instruction - Token mint:", tokenMintRequested.toString());
       } else {
         console.log("Platform fee account already exists");
       }
@@ -937,13 +939,14 @@ export const useContract = () => {
 
       console.log("=== FINAL ACCOUNT VERIFICATION BEFORE TRANSACTION ===");
       console.log("Platform PDA (for constraint matching):", platformPda.toString());
-      console.log("Platform fee account:", platformFeeAccount.toString());
+      console.log("Platform fee account (FIXED):", platformFeeAccount.toString());
+      console.log("Platform fee token mint (FIXED):", tokenMintRequested.toString());
       console.log("Taker requested (pays with):", takerTokenAccountRequested.toString());
       console.log("Taker offered (receives):", takerTokenAccountOffered.toString());
       console.log("Maker requested (receives):", makerTokenAccountRequested.toString());
 
       // Now proceed with accept deal transaction
-      console.log("Executing accept deal with verified constraints...");
+      console.log("Executing accept deal with FIXED platform fee account constraints...");
 
       const tx = await program.methods
         .acceptDeal()
