@@ -625,28 +625,28 @@ export const useContract = () => {
         platform: platformPda.toString()
       });
 
-      // Manual ATA derivation to avoid TokenOwnerOffCurveError
-      console.log("Getting associated token addresses using manual derivation...");
+      // Getting associated token addresses with CORRECTED derivation
+      console.log("Getting associated token addresses with CORRECTED derivation...");
       console.log("Using wallet public key:", wallet.publicKey.toString());
       console.log("Using token mint offered:", tokenMintOffered.toString());
       console.log("Using token mint requested:", tokenMintRequested.toString());
 
-      // Manual ATA derivation for taker (receives offered token)
+      // Manual ATA derivation with correct mint assignments
       const [takerTokenAccountRequested] = PublicKey.findProgramAddressSync(
         [
           wallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintOffered.toBuffer(),
+          tokenMintRequested.toBuffer(), // What taker pays (SOL/USDC/USDT)
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // Manual ATA derivation for taker (provides requested token)
+      // Manual ATA derivation for taker (receives offered token)
       const [takerTokenAccountOffered] = PublicKey.findProgramAddressSync(
         [
           wallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          tokenMintRequested.toBuffer(),
+          tokenMintOffered.toBuffer(), // What taker receives (memecoin)
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
@@ -671,48 +671,23 @@ export const useContract = () => {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      console.log("Successfully derived ATAs using manual derivation:", {
-        takerTokenAccountRequested: takerTokenAccountRequested.toString(),
-        takerTokenAccountOffered: takerTokenAccountOffered.toString(),
+      console.log("CORRECTED account assignment:", {
+        takerTokenAccountRequested: takerTokenAccountRequested.toString(), // What taker pays
+        takerTokenAccountOffered: takerTokenAccountOffered.toString(), // What taker receives
         makerTokenAccountRequested: makerTokenAccountRequested.toString(),
-        platformFeeAccount: platformFeeAccount.toString()
+        platformFeeAccount: platformFeeAccount.toString(),
+        requestedMint: tokenMintRequested.toString(), // Should be SOL for this deal
+        offeredMint: tokenMintOffered.toString() // Should be memecoin for this deal
       });
 
       // Verify account constraints before transaction
       console.log("Verifying account constraints before transaction...");
-      
-      console.log("Account verification:", {
-        takerWallet: wallet.publicKey.toString(),
-        takerTokenAccountRequested: takerTokenAccountRequested.toString(),
-        takerTokenAccountOffered: takerTokenAccountOffered.toString(),
-        makerWallet: dealAccount.maker.toString(),
-        makerTokenAccountRequested: makerTokenAccountRequested.toString(),
-        tokenMintRequested: tokenMintRequested.toString(),
-        tokenMintOffered: tokenMintOffered.toString()
-      });
 
       // Check if token accounts exist and create them if needed
       console.log("Checking if ALL required token accounts exist including platform fee...");
       const preInstructions = [];
 
-      // Check taker's offered token account (what they're providing)
-      const offeredAccountInfo = await connection.getAccountInfo(takerTokenAccountOffered);
-      if (!offeredAccountInfo) {
-        console.log("Creating taker's offered token account...");
-        const createOfferedATA = createAssociatedTokenAccountInstruction(
-          wallet.publicKey, // payer
-          takerTokenAccountOffered, // ata address
-          wallet.publicKey, // owner
-          tokenMintRequested, // mint that taker is providing (requested token)
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        );
-        preInstructions.push(createOfferedATA);
-      } else {
-        console.log("Taker's offered token account exists");
-      }
-
-      // Check taker's requested token account (what they're receiving)
+      // Check taker's requested token account (what they're providing/paying with)
       const requestedAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
       if (!requestedAccountInfo) {
         console.log("Creating taker's requested token account...");
@@ -720,13 +695,30 @@ export const useContract = () => {
           wallet.publicKey, // payer
           takerTokenAccountRequested, // ata address
           wallet.publicKey, // owner
-          tokenMintOffered, // mint that taker is receiving (offered token)
+          tokenMintRequested, // mint that taker is providing (requested token)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
         preInstructions.push(createRequestedATA);
       } else {
         console.log("Taker's requested token account exists");
+      }
+
+      // Check taker's offered token account (what they're receiving)
+      const offeredAccountInfo = await connection.getAccountInfo(takerTokenAccountOffered);
+      if (!offeredAccountInfo) {
+        console.log("Creating taker's offered token account...");
+        const createOfferedATA = createAssociatedTokenAccountInstruction(
+          wallet.publicKey, // payer
+          takerTokenAccountOffered, // ata address
+          wallet.publicKey, // owner
+          tokenMintOffered, // mint that taker is receiving (offered token)
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        preInstructions.push(createOfferedATA);
+      } else {
+        console.log("Taker's offered token account exists");
       }
 
       // Check maker's token account for the requested token (what maker receives)
@@ -778,12 +770,6 @@ export const useContract = () => {
         console.log("All required token accounts already exist");
       }
 
-      // Verify the accounts match what the smart contract expects
-      const takerAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
-      if (takerAccountInfo) {
-        console.log("Taker's requested token account info verified");
-      }
-
       // Check if the requested token is wrapped SOL and handle wrapping
       const WSOL_MINT = 'So11111111111111111111111111111111111111112';
       const isWrappedSOL = tokenMintRequested.toString() === WSOL_MINT;
@@ -803,23 +789,23 @@ export const useContract = () => {
           throw new Error(`Insufficient SOL. Need ${amountNeeded / 1e9} SOL + fees`);
         }
         
-        // Transfer SOL to wrapped SOL account and sync
-        console.log("Wrapping SOL for payment...");
+        // Transfer SOL to the CORRECT wrapped SOL account
+        console.log("Wrapping SOL for payment into CORRECT account...");
         
         const wrapInstructions = [];
         
-        // Transfer SOL to the wrapped SOL account
+        // Transfer SOL to the CORRECT wrapped SOL account (takerTokenAccountRequested)
         wrapInstructions.push(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
-            toPubkey: takerTokenAccountOffered,
+            toPubkey: takerTokenAccountRequested, // Use the correct account
             lamports: amountNeeded,
           })
         );
         
         // Sync native instruction to wrap the SOL
         wrapInstructions.push(
-          createSyncNativeInstruction(takerTokenAccountOffered)
+          createSyncNativeInstruction(takerTokenAccountRequested) // Use the correct account
         );
         
         // Execute wrapping transaction
@@ -836,7 +822,7 @@ export const useContract = () => {
         console.log("Verifying wrapped SOL balance after wrapping...");
         
         try {
-          const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountOffered);
+          const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountRequested); // Use the correct account
           console.log("Wrapped SOL balance:", tokenAccountBalance.value.uiAmount, "SOL");
           console.log("Wrapped SOL balance (raw):", tokenAccountBalance.value.amount);
           
@@ -857,11 +843,11 @@ export const useContract = () => {
         }
       }
 
-      // COMPREHENSIVE CONSTRAINT VERIFICATION FOR BOTH ACCOUNTS
+      // COMPREHENSIVE CONSTRAINT VERIFICATION FOR BOTH ACCOUNTS WITH CORRECTED LOGIC
       console.log("=== COMPREHENSIVE CONSTRAINT VERIFICATION ===");
       
-      // Verify taker's requested token account (what taker receives)
-      console.log("Verifying taker's REQUESTED token account (receives offered tokens)...");
+      // Verify taker's requested token account (what taker provides/pays with)
+      console.log("Verifying taker's REQUESTED token account (provides/pays with)...");
       try {
         const takerRequestedInfo = await connection.getParsedAccountInfo(takerTokenAccountRequested);
         if (takerRequestedInfo.value?.data && 'parsed' in takerRequestedInfo.value.data) {
@@ -873,7 +859,7 @@ export const useContract = () => {
             mint: parsedData.mint,
             balance: parsedData.tokenAmount.amount,
             expectedOwner: wallet.publicKey.toString(),
-            expectedMint: tokenMintOffered.toString()
+            expectedMint: tokenMintRequested.toString() // Should be wrapped SOL
           });
           
           // Verify constraints for requested account
@@ -881,11 +867,19 @@ export const useContract = () => {
             throw new Error(`REQUESTED account owner mismatch: ${parsedData.owner} vs ${wallet.publicKey.toString()}`);
           }
           
-          if (parsedData.mint !== tokenMintOffered.toString()) {
-            throw new Error(`REQUESTED account mint mismatch: ${parsedData.mint} vs ${tokenMintOffered.toString()}`);
+          if (parsedData.mint !== tokenMintRequested.toString()) {
+            throw new Error(`REQUESTED account mint mismatch: ${parsedData.mint} vs ${tokenMintRequested.toString()}`);
           }
           
-          console.log("✓ Taker REQUESTED account constraints verified");
+          // Verify sufficient balance for the trade
+          const requiredAmount = dealAccount.amountRequested.toString();
+          const actualBalance = parsedData.tokenAmount.amount;
+          
+          if (BigInt(actualBalance) < BigInt(requiredAmount)) {
+            throw new Error(`REQUESTED account insufficient balance. Need: ${requiredAmount}, Have: ${actualBalance}`);
+          }
+          
+          console.log("✓ Taker REQUESTED account constraints and balance verified");
         } else {
           console.log("⚠️ Taker REQUESTED account is not initialized or not a token account");
         }
@@ -894,8 +888,8 @@ export const useContract = () => {
         throw new Error(`Taker REQUESTED account verification failed: ${error.message}`);
       }
       
-      // Verify taker's offered token account (what taker provides)
-      console.log("Verifying taker's OFFERED token account (provides requested tokens)...");
+      // Verify taker's offered token account (what taker receives)
+      console.log("Verifying taker's OFFERED token account (receives tokens)...");
       try {
         const takerOfferedInfo = await connection.getParsedAccountInfo(takerTokenAccountOffered);
         if (takerOfferedInfo.value?.data && 'parsed' in takerOfferedInfo.value.data) {
@@ -907,7 +901,7 @@ export const useContract = () => {
             mint: parsedData.mint,
             balance: parsedData.tokenAmount.amount,
             expectedOwner: wallet.publicKey.toString(),
-            expectedMint: tokenMintRequested.toString()
+            expectedMint: tokenMintOffered.toString() // Should be memecoin
           });
           
           // Verify constraints for offered account
@@ -915,19 +909,11 @@ export const useContract = () => {
             throw new Error(`OFFERED account owner mismatch: ${parsedData.owner} vs ${wallet.publicKey.toString()}`);
           }
           
-          if (parsedData.mint !== tokenMintRequested.toString()) {
-            throw new Error(`OFFERED account mint mismatch: ${parsedData.mint} vs ${tokenMintRequested.toString()}`);
+          if (parsedData.mint !== tokenMintOffered.toString()) {
+            throw new Error(`OFFERED account mint mismatch: ${parsedData.mint} vs ${tokenMintOffered.toString()}`);
           }
           
-          // Verify sufficient balance for the trade
-          const requiredAmount = dealAccount.amountRequested.toString();
-          const actualBalance = parsedData.tokenAmount.amount;
-          
-          if (BigInt(actualBalance) < BigInt(requiredAmount)) {
-            throw new Error(`OFFERED account insufficient balance. Need: ${requiredAmount}, Have: ${actualBalance}`);
-          }
-          
-          console.log("✓ Taker OFFERED account constraints and balance verified");
+          console.log("✓ Taker OFFERED account constraints verified");
         } else {
           console.log("⚠️ Taker OFFERED account is not initialized or not a token account");
         }
