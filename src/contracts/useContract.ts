@@ -1,4 +1,3 @@
-
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
@@ -671,7 +670,7 @@ export const useContract = () => {
       });
 
       // Check if token accounts exist and create them if needed
-      console.log("Checking if token accounts exist...");
+      console.log("Checking if ALL required token accounts exist...");
       const preInstructions = [];
 
       // Check taker's offered token account (what they're providing)
@@ -734,13 +733,43 @@ export const useContract = () => {
         preInstructions.push(createRequestedATA);
       }
 
-      // Create token accounts if needed
+      // NEW: Check maker's token account for the requested token (what maker receives)
+      try {
+        const makerRequestedAccountInfo = await connection.getAccountInfo(makerTokenAccountRequested);
+        if (!makerRequestedAccountInfo) {
+          console.log("Creating maker's requested token account...");
+          const createMakerRequestedATA = createAssociatedTokenAccountInstruction(
+            wallet.publicKey, // taker pays for maker's account creation
+            makerTokenAccountRequested, // ata address
+            dealAccount.maker, // maker owns
+            tokenMintRequested, // mint (SOL/USDC/USDT that maker wants to receive)
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          );
+          preInstructions.push(createMakerRequestedATA);
+        } else {
+          console.log("Maker's requested token account exists");
+        }
+      } catch (error) {
+        console.log("Error checking maker's requested token account, will create:", error);
+        const createMakerRequestedATA = createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          makerTokenAccountRequested,
+          dealAccount.maker,
+          tokenMintRequested,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        preInstructions.push(createMakerRequestedATA);
+      }
+
+      // Create all needed token accounts
       if (preInstructions.length > 0) {
         console.log(`Creating ${preInstructions.length} token accounts...`);
         const setupTx = new Transaction().add(...preInstructions);
         const setupSig = await wallet.sendTransaction(setupTx, connection);
         await connection.confirmTransaction(setupSig, 'confirmed');
-        console.log("Token accounts created successfully:", setupSig);
+        console.log("All token accounts created successfully:", setupSig);
       }
 
       // Now proceed with accept deal transaction
