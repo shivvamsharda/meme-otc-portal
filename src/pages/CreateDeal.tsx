@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -6,12 +7,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useContract } from '@/contracts/useContract';
 import { toast } from '@/hooks/use-toast';
 import { useTransactionState } from '@/hooks/useTransactionState';
 import { generateUniqueDealId, validateDealParams } from '@/utils/dealUtils';
 import { ArrowLeft, Coins, Calendar, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+
+const ACCEPTED_TOKENS = [
+  {
+    symbol: "SOL",
+    name: "Solana",
+    mint: "native",
+    decimals: 9,
+    isNative: true
+  },
+  {
+    symbol: "USDC", 
+    name: "USD Coin",
+    mint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+    decimals: 6,
+    isNative: false
+  },
+  {
+    symbol: "USDT",
+    name: "Tether USD",
+    mint: "EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS", 
+    decimals: 6,
+    isNative: false
+  }
+];
 
 const CreateDeal = () => {
   const navigate = useNavigate();
@@ -21,7 +47,7 @@ const CreateDeal = () => {
   const [formData, setFormData] = useState({
     tokenMintOffered: '',
     amountOffered: '',
-    tokenMintRequested: '',
+    requestedTokenSymbol: '',
     amountRequested: '',
     expiryDays: '7',
   });
@@ -48,8 +74,20 @@ const CreateDeal = () => {
     setStep('validating');
 
     try {
+      // Find the selected token data
+      const requestedTokenData = ACCEPTED_TOKENS.find(t => t.symbol === formData.requestedTokenSymbol);
+      if (!requestedTokenData) {
+        setStep('error', "Please select a token you want in return");
+        return;
+      }
+
       // Validate form data
-      const validationError = validateDealParams(formData);
+      const validationData = {
+        ...formData,
+        tokenMintRequested: requestedTokenData.isNative ? "native" : requestedTokenData.mint
+      };
+      
+      const validationError = validateDealParams(validationData);
       if (validationError) {
         setStep('error', validationError);
         return;
@@ -105,12 +143,16 @@ const CreateDeal = () => {
         return;
       }
       
-      // Convert amounts to base units (9 decimal places for most SPL tokens)
-      const amountOfferedInBaseUnits = Math.floor(amountOffered * 1e9);
-      const amountRequestedInBaseUnits = Math.floor(amountRequested * 1e9);
+      // Convert amounts to base units (use token decimals for more accurate conversion)
+      const offeredDecimals = 9; // Default to 9 decimals for offered tokens (most SPL tokens)
+      const requestedDecimals = requestedTokenData.decimals;
+      
+      const amountOfferedInBaseUnits = Math.floor(amountOffered * Math.pow(10, offeredDecimals));
+      const amountRequestedInBaseUnits = Math.floor(amountRequested * Math.pow(10, requestedDecimals));
       
       console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
       console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
+      console.log("Selected token:", requestedTokenData.symbol, "mint:", requestedTokenData.mint);
 
       setStep('submitting_tx');
 
@@ -118,7 +160,7 @@ const CreateDeal = () => {
         dealId,
         tokenMintOffered: formData.tokenMintOffered,
         amountOffered: amountOfferedInBaseUnits,
-        tokenMintRequested: formData.tokenMintRequested,
+        tokenMintRequested: requestedTokenData.isNative ? "native" : requestedTokenData.mint,
         amountRequested: amountRequestedInBaseUnits,
         expiryTimestamp,
       });
@@ -146,6 +188,14 @@ const CreateDeal = () => {
     }
   };
 
+  const handleTokenSelect = (tokenSymbol: string) => {
+    setFormData(prev => ({ ...prev, requestedTokenSymbol: tokenSymbol }));
+    // Reset transaction state when form changes
+    if (txState.step !== 'idle') {
+      reset();
+    }
+  };
+
   const getStepMessage = () => {
     switch (txState.step) {
       case 'validating': return 'Validating deal parameters...';
@@ -165,6 +215,8 @@ const CreateDeal = () => {
       default: return <Loader2 className="w-4 h-4 animate-spin" />;
     }
   };
+
+  const selectedToken = ACCEPTED_TOKENS.find(t => t.symbol === formData.requestedTokenSymbol);
 
   return (
     <div className="min-h-screen bg-background">
@@ -244,6 +296,9 @@ const CreateDeal = () => {
                         disabled={txState.isLoading}
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Enter the mint address of the token you want to offer
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
@@ -259,29 +314,45 @@ const CreateDeal = () => {
                         required
                       />
                       <p className="text-xs text-muted-foreground">
-                        Enter any amount for OTC trading
+                        Enter the amount of tokens you want to offer
                       </p>
                     </div>
                   </div>
                 </div>
 
+                {/* Token Requested Section */}
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Coins className="w-4 h-4" />
-                    What You Want
+                    What You Want in Return
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="tokenMintRequested">Token Mint Address</Label>
-                      <Input
-                        id="tokenMintRequested"
-                        placeholder="Enter token mint address"
-                        value={formData.tokenMintRequested}
-                        onChange={(e) => handleInputChange('tokenMintRequested', e.target.value)}
+                      <Label htmlFor="requestedToken">Payment Token</Label>
+                      <Select 
+                        value={formData.requestedTokenSymbol} 
+                        onValueChange={handleTokenSelect}
                         disabled={txState.isLoading}
                         required
-                      />
+                      >
+                        <SelectTrigger id="requestedToken">
+                          <SelectValue placeholder="Select payment token" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ACCEPTED_TOKENS.map(token => (
+                            <SelectItem key={token.symbol} value={token.symbol}>
+                              <div className="flex items-center justify-between w-full">
+                                <span className="font-medium">{token.symbol}</span>
+                                <span className="text-sm text-muted-foreground ml-2">{token.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Choose from supported payment tokens
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
@@ -289,7 +360,7 @@ const CreateDeal = () => {
                       <Input
                         id="amountRequested"
                         type="number"
-                        step="0.000000001"
+                        step={selectedToken?.decimals === 6 ? "0.000001" : "0.000000001"}
                         placeholder="0.0"
                         value={formData.amountRequested}
                         onChange={(e) => handleInputChange('amountRequested', e.target.value)}
@@ -297,7 +368,7 @@ const CreateDeal = () => {
                         required
                       />
                       <p className="text-xs text-muted-foreground">
-                        Enter any amount for OTC trading
+                        {selectedToken ? `Amount in ${selectedToken.symbol}` : 'Select a token first'}
                       </p>
                     </div>
                   </div>
@@ -335,6 +406,14 @@ const CreateDeal = () => {
                   </p>
                 </div>
 
+                {/* Supported Tokens Info */}
+                <div className="p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Payment Tokens:</strong> We currently accept {ACCEPTED_TOKENS.map(t => t.symbol).join(', ')} as payment. 
+                    You can offer any token, but payments are limited to these stable and liquid tokens.
+                  </p>
+                </div>
+
                 <Button 
                   type="submit" 
                   disabled={txState.isLoading || !isAuthenticated}
@@ -365,3 +444,4 @@ const CreateDeal = () => {
 };
 
 export default CreateDeal;
+
