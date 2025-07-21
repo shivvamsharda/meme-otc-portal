@@ -673,103 +673,70 @@ export const useContract = () => {
       console.log("Checking if ALL required token accounts exist...");
       const preInstructions = [];
 
-      // Check taker's offered token account (what they're providing)
-      try {
-        const offeredAccountInfo = await connection.getAccountInfo(takerTokenAccountOffered);
-        if (!offeredAccountInfo) {
-          console.log("Creating taker's offered token account...");
-          const createOfferedATA = createAssociatedTokenAccountInstruction(
-            wallet.publicKey, // payer
-            takerTokenAccountOffered, // ata address
-            wallet.publicKey, // owner
-            tokenMintRequested, // mint
-            TOKEN_PROGRAM_ID,
-            ASSOCIATED_TOKEN_PROGRAM_ID
-          );
-          preInstructions.push(createOfferedATA);
-        } else {
-          console.log("Taker's offered token account exists");
-        }
-      } catch (error) {
-        console.log("Error checking offered token account, will create:", error);
+      // Check taker's offered token account (what they're providing) - FIXED MINT
+      const offeredAccountInfo = await connection.getAccountInfo(takerTokenAccountOffered);
+      if (!offeredAccountInfo) {
+        console.log("Creating taker's offered token account...");
         const createOfferedATA = createAssociatedTokenAccountInstruction(
-          wallet.publicKey,
-          takerTokenAccountOffered,
-          wallet.publicKey,
-          tokenMintRequested,
+          wallet.publicKey, // payer
+          takerTokenAccountOffered, // ata address
+          wallet.publicKey, // owner
+          tokenMintRequested, // FIXED: mint that taker is providing (requested token)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
         preInstructions.push(createOfferedATA);
+      } else {
+        console.log("Taker's offered token account exists");
       }
 
-      // Check taker's requested token account (what they're receiving)
-      try {
-        const requestedAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
-        if (!requestedAccountInfo) {
-          console.log("Creating taker's requested token account...");
-          const createRequestedATA = createAssociatedTokenAccountInstruction(
-            wallet.publicKey, // payer
-            takerTokenAccountRequested, // ata address
-            wallet.publicKey, // owner
-            tokenMintOffered, // mint
-            TOKEN_PROGRAM_ID,
-            ASSOCIATED_TOKEN_PROGRAM_ID
-          );
-          preInstructions.push(createRequestedATA);
-        } else {
-          console.log("Taker's requested token account exists");
-        }
-      } catch (error) {
-        console.log("Error checking requested token account, will create:", error);
+      // Check taker's requested token account (what they're receiving) - FIXED MINT
+      const requestedAccountInfo = await connection.getAccountInfo(takerTokenAccountRequested);
+      if (!requestedAccountInfo) {
+        console.log("Creating taker's requested token account...");
         const createRequestedATA = createAssociatedTokenAccountInstruction(
-          wallet.publicKey,
-          takerTokenAccountRequested,
-          wallet.publicKey,
-          tokenMintOffered,
+          wallet.publicKey, // payer
+          takerTokenAccountRequested, // ata address
+          wallet.publicKey, // owner
+          tokenMintOffered, // FIXED: mint that taker is receiving (offered token)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
         preInstructions.push(createRequestedATA);
+      } else {
+        console.log("Taker's requested token account exists");
       }
 
-      // NEW: Check maker's token account for the requested token (what maker receives)
-      try {
-        const makerRequestedAccountInfo = await connection.getAccountInfo(makerTokenAccountRequested);
-        if (!makerRequestedAccountInfo) {
-          console.log("Creating maker's requested token account...");
-          const createMakerRequestedATA = createAssociatedTokenAccountInstruction(
-            wallet.publicKey, // taker pays for maker's account creation
-            makerTokenAccountRequested, // ata address
-            dealAccount.maker, // maker owns
-            tokenMintRequested, // mint (SOL/USDC/USDT that maker wants to receive)
-            TOKEN_PROGRAM_ID,
-            ASSOCIATED_TOKEN_PROGRAM_ID
-          );
-          preInstructions.push(createMakerRequestedATA);
-        } else {
-          console.log("Maker's requested token account exists");
-        }
-      } catch (error) {
-        console.log("Error checking maker's requested token account, will create:", error);
+      // Check maker's token account for the requested token (what maker receives)
+      const makerRequestedAccountInfo = await connection.getAccountInfo(makerTokenAccountRequested);
+      if (!makerRequestedAccountInfo) {
+        console.log("Creating MAKER'S requested token account...");
         const createMakerRequestedATA = createAssociatedTokenAccountInstruction(
-          wallet.publicKey,
-          makerTokenAccountRequested,
-          dealAccount.maker,
-          tokenMintRequested,
+          wallet.publicKey, // taker pays for maker's account creation
+          makerTokenAccountRequested, // ata address
+          dealAccount.maker, // maker owns
+          tokenMintRequested, // mint (SOL/USDC/USDT that maker wants to receive)
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
         preInstructions.push(createMakerRequestedATA);
+      } else {
+        console.log("Maker's requested token account already exists");
       }
 
       // Create all needed token accounts
       if (preInstructions.length > 0) {
-        console.log(`Creating ${preInstructions.length} token accounts...`);
+        console.log(`Creating ${preInstructions.length} token accounts (including maker's if needed)...`);
         const setupTx = new Transaction().add(...preInstructions);
         const setupSig = await wallet.sendTransaction(setupTx, connection);
         await connection.confirmTransaction(setupSig, 'confirmed');
-        console.log("All token accounts created successfully:", setupSig);
+        console.log("ALL token accounts created successfully:", setupSig);
+        
+        // Add delay to ensure accounts are properly created
+        console.log("Waiting 2 seconds for account creation to settle...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.log("All required token accounts already exist");
       }
 
       // Now proceed with accept deal transaction
