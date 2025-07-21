@@ -831,7 +831,112 @@ export const useContract = () => {
         
         // Wait a moment for the wrap to settle
         await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // VERIFY WRAPPED SOL BALANCE AFTER WRAPPING
+        console.log("Verifying wrapped SOL balance after wrapping...");
+        
+        try {
+          const tokenAccountBalance = await connection.getTokenAccountBalance(takerTokenAccountOffered);
+          console.log("Wrapped SOL balance:", tokenAccountBalance.value.uiAmount, "SOL");
+          console.log("Wrapped SOL balance (raw):", tokenAccountBalance.value.amount);
+          
+          const requiredAmount = dealAccount.amountRequested.toString();
+          const actualBalance = tokenAccountBalance.value.amount;
+          
+          console.log("Required amount:", requiredAmount);
+          console.log("Actual balance:", actualBalance);
+          
+          if (BigInt(actualBalance) < BigInt(requiredAmount)) {
+            throw new Error(`Insufficient wrapped SOL balance. Need: ${requiredAmount}, Have: ${actualBalance}`);
+          }
+          
+          console.log("✓ Wrapped SOL balance verification passed");
+        } catch (balanceError) {
+          console.error("Error checking wrapped SOL balance:", balanceError);
+          throw new Error(`Failed to verify wrapped SOL balance: ${balanceError.message}`);
+        }
       }
+
+      // COMPREHENSIVE CONSTRAINT VERIFICATION FOR BOTH ACCOUNTS
+      console.log("=== COMPREHENSIVE CONSTRAINT VERIFICATION ===");
+      
+      // Verify taker's requested token account (what taker receives)
+      console.log("Verifying taker's REQUESTED token account (receives offered tokens)...");
+      try {
+        const takerRequestedInfo = await connection.getParsedAccountInfo(takerTokenAccountRequested);
+        if (takerRequestedInfo.value?.data && 'parsed' in takerRequestedInfo.value.data) {
+          const parsedData = takerRequestedInfo.value.data.parsed.info;
+          
+          console.log("Taker REQUESTED account details:", {
+            address: takerTokenAccountRequested.toString(),
+            owner: parsedData.owner,
+            mint: parsedData.mint,
+            balance: parsedData.tokenAmount.amount,
+            expectedOwner: wallet.publicKey.toString(),
+            expectedMint: tokenMintOffered.toString()
+          });
+          
+          // Verify constraints for requested account
+          if (parsedData.owner !== wallet.publicKey.toString()) {
+            throw new Error(`REQUESTED account owner mismatch: ${parsedData.owner} vs ${wallet.publicKey.toString()}`);
+          }
+          
+          if (parsedData.mint !== tokenMintOffered.toString()) {
+            throw new Error(`REQUESTED account mint mismatch: ${parsedData.mint} vs ${tokenMintOffered.toString()}`);
+          }
+          
+          console.log("✓ Taker REQUESTED account constraints verified");
+        } else {
+          console.log("⚠️ Taker REQUESTED account is not initialized or not a token account");
+        }
+      } catch (error) {
+        console.error("Error verifying taker REQUESTED account:", error);
+        throw new Error(`Taker REQUESTED account verification failed: ${error.message}`);
+      }
+      
+      // Verify taker's offered token account (what taker provides)
+      console.log("Verifying taker's OFFERED token account (provides requested tokens)...");
+      try {
+        const takerOfferedInfo = await connection.getParsedAccountInfo(takerTokenAccountOffered);
+        if (takerOfferedInfo.value?.data && 'parsed' in takerOfferedInfo.value.data) {
+          const parsedData = takerOfferedInfo.value.data.parsed.info;
+          
+          console.log("Taker OFFERED account details:", {
+            address: takerTokenAccountOffered.toString(),
+            owner: parsedData.owner,
+            mint: parsedData.mint,
+            balance: parsedData.tokenAmount.amount,
+            expectedOwner: wallet.publicKey.toString(),
+            expectedMint: tokenMintRequested.toString()
+          });
+          
+          // Verify constraints for offered account
+          if (parsedData.owner !== wallet.publicKey.toString()) {
+            throw new Error(`OFFERED account owner mismatch: ${parsedData.owner} vs ${wallet.publicKey.toString()}`);
+          }
+          
+          if (parsedData.mint !== tokenMintRequested.toString()) {
+            throw new Error(`OFFERED account mint mismatch: ${parsedData.mint} vs ${tokenMintRequested.toString()}`);
+          }
+          
+          // Verify sufficient balance for the trade
+          const requiredAmount = dealAccount.amountRequested.toString();
+          const actualBalance = parsedData.tokenAmount.amount;
+          
+          if (BigInt(actualBalance) < BigInt(requiredAmount)) {
+            throw new Error(`OFFERED account insufficient balance. Need: ${requiredAmount}, Have: ${actualBalance}`);
+          }
+          
+          console.log("✓ Taker OFFERED account constraints and balance verified");
+        } else {
+          console.log("⚠️ Taker OFFERED account is not initialized or not a token account");
+        }
+      } catch (error) {
+        console.error("Error verifying taker OFFERED account:", error);
+        throw new Error(`Taker OFFERED account verification failed: ${error.message}`);
+      }
+      
+      console.log("=== ALL CONSTRAINT VERIFICATION COMPLETED ===");
 
       // Now proceed with accept deal transaction
       console.log("Executing accept deal with verified constraints...");
