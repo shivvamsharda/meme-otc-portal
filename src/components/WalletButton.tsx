@@ -4,12 +4,35 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { LogOut, Unplug } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export const WalletButton = () => {
   const wallet = useWallet()
   const { user, signOut } = useAuth()
+
+  const handleWalletDisconnect = async () => {
+    try {
+      await wallet.disconnect()
+      toast({
+        title: "Wallet Disconnected",
+        description: "Your wallet has been disconnected. You remain signed in.",
+      })
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error)
+      toast({
+        title: "Disconnect Failed",
+        description: "Failed to disconnect wallet. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleSolanaSignIn = async () => {
     if (!wallet.connected || !wallet.signMessage || !wallet.publicKey) {
@@ -42,17 +65,32 @@ export const WalletButton = () => {
     }
   }
 
-  // If user is authenticated, show sign out button
+  // If user is authenticated, show dropdown with wallet and auth options
   if (user) {
     return (
-      <Button
-        onClick={signOut}
-        variant="outline"
-        className="flex items-center gap-2"
-      >
-        <LogOut className="w-4 h-4" />
-        Sign Out
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Account
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {wallet.connected && (
+            <DropdownMenuItem onClick={handleWalletDisconnect}>
+              <Unplug className="w-4 h-4 mr-2" />
+              Disconnect Wallet
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={signOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
