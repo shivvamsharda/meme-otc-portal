@@ -10,7 +10,7 @@ const Hero = () => {
       {/* Floating Memecoin Avatars - All consistent size and style */}
       <div className="absolute inset-0 pointer-events-none">
         {/* BONK - Top left */}
-        <div className="absolute top-24 left-16 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm">
+        <div className="absolute top-24 left-16 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm">
           <img 
             src="/lovable-uploads/c20442fe-b06a-40f4-9fb4-fad85a5bf1cd.png" 
             alt="BONK" 
@@ -19,7 +19,7 @@ const Hero = () => {
         </div>
         
         {/* WIF/dogwifhat - Top right */}
-        <div className="absolute top-32 right-20 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white" style={{ animationDelay: '-1s' }}>
+        <div className="absolute top-32 right-20 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white" style={{ animationDelay: '-1s' }}>
           <img 
             src="/lovable-uploads/5158b8e4-ca6d-4434-aad7-7c33ccd68cbb.png" 
             alt="dogwifhat" 
@@ -28,7 +28,7 @@ const Hero = () => {
         </div>
         
         {/* PEPE - Bottom left */}
-        <div className="absolute bottom-40 left-12 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-3s' }}>
+        <div className="absolute bottom-40 left-12 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-3s' }}>
           <img 
             src="/lovable-uploads/5c1b6715-c4bd-462d-8f6e-fbfb61a8f071.png" 
             alt="PEPE" 
@@ -37,7 +37,7 @@ const Hero = () => {
         </div>
         
         {/* POPCAT - Bottom right */}
-        <div className="absolute bottom-32 right-16 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-2s' }}>
+        <div className="absolute bottom-32 right-16 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-2s' }}>
           <img 
             src="/lovable-uploads/147e08a4-6b9c-4e42-bcf1-0f36f73682d3.png" 
             alt="POPCAT" 
@@ -46,7 +46,7 @@ const Hero = () => {
         </div>
         
         {/* JUP (Jupiter) - Middle right */}
-        <div className="absolute top-1/2 right-12 w-16 h-16 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-4s' }}>
+        <div className="absolute top-1/2 right-12 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-4s' }}>
           <img 
             src="/lovable-uploads/c25e50ad-f670-47cb-9103-898ce9cb25f5.png" 
             alt="Jupiter" 
