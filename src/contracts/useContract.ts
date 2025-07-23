@@ -287,7 +287,7 @@ export const useContract = () => {
     }
   };
 
-  const createDeal = async (params: CreateDealParams) => {
+  const createDeal = async (params: CreateDealParams, setStep?: (step: string, error?: string, signature?: string) => void) => {
     if (!isAuthenticated || !wallet.publicKey) {
       throw new Error("Please connect your wallet first");
     }
@@ -394,28 +394,44 @@ export const useContract = () => {
       const connection = program.provider.connection;
       const makerTokenAccountInfo = await connection.getAccountInfo(makerTokenAccount);
       
-      const preInstructions = [];
       if (!makerTokenAccountInfo) {
         console.log("Creating ATA for offered token:", params.tokenMintOffered);
+        setStep?.('creating_accounts');
+        
+        // Create ATA in separate transaction
         const createATAInstruction = createAssociatedTokenAccountInstruction(
           wallet.publicKey, // payer
           makerTokenAccount, // ata
           wallet.publicKey, // owner
           new PublicKey(params.tokenMintOffered) // mint
         );
-        preInstructions.push(createATAInstruction);
+        
+        const ataTransaction = new Transaction().add(createATAInstruction);
+        const { blockhash: ataBlockhash, lastValidBlockHeight: ataLastValidBlockHeight } = 
+          await connection.getLatestBlockhash('confirmed');
+        ataTransaction.recentBlockhash = ataBlockhash;
+        ataTransaction.feePayer = wallet.publicKey;
+        
+        const ataSignature = await wallet.sendTransaction(ataTransaction, connection);
+        
+        // Wait for ATA creation confirmation
+        const ataConfirmation = await connection.confirmTransaction({
+          signature: ataSignature,
+          blockhash: ataBlockhash,
+          lastValidBlockHeight: ataLastValidBlockHeight
+        }, 'confirmed');
+        
+        if (ataConfirmation.value.err) {
+          throw new Error(`ATA creation failed: ${ataConfirmation.value.err}`);
+        }
+        
+        console.log("ATA created successfully:", ataSignature);
       }
 
-      // Build transaction with pre-instructions
-      const transaction = new Transaction();
-      
-      // Add ATA creation instructions if needed
-      if (preInstructions.length > 0) {
-        transaction.add(...preInstructions);
-      }
+      setStep?.('submitting_tx');
 
-      // Create the main deal instruction
-      const dealInstruction = await program.methods
+      // Create deal transaction separately
+      transactionSignature = await program.methods
         .createDeal(
           new BN(params.dealId),
           new PublicKey(params.tokenMintOffered),
@@ -436,29 +452,7 @@ export const useContract = () => {
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         } as any)
-        .instruction();
-
-      // Add the main instruction to the transaction
-      transaction.add(dealInstruction);
-
-      // Get fresh blockhash and send transaction
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = wallet.publicKey;
-
-      // Send and confirm transaction
-      transactionSignature = await wallet.sendTransaction(transaction, connection);
-      
-      // Wait for confirmation
-      const confirmation = await connection.confirmTransaction({
-        signature: transactionSignature,
-        blockhash,
-        lastValidBlockHeight
-      }, 'confirmed');
-
-      if (confirmation.value.err) {
-        throw new Error(`Transaction failed: ${confirmation.value.err}`);
-      }
+        .rpc();
 
       console.log("Step 1 SUCCESS: Blockchain transaction completed:", transactionSignature);
 
