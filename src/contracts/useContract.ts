@@ -390,8 +390,32 @@ export const useContract = () => {
         wallet.publicKey
       );
 
-      // Create deal transaction with proper BN handling for large numbers
-      transactionSignature = await program.methods
+      // Check if maker's token account exists, create if needed
+      const connection = program.provider.connection;
+      const makerTokenAccountInfo = await connection.getAccountInfo(makerTokenAccount);
+      
+      const preInstructions = [];
+      if (!makerTokenAccountInfo) {
+        console.log("Creating ATA for offered token:", params.tokenMintOffered);
+        const createATAInstruction = createAssociatedTokenAccountInstruction(
+          wallet.publicKey, // payer
+          makerTokenAccount, // ata
+          wallet.publicKey, // owner
+          new PublicKey(params.tokenMintOffered) // mint
+        );
+        preInstructions.push(createATAInstruction);
+      }
+
+      // Build transaction with pre-instructions
+      const transaction = new Transaction();
+      
+      // Add ATA creation instructions if needed
+      if (preInstructions.length > 0) {
+        transaction.add(...preInstructions);
+      }
+
+      // Create the main deal instruction
+      const dealInstruction = await program.methods
         .createDeal(
           new BN(params.dealId),
           new PublicKey(params.tokenMintOffered),
@@ -412,7 +436,29 @@ export const useContract = () => {
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         } as any)
-        .rpc();
+        .instruction();
+
+      // Add the main instruction to the transaction
+      transaction.add(dealInstruction);
+
+      // Get fresh blockhash and send transaction
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallet.publicKey;
+
+      // Send and confirm transaction
+      transactionSignature = await wallet.sendTransaction(transaction, connection);
+      
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction({
+        signature: transactionSignature,
+        blockhash,
+        lastValidBlockHeight
+      }, 'confirmed');
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      }
 
       console.log("Step 1 SUCCESS: Blockchain transaction completed:", transactionSignature);
 
