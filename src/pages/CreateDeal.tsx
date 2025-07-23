@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import Navbar from '@/components/Navbar';
 const CreateDeal = () => {
   const navigate = useNavigate();
   const { publicKey } = useWallet();
+  const { connection } = useConnection();
   const { createDeal, isAuthenticated } = useContract();
   const { state: txState, setStep, reset } = useTransactionState();
   const [formData, setFormData] = useState({
@@ -130,13 +132,28 @@ const CreateDeal = () => {
         return;
       }
       
+      // Get token mint info to determine correct decimals for offered token
+      let offeredTokenDecimals = 9; // Default fallback
+      try {
+        const tokenMintInfo = await connection.getAccountInfo(new PublicKey(formData.tokenMintOffered));
+        if (tokenMintInfo && tokenMintInfo.data.length >= 45) {
+          // Parse mint data to get decimals (bytes 44-45 contain decimals)
+          offeredTokenDecimals = tokenMintInfo.data[44];
+          console.log(`Offered token decimals: ${offeredTokenDecimals}`);
+        } else {
+          console.warn("Could not fetch token mint info, using default 9 decimals");
+        }
+      } catch (error) {
+        console.warn("Error fetching token mint info, using default 9 decimals:", error);
+      }
+      
       // Convert amounts to base units using appropriate decimals
-      // Assume 9 decimals for offered token (most SPL tokens use 9)
-      const amountOfferedInBaseUnits = Math.floor(amountOffered * Math.pow(10, 9));
+      const amountOfferedInBaseUnits = Math.floor(amountOffered * Math.pow(10, offeredTokenDecimals));
       // Use actual decimals for requested token
       const amountRequestedInBaseUnits = Math.floor(amountRequested * Math.pow(10, requestedTokenData.decimals));
       
       console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
+      console.log("Decimals - Offered token:", offeredTokenDecimals, "Requested token:", requestedTokenData.decimals);
       console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
       console.log("Requested token:", requestedTokenData.symbol, "with mint:", requestedTokenData.mint);
 
