@@ -34,7 +34,7 @@ const Hero = () => {
         {/* BONK - Top left */}
         <div 
           onClick={() => handleBubbleClick('bonk')}
-          className={getBubbleClasses('bonk', "absolute top-24 left-16 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
+          className={getBubbleClasses('bonk', "absolute top-24 left-16 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
         >
           <img 
             src="/lovable-uploads/c20442fe-b06a-40f4-9fb4-fad85a5bf1cd.png" 
@@ -46,8 +46,7 @@ const Hero = () => {
         {/* WIF/dogwifhat - Top right */}
         <div 
           onClick={() => handleBubbleClick('wif')}
-          className={getBubbleClasses('wif', "absolute top-32 right-20 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white")}
-          style={{ animationDelay: bouncingBubbles.has('wif') ? '0s' : '-1s' }}
+          className={getBubbleClasses('wif', "absolute top-32 right-20 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white")}
         >
           <img 
             src="/lovable-uploads/5158b8e4-ca6d-4434-aad7-7c33ccd68cbb.png" 
@@ -59,8 +58,7 @@ const Hero = () => {
         {/* PEPE - Bottom left */}
         <div 
           onClick={() => handleBubbleClick('pepe')}
-          className={getBubbleClasses('pepe', "absolute bottom-40 left-12 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
-          style={{ animationDelay: bouncingBubbles.has('pepe') ? '0s' : '-3s' }}
+          className={getBubbleClasses('pepe', "absolute bottom-40 left-12 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
         >
           <img 
             src="/lovable-uploads/5c1b6715-c4bd-462d-8f6e-fbfb61a8f071.png" 
@@ -72,8 +70,7 @@ const Hero = () => {
         {/* POPCAT - Bottom right */}
         <div 
           onClick={() => handleBubbleClick('popcat')}
-          className={getBubbleClasses('popcat', "absolute bottom-32 right-16 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
-          style={{ animationDelay: bouncingBubbles.has('popcat') ? '0s' : '-2s' }}
+          className={getBubbleClasses('popcat', "absolute bottom-32 right-16 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
         >
           <img 
             src="/lovable-uploads/147e08a4-6b9c-4e42-bcf1-0f36f73682d3.png" 
@@ -85,8 +82,7 @@ const Hero = () => {
         {/* JUP (Jupiter) - Middle right */}
         <div 
           onClick={() => handleBubbleClick('jup')}
-          className={getBubbleClasses('jup', "absolute top-1/2 right-12 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
-          style={{ animationDelay: bouncingBubbles.has('jup') ? '0s' : '-4s' }}
+          className={getBubbleClasses('jup', "absolute top-1/2 right-12 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
         >
           <img 
             src="/lovable-uploads/c25e50ad-f670-47cb-9103-898ce9cb25f5.png" 
