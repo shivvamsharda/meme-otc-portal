@@ -390,8 +390,18 @@ export const useContract = () => {
         wallet.publicKey
       );
 
-      // Check if maker's token account exists, create if needed
+      // Get token mint info to determine correct decimals
       const connection = program.provider.connection;
+      const tokenMintInfo = await connection.getAccountInfo(new PublicKey(params.tokenMintOffered));
+      if (!tokenMintInfo) {
+        throw new Error(`Token mint ${params.tokenMintOffered} not found`);
+      }
+      
+      // Parse mint data to get decimals (bytes 44-45 contain decimals)
+      const decimals = tokenMintInfo.data[44];
+      console.log(`Token decimals for offered token: ${decimals}`);
+
+      // Check if maker's token account exists, create if needed
       const makerTokenAccountInfo = await connection.getAccountInfo(makerTokenAccount);
       
       if (!makerTokenAccountInfo) {
@@ -426,6 +436,25 @@ export const useContract = () => {
         }
         
         console.log("ATA created successfully:", ataSignature);
+      }
+
+      // Validate token balance before proceeding
+      setStep?.('validating');
+      try {
+        const balance = await connection.getTokenAccountBalance(makerTokenAccount);
+        const balanceAmount = balance.value.uiAmount || 0;
+        const requiredAmount = params.amountOffered / Math.pow(10, decimals);
+        
+        console.log(`Token balance: ${balanceAmount}, Required: ${requiredAmount}`);
+        
+        if (balanceAmount < requiredAmount) {
+          throw new Error(`Insufficient token balance. You have ${balanceAmount} but need ${requiredAmount} tokens.`);
+        }
+      } catch (balanceError: any) {
+        if (balanceError.message.includes("could not find account")) {
+          throw new Error(`You don't have any balance of the offered token. Please ensure you have sufficient tokens in your wallet.`);
+        }
+        throw balanceError;
       }
 
       setStep?.('submitting_tx');
@@ -532,9 +561,21 @@ export const useContract = () => {
         // For real blockchain failures, don't create database entry at all
         errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         
-        // Handle specific program errors
+        // Handle specific program errors by checking transaction logs
         if (errorMessage.includes("custom program error: 0x1")) {
-          errorMessage = "Invalid expiry timestamp. Please check that your expiry time is valid and in the future.";
+          // Check if this is an insufficient funds error by examining transaction logs
+          const errorString = error.toString();
+          if (errorString.includes("insufficient funds") || 
+              errorString.includes("insufficient lamports") ||
+              errorString.includes("transfer amount exceeds balance")) {
+            errorMessage = "Insufficient token balance. Please ensure you have enough tokens in your wallet to create this deal.";
+          } else {
+            errorMessage = "Transaction failed with program error. This could be due to insufficient funds, invalid parameters, or network issues.";
+          }
+        } else if (errorMessage.includes("insufficient funds") || 
+                   errorMessage.includes("insufficient lamports") ||
+                   errorMessage.includes("transfer amount exceeds balance")) {
+          errorMessage = "Insufficient token balance. Please ensure you have enough tokens in your wallet to create this deal.";
         }
         
         console.error("Real blockchain transaction failure:", errorMessage);
