@@ -26,7 +26,7 @@ const Navbar = () => {
                 alt="MEMEOTC Logo" 
                 className="h-16 w-16"
               />
-              <span className="text-2xl font-bold" style={{ color: '#b36cfa' }}>
+              <span className="text-2xl font-bold" style={{ color: '#a37eef' }}>
                 MEMEOTC
               </span>
             </a>
