@@ -44,8 +44,7 @@ const Footer = () => {
               <span className="text-3xl font-bold gradient-text-meme">MEMEOTC</span>
             </div>
             <p className="text-muted-foreground leading-relaxed mb-6 max-w-md">
-              The most advanced OTC trading platform for Solana memecoins. 
-              Trade with zero slippage, maximum security, and instant settlements.
+              A peer-to-peer OTC desk for Solana memecoins. List tokens, set your price, and settle directly with buyers.
             </p>
             
             {/* Social Links */}
