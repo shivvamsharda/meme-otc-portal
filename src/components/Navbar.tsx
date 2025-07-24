@@ -20,8 +20,15 @@ const Navbar = () => {
           
           {/* Logo - refined */}
           <div className="flex items-center">
-            <a href="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-              MEMEOTC
+            <a href="/" className="flex items-center space-x-3">
+              <img 
+                src="https://ebmiuqrdzzdliupgcqsy.supabase.co/storage/v1/object/public/logos//memeotc_logo.png" 
+                alt="MEMEOTC Logo" 
+                className="h-8 w-8"
+              />
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+                MEMEOTC
+              </span>
             </a>
           </div>
 
