@@ -42,8 +42,8 @@ const Hero = () => {
       
 
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-6 md:px-8 lg:px-12 text-center overflow-visible">
-        <div className="mx-auto space-y-12 animate-fade-in-scale px-4 py-8">
+      <div className="relative z-10 container mx-auto px-6 text-center">
+        <div className="max-w-5xl mx-auto space-y-12 animate-fade-in-scale">
           
           {/* Live Badge */}
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-card/40 backdrop-blur-xl border border-primary/20 text-sm font-medium">
@@ -52,16 +52,16 @@ const Hero = () => {
           </div>
 
           {/* Main Headline - Matching reference typography */}
-          <div className="space-y-6 overflow-visible">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-inter-tight font-bold leading-[1.1] tracking-tight px-8 mx-auto overflow-visible">
+          <div className="space-y-4">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-inter-tight font-bold leading-[0.9] tracking-tight">
               The{' '}
-              <span className="bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent italic inline-block">
+              <span className="bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent">
                 OTC Platform
               </span>
               <br />
               powering the
               <br />
-              <span className="bg-gradient-to-r from-primary via-accent to-orange-400 bg-clip-text text-transparent italic inline-block">
+              <span className="bg-gradient-to-r from-primary via-accent to-orange-400 bg-clip-text text-transparent">
                 Solana memecoin
               </span>
               <br />
