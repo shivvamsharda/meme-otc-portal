@@ -71,7 +71,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				'color-1': 'hsl(var(--color-1))',
+				'color-2': 'hsl(var(--color-2))',
+				'color-3': 'hsl(var(--color-3))',
+				'color-4': 'hsl(var(--color-4))',
+				'color-5': 'hsl(var(--color-5))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -133,6 +138,14 @@ export default {
 						opacity: '1',
 						transform: 'scale(1)'
 					}
+				},
+				'rainbow': {
+					'0%': {
+						'background-position': '0%'
+					},
+					'100%': {
+						'background-position': '200%'
+					}
 				}
 			},
 			animation: {
@@ -141,7 +154,8 @@ export default {
 				'float': 'float 6s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'slide-in-up': 'slide-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-				'fade-in-scale': 'fade-in-scale 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+				'fade-in-scale': 'fade-in-scale 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+				'rainbow': 'rainbow var(--speed, 2s) infinite linear'
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
