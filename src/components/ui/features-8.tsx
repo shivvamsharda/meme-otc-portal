@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Upload, Shield, Zap } from 'lucide-react'
 
-const HowItWorks = () => {
+export function Features() {
   return (
     <section className="py-32 relative">
       <div className="container mx-auto px-6">
@@ -87,5 +87,3 @@ const HowItWorks = () => {
     </section>
   )
 }
-
-export default HowItWorks
