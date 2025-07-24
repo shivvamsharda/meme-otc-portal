@@ -1,55 +1,36 @@
-
 import { ArrowRight, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-const FloatingPaths = ({ position }: { position: number }) => {
-  const paths = Array.from({ length: 36 }, (_, i) => ({
+const FloatingPaths = ({
+  position
+}: {
+  position: number;
+}) => {
+  const paths = Array.from({
+    length: 36
+  }, (_, i) => ({
     id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
-      380 - i * 5 * position
-    } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
-      152 - i * 5 * position
-    } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
-      684 - i * 5 * position
-    } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    width: 0.5 + i * 0.03,
+    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+    width: 0.5 + i * 0.03
   }));
-
-  return (
-    <div className="absolute inset-0 pointer-events-none z-0">
-      <svg
-        className="w-full h-full text-white/30"
-        viewBox="0 0 696 316"
-        fill="none"
-      >
-        {paths.map((path) => (
-          <motion.path
-            key={path.id}
-            d={path.d}
-            stroke="currentColor"
-            strokeWidth={path.width * 2}
-            strokeOpacity={0.15 + path.id * 0.02}
-            initial={{ pathLength: 0.3, opacity: 0.6 }}
-            animate={{
-              pathLength: 1,
-              opacity: [0.3, 0.7, 0.3],
-              pathOffset: [0, 1, 0],
-            }}
-            transition={{
-              duration: 20 + Math.random() * 10,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
-            }}
-          />
-        ))}
+  return <div className="absolute inset-0 pointer-events-none z-0">
+      <svg className="w-full h-full text-white/30" viewBox="0 0 696 316" fill="none">
+        {paths.map(path => <motion.path key={path.id} d={path.d} stroke="currentColor" strokeWidth={path.width * 2} strokeOpacity={0.15 + path.id * 0.02} initial={{
+        pathLength: 0.3,
+        opacity: 0.6
+      }} animate={{
+        pathLength: 1,
+        opacity: [0.3, 0.7, 0.3],
+        pathOffset: [0, 1, 0]
+      }} transition={{
+        duration: 20 + Math.random() * 10,
+        repeat: Number.POSITIVE_INFINITY,
+        ease: "linear"
+      }} />)}
       </svg>
-    </div>
-  );
+    </div>;
 };
-
 const Hero = () => {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* Clean dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
       
@@ -110,30 +91,9 @@ const Hero = () => {
           </div>
 
           {/* Stats - matching reference layout */}
-          <div className="grid grid-cols-3 gap-8 pt-20 max-w-2xl mx-auto">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-                $2.4M+
-              </div>
-              <div className="text-sm text-muted-foreground font-medium">Volume Traded</div>
-            </div>
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold bg-gradient-to-r from-accent to-orange-400 bg-clip-text text-transparent">
-                420+
-              </div>
-              <div className="text-sm text-muted-foreground font-medium">Active Traders</div>
-            </div>
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-primary bg-clip-text text-transparent">
-                150+
-              </div>
-              <div className="text-sm text-muted-foreground font-medium">Memecoins Listed</div>
-            </div>
-          </div>
+          
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
