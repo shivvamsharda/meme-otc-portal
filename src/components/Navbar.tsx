@@ -20,7 +20,7 @@ const Navbar = () => {
           
           {/* Logo - refined */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center space-x-3">
+            <a href="/" className="flex items-center space-x-2">
               <img 
                 src="https://ebmiuqrdzzdliupgcqsy.supabase.co/storage/v1/object/public/logos//memeotc_logo%20(1).png" 
                 alt="MEMEOTC Logo" 
