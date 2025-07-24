@@ -1,16 +1,41 @@
 
+import { useState } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
 
 const Hero = () => {
+  const [bouncingBubbles, setBouncingBubbles] = useState<Set<string>>(new Set());
+
+  const handleBubbleClick = (bubbleId: string) => {
+    if (bouncingBubbles.has(bubbleId)) return; // Prevent rapid clicking
+    
+    setBouncingBubbles(prev => new Set([...prev, bubbleId]));
+    
+    // Return to original position after 3 seconds
+    setTimeout(() => {
+      setBouncingBubbles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(bubbleId);
+        return newSet;
+      });
+    }, 3000);
+  };
+
+  const getBubbleClasses = (bubbleId: string, baseClasses: string) => {
+    const isBouncing = bouncingBubbles.has(bubbleId);
+    return `${baseClasses} ${isBouncing ? 'animate-[bounce-around_3s_ease-in-out]' : ''} cursor-pointer hover:scale-110 hover:shadow-xl transition-all duration-200 pointer-events-auto`;
+  };
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* Clean dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
       
-      {/* Floating Memecoin Avatars - All consistent size and style */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Interactive Floating Memecoin Avatars */}
+      <div className="absolute inset-0">
         {/* BONK - Top left */}
-        <div className="absolute top-24 left-16 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm">
+        <div 
+          onClick={() => handleBubbleClick('bonk')}
+          className={getBubbleClasses('bonk', "absolute top-24 left-16 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
+        >
           <img 
             src="/lovable-uploads/c20442fe-b06a-40f4-9fb4-fad85a5bf1cd.png" 
             alt="BONK" 
@@ -19,7 +44,10 @@ const Hero = () => {
         </div>
         
         {/* WIF/dogwifhat - Top right */}
-        <div className="absolute top-32 right-20 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white" style={{ animationDelay: '-1s' }}>
+        <div 
+          onClick={() => handleBubbleClick('wif')}
+          className={getBubbleClasses('wif', "absolute top-32 right-20 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm bg-white")}
+        >
           <img 
             src="/lovable-uploads/5158b8e4-ca6d-4434-aad7-7c33ccd68cbb.png" 
             alt="dogwifhat" 
@@ -28,7 +56,10 @@ const Hero = () => {
         </div>
         
         {/* PEPE - Bottom left */}
-        <div className="absolute bottom-40 left-12 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-3s' }}>
+        <div 
+          onClick={() => handleBubbleClick('pepe')}
+          className={getBubbleClasses('pepe', "absolute bottom-40 left-12 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
+        >
           <img 
             src="/lovable-uploads/5c1b6715-c4bd-462d-8f6e-fbfb61a8f071.png" 
             alt="PEPE" 
@@ -37,7 +68,10 @@ const Hero = () => {
         </div>
         
         {/* POPCAT - Bottom right */}
-        <div className="absolute bottom-32 right-16 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-2s' }}>
+        <div 
+          onClick={() => handleBubbleClick('popcat')}
+          className={getBubbleClasses('popcat', "absolute bottom-32 right-16 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
+        >
           <img 
             src="/lovable-uploads/147e08a4-6b9c-4e42-bcf1-0f36f73682d3.png" 
             alt="POPCAT" 
@@ -46,7 +80,10 @@ const Hero = () => {
         </div>
         
         {/* JUP (Jupiter) - Middle right */}
-        <div className="absolute top-1/2 right-12 w-24 h-24 rounded-full animate-float shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm" style={{ animationDelay: '-4s' }}>
+        <div 
+          onClick={() => handleBubbleClick('jup')}
+          className={getBubbleClasses('jup', "absolute top-1/2 right-12 w-24 h-24 rounded-full shadow-lg overflow-hidden border border-white/10 backdrop-blur-sm")}
+        >
           <img 
             src="/lovable-uploads/c25e50ad-f670-47cb-9103-898ce9cb25f5.png" 
             alt="Jupiter" 
