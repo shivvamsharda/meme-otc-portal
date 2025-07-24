@@ -33,7 +33,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Navigation - cleaner spacing */}
-          <div className="hidden md:flex items-center space-x-10">
+          <div className="hidden lg:flex items-center space-x-8">
             {navItems.map((item) => (
               <a
                 key={item.name}
@@ -46,14 +46,14 @@ const Navbar = () => {
           </div>
 
           {/* Desktop CTA - replaced with WalletButton */}
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <WalletButton />
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -61,7 +61,7 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-6 border-t border-border/30">
+          <div className="lg:hidden py-6 border-t border-border/30">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <a
