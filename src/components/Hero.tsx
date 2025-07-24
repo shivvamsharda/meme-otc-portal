@@ -53,7 +53,7 @@ const Hero = () => {
 
           {/* Main Headline - Matching reference typography */}
           <div className="space-y-6 overflow-visible">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-inter-tight font-bold leading-[1.1] tracking-tight px-2 overflow-visible">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-inter-tight font-bold leading-[1.1] tracking-tight px-8 mx-auto overflow-visible">
               The{' '}
               <span className="bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent italic inline-block">
                 OTC Platform
