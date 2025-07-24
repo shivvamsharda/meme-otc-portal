@@ -55,13 +55,13 @@ const Hero = () => {
           <div className="space-y-4">
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-inter-tight font-bold leading-[0.9] tracking-tight">
               The{' '}
-              <span className="bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent italic">
                 OTC Platform
               </span>
               <br />
               powering the
               <br />
-              <span className="bg-gradient-to-r from-primary via-accent to-orange-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-accent to-orange-400 bg-clip-text text-transparent italic">
                 Solana memecoin
               </span>
               <br />
