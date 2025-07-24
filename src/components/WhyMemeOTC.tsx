@@ -1,29 +1,29 @@
-import { Shield, Zap, Target, Users } from 'lucide-react';
+import { Shield, Eye, Coins, Scale } from 'lucide-react';
 
 const WhyMemeOTC = () => {
   const features = [
     {
       icon: Shield,
-      title: "No Front-running",
-      description: "Private peer-to-peer trades mean MEV bots can't sandwich your orders.",
+      title: "Escrow-Backed Trust",
+      description: "Every deal is protected by a secure smart contract. Tokens and SOL are only exchanged when both sides commit.",
       color: "primary"
     },
     {
-      icon: Zap,
-      title: "No DEX Fees",
-      description: "Skip the 0.3% fees and slippage. Pay only what you agree to.",
+      icon: Eye,
+      title: "Private Peer-to-Peer Listings",
+      description: "No public order books. No frontrunning. Just direct negotiations between holders and buyers.",
       color: "accent"
     },
     {
-      icon: Target,
-      title: "Memecoin-only Focus",
-      description: "Built specifically for degens trading the hottest Solana memecoins.",
+      icon: Coins,
+      title: "Memecoin-Centric Infrastructure",
+      description: "Purpose-built for the memecoin meta. Any SPL token. Any deal size. No gatekeeping.",
       color: "meme"
     },
     {
-      icon: Users,
-      title: "Direct P2P Payment",
-      description: "Instant settlement between wallets. No intermediaries or delays.",
+      icon: Scale,
+      title: "Fully Controlled Terms",
+      description: "Set your price, your quantity, and your conditions. No slippage, no bots, no automated match engines.",
       color: "secondary"
     }
   ];
@@ -56,10 +56,10 @@ const WhyMemeOTC = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Why <span className="gradient-text-meme">Degens</span> Use MemeOTC
+            Why Serious <span className="gradient-text-meme">Memecoin Holders</span> Use MemeOTC
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            The most advanced OTC trading experience designed for serious memecoin traders.
+            The go-to OTC desk for private, direct Solana memecoin deals — no noise, no middlemen, just clean peer-to-peer execution.
           </p>
         </div>
 
