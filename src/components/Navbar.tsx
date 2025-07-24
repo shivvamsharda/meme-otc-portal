@@ -24,7 +24,7 @@ const Navbar = () => {
               <img 
                 src="https://ebmiuqrdzzdliupgcqsy.supabase.co/storage/v1/object/public/logos//memeotc_logo.png" 
                 alt="MEMEOTC Logo" 
-                className="h-8 w-8"
+                className="h-16 w-16"
               />
               <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
                 MEMEOTC
