@@ -26,7 +26,7 @@ const Navbar = () => {
                 alt="MEMEOTC Logo" 
                 className="h-16 w-16"
               />
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold text-[hsl(var(--brand-text))]">
                 MEMEOTC
               </span>
             </a>
