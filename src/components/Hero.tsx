@@ -1,5 +1,4 @@
 import { ArrowRight, Play } from 'lucide-react';
-import { RainbowButton } from '@/components/ui/rainbow-button';
 import { motion } from 'framer-motion';
 const FloatingPaths = ({
   position
@@ -80,10 +79,10 @@ const Hero = () => {
 
           {/* CTA Buttons - styled like reference */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <RainbowButton className="group relative px-10 py-4 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3">
+            <button className="group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3">
               <span>Start Trading</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
-            </RainbowButton>
+            </button>
             
             <button className="group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3">
               <Play className="w-5 h-5" />
