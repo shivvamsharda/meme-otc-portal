@@ -43,7 +43,7 @@ const Hero = () => {
 
       {/* Main Content */}
       <div className="relative z-10 container mx-auto px-6 text-center">
-        <div className="max-w-5xl mx-auto space-y-12 animate-fade-in-scale">
+        <div className="max-w-6xl mx-auto space-y-12 animate-fade-in-scale px-4">
           
           {/* Live Badge */}
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-card/40 backdrop-blur-xl border border-primary/20 text-sm font-medium">
