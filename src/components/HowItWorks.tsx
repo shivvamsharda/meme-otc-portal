@@ -4,20 +4,20 @@ const HowItWorks = () => {
   const steps = [
     {
       icon: Upload,
-      title: "List Your Coin",
-      description: "Upload token details, set your amount and SOL price. Simple as that.",
+      title: "Create Your Listing",
+      description: "Specify your SPL token, amount, and asking price in SOL. Your offer is now live for OTC buyers.",
       step: "01"
     },
     {
       icon: Shield,
-      title: "Secure Escrow",
-      description: "Funds held safely in smart contract until buyer accepts the deal.",
+      title: "Escrow Protection",
+      description: "Once a buyer accepts, funds are locked in a smart contract. Neither party can rug — guaranteed.",
       step: "02"
     },
     {
       icon: Zap,
-      title: "Instant Deal",
-      description: "SOL goes to lister, tokens to buyer. Lightning fast settlements.",
+      title: "Settle Instantly",
+      description: "SOL is released to the seller. Tokens are released to the buyer. Private, peer-to-peer. No middlemen.",
       step: "03"
     }
   ];
@@ -32,7 +32,7 @@ const HowItWorks = () => {
             How <span className="gradient-text-primary">MemeOTC</span> Works
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Three simple steps to trade any Solana memecoin with zero slippage and maximum security.
+            Three simple steps to privately exchange any Solana memecoin with zero slippage, no front-running, and full escrow protection.
           </p>
         </div>
 
@@ -80,7 +80,7 @@ const HowItWorks = () => {
         {/* Bottom CTA */}
         <div className="text-center mt-16 animate-on-scroll">
           <button className="btn-gradient px-8 py-4 rounded-2xl font-semibold text-lg">
-            Start Your First Trade
+            Create Your First Listing
           </button>
         </div>
       </div>
