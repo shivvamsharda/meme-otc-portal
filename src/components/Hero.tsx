@@ -48,7 +48,7 @@ const Hero = () => {
           {/* Live Badge */}
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-card/40 backdrop-blur-xl border border-primary/20 text-sm font-medium">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-muted-foreground">Now Live on Solana</span>
+            <span className="text-muted-foreground">Now Live on Solana Devnet</span>
           </div>
 
           {/* Main Headline - Matching reference typography */}
