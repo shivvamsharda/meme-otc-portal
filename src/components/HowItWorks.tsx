@@ -53,11 +53,9 @@ const HowItWorks = () => {
             {/* Settle Instantly Card */}
             <Card className="relative col-span-full overflow-hidden sm:col-span-3 lg:col-span-2">
               <CardContent className="pt-6">
-                <div className="pt-6 lg:px-6">
-                  <div className="relative mx-auto flex aspect-square size-32 rounded-full border before:absolute before:-inset-2 before:rounded-full before:border dark:border-white/10 dark:before:border-white/5">
-                    <div className="w-16 h-16 mx-auto my-auto rounded-2xl bg-gradient-primary p-4 shadow-glow-primary">
-                      <Zap className="w-full h-full text-white" />
-                    </div>
+                <div className="relative mx-auto flex aspect-square size-32 rounded-full border before:absolute before:-inset-2 before:rounded-full before:border dark:border-white/10 dark:before:border-white/5">
+                  <div className="w-16 h-16 mx-auto my-auto rounded-2xl bg-gradient-primary p-4 shadow-glow-primary">
+                    <Zap className="w-full h-full text-white" />
                   </div>
                 </div>
                 <div className="relative z-10 mt-6 space-y-2 text-center">
