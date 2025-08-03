@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useConnection } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { toast } from '@/hooks/use-toast';
 const BrowseDeals = () => {
   const navigate = useNavigate();
   const { connection } = useConnection();
+  const { publicKey } = useWallet();
   const { getDeals, acceptDeal, isAuthenticated } = useContract();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,6 +140,24 @@ const BrowseDeals = () => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
+  // Helper functions for deal visibility
+  const isDealExpired = (expiryTimestamp: number): boolean => {
+    const now = Math.floor(Date.now() / 1000);
+    return expiryTimestamp <= now;
+  };
+
+  const isDealOwner = (deal: Deal, userPublicKey: PublicKey | null): boolean => {
+    return userPublicKey ? deal.maker.equals(userPublicKey) : false;
+  };
+
+  // Filter deals to hide expired deals from non-owners
+  const visibleDeals = deals.filter(deal => {
+    if (!isDealExpired(deal.expiryTimestamp)) {
+      return true; // Show all non-expired deals
+    }
+    return isDealOwner(deal, publicKey); // Only show expired deals to owners
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -183,7 +202,7 @@ const BrowseDeals = () => {
           </div>
         </div>
 
-        {deals.length === 0 ? (
+        {visibleDeals.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Coins className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -198,7 +217,7 @@ const BrowseDeals = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {deals.map((deal) => (
+            {visibleDeals.map((deal) => (
               <Card key={deal.dealId} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">

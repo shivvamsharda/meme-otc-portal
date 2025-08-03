@@ -107,6 +107,24 @@ const DealDetails = () => {
     return deal && publicKey && deal.maker.equals(publicKey) && 'Open' in deal.status;
   };
 
+  // Helper functions for deal visibility
+  const isDealExpired = (expiryTimestamp: number): boolean => {
+    const now = Math.floor(Date.now() / 1000);
+    return expiryTimestamp <= now;
+  };
+
+  const isDealOwner = (deal: Deal, userPublicKey: typeof publicKey): boolean => {
+    return userPublicKey ? deal.maker.equals(userPublicKey) : false;
+  };
+
+  // Check if current user can view this expired deal
+  const canViewExpiredDeal = (deal: Deal): boolean => {
+    if (!isDealExpired(deal.expiryTimestamp)) {
+      return true; // Non-expired deals are visible to everyone
+    }
+    return isDealOwner(deal, publicKey); // Only owners can see expired deals
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -133,6 +151,28 @@ const DealDetails = () => {
               </p>
               <Button onClick={() => navigate('/deals')}>
                 Browse All Deals
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Hide expired deals from non-owners
+  if (!canViewExpiredDeal(deal)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-6 pt-24 pb-12">
+          <Card className="text-center py-12">
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-2">Deal Not Available</h3>
+              <p className="text-muted-foreground mb-4">
+                This deal has expired and is only visible to its creator.
+              </p>
+              <Button onClick={() => navigate('/deals')}>
+                Browse Available Deals
               </Button>
             </CardContent>
           </Card>
