@@ -9,6 +9,32 @@ import { toast } from "@/hooks/use-toast";
 import type { CreateListingParams } from "@/contracts/types";
 import { mapListingToDeal, type Deal } from "@/contracts/types";
 
+// Patch IDL at runtime to ensure accounts have types (prevents Anchor AccountClient crash)
+type AnyIdl = Idl & { accounts?: any[]; types?: any[] };
+function normalizeIdl(i: AnyIdl): AnyIdl {
+  try {
+    if (!i) return i;
+    const cloned = JSON.parse(JSON.stringify(i));
+    if (Array.isArray(cloned.accounts)) {
+      const typesByName: Record<string, any> = {};
+      if (Array.isArray(cloned.types)) {
+        for (const t of cloned.types) {
+          if (t?.name && t?.type) typesByName[t.name] = t.type;
+        }
+      }
+      cloned.accounts = cloned.accounts.map((acc: any) => {
+        if (!acc?.type && acc?.name && typesByName[acc.name]) {
+          return { ...acc, type: typesByName[acc.name] };
+        }
+        return acc;
+      });
+    }
+    return cloned;
+  } catch {
+    return i;
+  }
+}
+
 // Helper to build an Anchor provider from wallet adapter
 function getProvider(connection: Connection, walletAdapter: ReturnType<typeof useWallet>) {
   const { publicKey, signAllTransactions, signTransaction } = walletAdapter;
@@ -40,14 +66,15 @@ export const useContract = () => {
   const program = useMemo(() => {
     if (!publicKey || !signAllTransactions || !signTransaction) return null;
     const provider = getProvider(connection, { publicKey, signAllTransactions, signTransaction } as any);
-    return new (Program as any)(idl as any, MEMEOTC_CONFIG.programId, provider) as any;
+    const patchedIdl = normalizeIdl(idl as any);
+    return new (Program as any)(patchedIdl as any, MEMEOTC_CONFIG.programId, provider) as any;
   }, [connection, publicKey, signAllTransactions, signTransaction]);
 
   const isAuthenticated = !!publicKey && connected;
 
   // Fetch all active listings
   const getDeals = useCallback(async (): Promise<Deal[]> => {
-    if (!program) return [];
+    if (!program || !(program as any)?.account?.listing) return [];
     const listings = await program.account.listing.all();
     return listings
       .map((acc: any) => mapListingToDeal(acc.publicKey, acc.account as any))
@@ -56,7 +83,7 @@ export const useContract = () => {
 
   // Fetch listings belonging to current user
   const getMyDeals = useCallback(async (): Promise<Deal[]> => {
-    if (!program || !publicKey) return [];
+    if (!program || !publicKey || !(program as any)?.account?.listing) return [];
     const listings = await program.account.listing.all();
     return listings
       .map((acc) => mapListingToDeal(acc.publicKey, acc.account as any))
