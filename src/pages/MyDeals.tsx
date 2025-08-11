@@ -10,6 +10,7 @@ import { Deal } from '@/contracts/types';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Coins, Clock, RefreshCw, TrendingUp, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
 
 const MyDeals = () => {
   const navigate = useNavigate();
@@ -36,6 +37,9 @@ const MyDeals = () => {
   useEffect(() => {
     loadMyDeals();
   }, [isAuthenticated]);
+
+  // Realtime updates: refresh whenever deals table changes
+  useRealtimeDeals(loadMyDeals);
 
   const handleCancelDeal = async (dealId: string) => {
     setCancellingDeal(dealId);

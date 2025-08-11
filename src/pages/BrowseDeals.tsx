@@ -13,6 +13,7 @@ import Navbar from '@/components/Navbar';
 import { useTransactionState } from '@/hooks/useTransactionState';
 import { toast } from '@/hooks/use-toast';
 import { useDatabase } from '@/hooks/useDatabase';
+import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
 
 const BrowseDeals = () => {
   const navigate = useNavigate();
@@ -84,6 +85,9 @@ const BrowseDeals = () => {
   useEffect(() => {
     loadDeals();
   }, []);
+
+  // Realtime updates: refresh whenever deals table changes
+  useRealtimeDeals(loadDeals);
 
   const handleAcceptDeal = async (dealId: string) => {
     if (!isAuthenticated) {
@@ -382,9 +386,9 @@ const TokenAmountDisplay = ({
   formatTokenAmount, 
   getTokenDisplayInfo 
 }: {
-  amount: number;
+  amount: number | string;
   mintAddress: string;
-  formatTokenAmount: (amount: number, mintAddress: string) => Promise<string>;
+  formatTokenAmount: (amount: number | string, mintAddress: string) => Promise<string>;
   getTokenDisplayInfo: (mintAddress: string) => { symbol: string; name: string };
 }) => {
   const [formattedAmount, setFormattedAmount] = useState<string>('...');
