@@ -207,6 +207,7 @@ export const useContract = () => {
       const buyInstruction = await program.methods
         .buyListing()
         .accounts({
+          listing: listing, // Add the missing listing account
           buyer: wallet.publicKey,
           seller: listingAccount.seller,
           buyerTokenAccount,
