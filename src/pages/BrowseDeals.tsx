@@ -34,6 +34,7 @@ const BrowseDeals = () => {
       if (dbDeals.length > 0) {
         const mappedDeals = dbDeals.map(deal => ({
           seller: { toString: () => deal.maker_address } as any,
+          maker: new PublicKey(deal.maker_address),
           tokenMint: { toString: () => deal.token_mint_offered } as any,
           tokenAmount: deal.amount_offered,
           totalPrice: deal.amount_requested,
