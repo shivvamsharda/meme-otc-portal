@@ -157,15 +157,21 @@ const CreateDeal = () => {
       console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
       console.log("Requested token:", requestedTokenData.symbol, "with mint:", requestedTokenData.mint);
 
+      // Validate that price per token rounds to at least 1 lamport per base unit
+      const pricePerTokenInt = Math.floor(amountRequestedInBaseUnits / amountOfferedInBaseUnits);
+      if (pricePerTokenInt <= 0) {
+        setStep('error', 'Requested amount is too low for the offered amount. Increase requested amount or reduce offered tokens.');
+        return;
+      }
+
       setStep('submitting_tx');
 
       const result = await createDeal({
         dealId,
         tokenMintOffered: formData.tokenMintOffered,
         amountOffered: amountOfferedInBaseUnits,
-        tokenMintRequested: requestedTokenData.mint,
         amountRequested: amountRequestedInBaseUnits,
-        expiryTimestamp,
+        durationHours: expiryDays * 24,
       });
 
       if (result.success) {
@@ -330,7 +336,7 @@ const CreateDeal = () => {
                           <SelectValue placeholder="Choose payment token" />
                         </SelectTrigger>
                         <SelectContent>
-                          {DEVNET_ACCEPTED_TOKENS.map(token => (
+                          {DEVNET_ACCEPTED_TOKENS.filter(token => token.symbol === 'SOL').map(token => (
                             <SelectItem key={token.symbol} value={token.symbol}>
                               <div className="flex items-center justify-between w-full">
                                 <span className="font-medium">{token.symbol}</span>

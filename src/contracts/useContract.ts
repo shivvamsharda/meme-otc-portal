@@ -43,6 +43,23 @@ export const useContract = () => {
     return program;
   };
 
+  const getReadOnlyProgram = () => {
+    // Minimal wallet interface for read-only operations
+    const readOnlyWallet = {
+      publicKey: null,
+      signTransaction: async () => { throw new Error("Read-only provider cannot sign"); },
+      signAllTransactions: async () => { throw new Error("Read-only provider cannot sign"); },
+    } as any;
+
+    const provider = new AnchorProvider(
+      connection,
+      readOnlyWallet,
+      { commitment: "confirmed" }
+    );
+    const program = new Program<MemeotcPlatform>(IDL as any, provider);
+    return program;
+  };
+
   const createListing = async (params: CreateListingParams) => {
     if (!isAuthenticated || !wallet.publicKey) {
       throw new Error("Please connect your wallet first");
@@ -107,6 +124,7 @@ export const useContract = () => {
           new BN(listingNonce)
         )
         .accounts({
+          listing: listing,
           seller: wallet.publicKey,
           tokenMint: new PublicKey(params.tokenMint),
           sellerTokenAccount,
@@ -293,6 +311,7 @@ export const useContract = () => {
       const tx = await program.methods
         .cancelListing()
         .accounts({
+          listing: listing,
           seller: wallet.publicKey,
           sellerTokenAccount,
           escrowTokenAccount,
@@ -326,7 +345,7 @@ export const useContract = () => {
 
   const getListings = async (): Promise<Deal[]> => {
     try {
-      const program = getProgram();
+      const program = getReadOnlyProgram();
       const listings = await program.account.listing.all();
       
       const now = Date.now() / 1000;
