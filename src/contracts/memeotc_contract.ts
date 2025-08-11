@@ -1,371 +1,192 @@
-
 /**
  * Program IDL in camelCase format in order to be used in JS/TS.
  *
  * Note that this is only a type helper and is not the actual IDL. The original
- * IDL can be found at `target/idl/memeotc_contract.json`.
+ * IDL can be found at `target/idl/memeotc_platform.json`.
  */
-export type MemeotcContract = {
-  "address": "2yT4Gd7NV9NDcetuoBZsdA317Ko3JAZDGx6RCCaTATfJ",
+export type MemeotcPlatform = {
+  "address": "6Ev9xMEALPAAmhYgonzNBmkPwrYTGryBebQvtgPVgznQ",
   "metadata": {
-    "name": "memeotcContract",
+    "name": "memeotcPlatform",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "Created with Anchor"
+    "description": "Solana memecoin OTC trading platform"
   },
   "instructions": [
     {
-      "name": "acceptDeal",
-      "docs": [
-        "Accept and execute an OTC deal"
-      ],
+      "name": "buyListing",
       "discriminator": [
-        76,
-        156,
-        34,
-        30,
-        129,
-        136,
-        76,
-        244
-      ],
-      "accounts": [
-        {
-          "name": "platform",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  116,
-                  102,
-                  111,
-                  114,
-                  109
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "deal",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  101,
-                  97,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "deal.deal_id",
-                "account": "deal"
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowAccount",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "deal.deal_id",
-                "account": "deal"
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowAuthority",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "deal.deal_id",
-                "account": "deal"
-              }
-            ]
-          }
-        },
-        {
-          "name": "taker",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "takerTokenAccountRequested",
-          "writable": true
-        },
-        {
-          "name": "takerTokenAccountOffered",
-          "writable": true
-        },
-        {
-          "name": "makerTokenAccountRequested",
-          "writable": true
-        },
-        {
-          "name": "platformFeeAccount",
-          "writable": true
-        },
-        {
-          "name": "tokenProgram",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "cancelDeal",
-      "docs": [
-        "Cancel an OTC deal"
-      ],
-      "discriminator": [
-        158,
-        86,
-        193,
-        45,
-        168,
-        111,
-        48,
-        29
-      ],
-      "accounts": [
-        {
-          "name": "deal",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  101,
-                  97,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "deal.deal_id",
-                "account": "deal"
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowAccount",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "deal.deal_id",
-                "account": "deal"
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowAuthority",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "deal.deal_id",
-                "account": "deal"
-              }
-            ]
-          }
-        },
-        {
-          "name": "maker",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "makerTokenAccount",
-          "writable": true
-        },
-        {
-          "name": "tokenProgram",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "createDeal",
-      "docs": [
-        "Create a new OTC deal"
-      ],
-      "discriminator": [
-        198,
-        212,
-        144,
-        151,
-        97,
-        56,
+        115,
         149,
-        113
+        42,
+        108,
+        44,
+        49,
+        140,
+        153
       ],
       "accounts": [
         {
-          "name": "platform",
+          "name": "listing",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  112,
                   108,
-                  97,
+                  105,
+                  115,
                   116,
-                  102,
-                  111,
-                  114,
-                  109
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "deal",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  101,
-                  97,
-                  108
+                  105,
+                  110,
+                  103
                 ]
               },
               {
-                "kind": "arg",
-                "path": "dealId"
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowAccount",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "kind": "account",
+                "path": "listing.seller",
+                "account": "listing"
               },
               {
-                "kind": "arg",
-                "path": "dealId"
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowAuthority",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "kind": "account",
+                "path": "listing.token_mint",
+                "account": "listing"
               },
               {
-                "kind": "arg",
-                "path": "dealId"
+                "kind": "account",
+                "path": "listing.listing_nonce",
+                "account": "listing"
               }
             ]
           }
         },
         {
-          "name": "maker",
+          "name": "buyer",
           "writable": true,
           "signer": true
         },
         {
-          "name": "makerTokenAccount",
+          "name": "seller",
           "writable": true
         },
         {
-          "name": "tokenMintOffered"
+          "name": "buyerTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "buyer"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "listing.token_mint",
+                "account": "listing"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
         },
         {
-          "name": "tokenMintRequested"
+          "name": "escrowTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "listing"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platformWallet",
+          "writable": true
         },
         {
           "name": "tokenProgram",
@@ -374,376 +195,375 @@ export type MemeotcContract = {
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "dealId",
-          "type": "u64"
         },
         {
-          "name": "tokenMintOffered",
-          "type": "pubkey"
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
         },
         {
-          "name": "amountOffered",
-          "type": "u64"
-        },
-        {
-          "name": "tokenMintRequested",
-          "type": "pubkey"
-        },
-        {
-          "name": "amountRequested",
-          "type": "u64"
-        },
-        {
-          "name": "expiryTimestamp",
-          "type": "i64"
-        }
-      ]
-    },
-    {
-      "name": "initialize",
-      "docs": [
-        "Initialize the MemeOTC platform"
-      ],
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
-      "accounts": [
-        {
-          "name": "platform",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  116,
-                  102,
-                  111,
-                  114,
-                  109
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": []
     },
     {
-      "name": "setPlatformPause",
-      "docs": [
-        "Pause/unpause the platform (only platform authority)"
-      ],
+      "name": "cancelListing",
       "discriminator": [
-        66,
-        196,
-        80,
-        8,
-        64,
-        171,
-        56,
-        26
+        41,
+        183,
+        50,
+        232,
+        230,
+        233,
+        157,
+        70
       ],
       "accounts": [
         {
-          "name": "platform",
+          "name": "listing",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  112,
                   108,
-                  97,
+                  105,
+                  115,
                   116,
-                  102,
-                  111,
-                  114,
-                  109
+                  105,
+                  110,
+                  103
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "listing.seller",
+                "account": "listing"
+              },
+              {
+                "kind": "account",
+                "path": "listing.token_mint",
+                "account": "listing"
+              },
+              {
+                "kind": "account",
+                "path": "listing.listing_nonce",
+                "account": "listing"
               }
             ]
           }
         },
         {
-          "name": "authority",
-          "signer": true,
-          "relations": [
-            "platform"
-          ]
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sellerTokenAccount",
+          "writable": true
+        },
+        {
+          "name": "escrowTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "listing"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
-      "args": [
-        {
-          "name": "paused",
-          "type": "bool"
-        }
-      ]
+      "args": []
     },
     {
-      "name": "updatePlatformFee",
-      "docs": [
-        "Update platform fee (only platform authority)"
-      ],
+      "name": "createListing",
       "discriminator": [
-        162,
-        97,
-        186,
-        47,
-        93,
-        113,
-        176,
-        243
+        18,
+        168,
+        45,
+        24,
+        191,
+        31,
+        117,
+        54
       ],
       "accounts": [
         {
-          "name": "platform",
+          "name": "listing",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  112,
                   108,
-                  97,
+                  105,
+                  115,
                   116,
-                  102,
-                  111,
-                  114,
-                  109
+                  105,
+                  110,
+                  103
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "seller"
+              },
+              {
+                "kind": "account",
+                "path": "tokenMint"
+              },
+              {
+                "kind": "arg",
+                "path": "listingNonce"
               }
             ]
           }
         },
         {
-          "name": "authority",
-          "signer": true,
-          "relations": [
-            "platform"
-          ]
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tokenMint"
+        },
+        {
+          "name": "sellerTokenAccount",
+          "writable": true
+        },
+        {
+          "name": "escrowTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "listing"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platformWallet",
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "newFeeBps",
-          "type": "u16"
+          "name": "tokenAmount",
+          "type": "u64"
+        },
+        {
+          "name": "pricePerToken",
+          "type": "u64"
+        },
+        {
+          "name": "durationHours",
+          "type": "u64"
+        },
+        {
+          "name": "listingNonce",
+          "type": "u64"
         }
       ]
     }
   ],
   "accounts": [
     {
-      "name": "deal",
+      "name": "listing",
       "discriminator": [
-        125,
-        223,
-        160,
-        234,
-        71,
-        162,
-        182,
-        219
-      ]
-    },
-    {
-      "name": "platform",
-      "discriminator": [
-        77,
-        92,
-        204,
-        58,
-        187,
-        98,
-        91,
-        12
+        218,
+        32,
+        50,
+        73,
+        43,
+        134,
+        26,
+        58
       ]
     }
   ],
   "events": [
     {
-      "name": "DealCancelled",
+      "name": "listingCancelled",
       "discriminator": [
-        229,
-        189,
-        86,
-        176,
-        134,
-        151,
-        43,
-        152
-      ]
-    },
-    {
-      "name": "DealCompleted",
-      "discriminator": [
-        3,
-        185,
-        99,
-        192,
-        252,
-        161,
-        216,
-        28
-      ]
-    },
-    {
-      "name": "DealCreated",
-      "discriminator": [
-        27,
-        18,
-        50,
-        52,
-        104,
-        175,
+        11,
         46,
-        101
+        163,
+        10,
+        103,
+        80,
+        139,
+        194
       ]
     },
     {
-      "name": "PlatformFeeUpdated",
+      "name": "listingCreated",
       "discriminator": [
-        210,
-        134,
-        201,
-        4,
-        92,
-        228,
-        80,
-        26
+        94,
+        164,
+        167,
+        255,
+        246,
+        186,
+        12,
+        96
+      ]
+    },
+    {
+      "name": "listingPurchased",
+      "discriminator": [
+        193,
+        130,
+        25,
+        202,
+        91,
+        170,
+        74,
+        117
       ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount provided"
+      "name": "invalidDuration",
+      "msg": "Invalid duration. Must be between 1 hour and 720 hours (30 days)."
     },
     {
       "code": 6001,
-      "name": "InvalidExpiry",
-      "msg": "Invalid expiry timestamp"
+      "name": "listingNotActive",
+      "msg": "Listing is not active."
     },
     {
       "code": 6002,
-      "name": "DealNotOpen",
-      "msg": "Deal is not open for acceptance"
+      "name": "listingExpired",
+      "msg": "Listing has expired."
     },
     {
       "code": 6003,
-      "name": "DealExpired",
-      "msg": "Deal has expired"
+      "name": "unauthorized",
+      "msg": "Unauthorized access."
     },
     {
       "code": 6004,
-      "name": "DealAlreadyTaken",
-      "msg": "Deal has already been taken"
+      "name": "mathOverflow",
+      "msg": "Mathematical operation caused an overflow."
     },
     {
       "code": 6005,
-      "name": "Unauthorized",
-      "msg": "Unauthorized action"
+      "name": "invalidAmount",
+      "msg": "Invalid amount. Amount must be greater than zero."
     },
     {
       "code": 6006,
-      "name": "FeeTooHigh",
-      "msg": "Platform fee is too high"
+      "name": "invalidTokenAccount",
+      "msg": "Invalid token account. Check owner and mint."
     },
     {
       "code": 6007,
-      "name": "CannotAcceptOwnDeal",
-      "msg": "Cannot accept your own deal"
+      "name": "insufficientTokens",
+      "msg": "Insufficient tokens in seller account."
     },
     {
       "code": 6008,
-      "name": "SameTokenMints",
-      "msg": "Offered and requested token mints cannot be the same"
+      "name": "invalidPlatformWallet",
+      "msg": "Invalid platform wallet address."
     },
     {
       "code": 6009,
-      "name": "PlatformPaused",
-      "msg": "Platform is currently paused"
+      "name": "invalidSeller",
+      "msg": "Invalid seller address."
     }
   ],
   "types": [
     {
-      "name": "deal",
+      "name": "listing",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "dealId",
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenAmount",
             "type": "u64"
           },
           {
-            "name": "maker",
-            "type": "pubkey"
-          },
-          {
-            "name": "taker",
-            "type": "pubkey"
-          },
-          {
-            "name": "tokenMintOffered",
-            "type": "pubkey"
-          },
-          {
-            "name": "amountOffered",
+            "name": "pricePerToken",
             "type": "u64"
           },
           {
-            "name": "tokenMintRequested",
-            "type": "pubkey"
-          },
-          {
-            "name": "amountRequested",
+            "name": "totalPrice",
             "type": "u64"
-          },
-          {
-            "name": "status",
-            "type": {
-              "defined": {
-                "name": "DealStatus"
-              }
-            }
           },
           {
             "name": "createdAt",
             "type": "i64"
           },
           {
-            "name": "expiryTimestamp",
+            "name": "expiresAt",
             "type": "i64"
           },
           {
-            "name": "completedAt",
-            "type": "i64"
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "listingNonce",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           },
           {
             "name": "escrowBump",
@@ -753,149 +573,85 @@ export type MemeotcContract = {
       }
     },
     {
-      "name": "DealCancelled",
+      "name": "listingCancelled",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "dealId",
-            "type": "u64"
+            "name": "listingId",
+            "type": "pubkey"
           },
           {
-            "name": "maker",
+            "name": "seller",
             "type": "pubkey"
           }
         ]
       }
     },
     {
-      "name": "DealCompleted",
+      "name": "listingCreated",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "dealId",
-            "type": "u64"
-          },
-          {
-            "name": "maker",
+            "name": "listingId",
             "type": "pubkey"
           },
           {
-            "name": "taker",
+            "name": "seller",
             "type": "pubkey"
           },
           {
-            "name": "amountOffered",
-            "type": "u64"
-          },
-          {
-            "name": "amountRequested",
-            "type": "u64"
-          },
-          {
-            "name": "platformFee",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "DealCreated",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "dealId",
-            "type": "u64"
-          },
-          {
-            "name": "maker",
+            "name": "tokenMint",
             "type": "pubkey"
           },
           {
-            "name": "tokenOffered",
-            "type": "pubkey"
-          },
-          {
-            "name": "amountOffered",
+            "name": "tokenAmount",
             "type": "u64"
           },
           {
-            "name": "tokenRequested",
-            "type": "pubkey"
-          },
-          {
-            "name": "amountRequested",
+            "name": "pricePerToken",
             "type": "u64"
           },
           {
-            "name": "expiry",
+            "name": "totalPrice",
+            "type": "u64"
+          },
+          {
+            "name": "expiresAt",
             "type": "i64"
           }
         ]
       }
     },
     {
-      "name": "DealStatus",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Open"
-          },
-          {
-            "name": "InProgress"
-          },
-          {
-            "name": "Completed"
-          },
-          {
-            "name": "Cancelled"
-          }
-        ]
-      }
-    },
-    {
-      "name": "platform",
+      "name": "listingPurchased",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "authority",
+            "name": "listingId",
             "type": "pubkey"
           },
           {
-            "name": "totalDeals",
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenAmount",
             "type": "u64"
           },
           {
-            "name": "completedDeals",
+            "name": "totalPrice",
             "type": "u64"
           },
           {
-            "name": "platformFeeBps",
-            "type": "u16"
-          },
-          {
-            "name": "isPaused",
-            "type": "bool"
-          }
-        ]
-      }
-    },
-    {
-      "name": "PlatformFeeUpdated",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "oldFee",
-            "type": "u16"
-          },
-          {
-            "name": "newFee",
-            "type": "u16"
+            "name": "platformFee",
+            "type": "u64"
           }
         ]
       }
