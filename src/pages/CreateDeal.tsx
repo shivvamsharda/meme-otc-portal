@@ -25,7 +25,6 @@ const CreateDeal = () => {
   const [formData, setFormData] = useState({
     tokenMintOffered: '',
     amountOffered: '',
-    requestedTokenSymbol: '',
     amountRequested: '',
     expiryDays: '7',
   });
@@ -42,14 +41,6 @@ const CreateDeal = () => {
       return;
     }
 
-    if (!formData.requestedTokenSymbol) {
-      toast({
-        title: "Payment Token Required",
-        description: "Please select a payment token (SOL, USDC, or USDT)",
-        variant: "destructive",
-      });
-      return;
-    }
 
     // Prevent double submission
     if (txState.isLoading) {
@@ -61,9 +52,10 @@ const CreateDeal = () => {
     setStep('validating');
 
     try {
-      const requestedTokenData = getTokenBySymbol(formData.requestedTokenSymbol);
+      // Hardcode SOL as the only payment token
+      const requestedTokenData = getTokenBySymbol('SOL');
       if (!requestedTokenData) {
-        setStep('error', "Invalid payment token selected");
+        setStep('error', "SOL payment token not configured");
         return;
       }
 
@@ -267,7 +259,7 @@ const CreateDeal = () => {
                 Deal Details
               </CardTitle>
               <CardDescription>
-                Sell any token and accept SOL, USDC, or USDT as payment.
+                Sell any token and accept SOL as payment.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -311,7 +303,7 @@ const CreateDeal = () => {
                   </div>
                 </div>
 
-                {/* Token Requested Section - Dropdown Only */}
+                {/* Token Requested Section - SOL Only */}
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Coins className="w-4 h-4" />
@@ -320,34 +312,18 @@ const CreateDeal = () => {
                   
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="requestedTokenSymbol">Payment Token</Label>
-                      <Select 
-                        value={formData.requestedTokenSymbol}
-                        onValueChange={(value) => handleInputChange('requestedTokenSymbol', value)}
-                        disabled={txState.isLoading}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose payment token" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DEVNET_ACCEPTED_TOKENS.filter(token => token.symbol === 'SOL').map(token => (
-                            <SelectItem key={token.symbol} value={token.symbol}>
-                              <div className="flex items-center justify-between w-full">
-                                <span className="font-medium">{token.symbol}</span>
-                                <span className="text-sm text-muted-foreground ml-2">{token.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="paymentToken">Payment Token</Label>
+                      <div className="px-4 py-2 bg-muted border border-input rounded-md text-foreground text-sm flex items-center justify-between">
+                        <span className="font-medium">SOL</span>
+                        <span className="text-sm text-muted-foreground">Solana</span>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        Choose SOL, USDC, or USDT as payment
+                        All deals use SOL as payment
                       </p>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="amountRequested">Amount You Want</Label>
+                      <Label htmlFor="amountRequested">Amount You Want (SOL)</Label>
                       <div className="flex">
                         <Input
                           id="amountRequested"
@@ -361,7 +337,7 @@ const CreateDeal = () => {
                           className="rounded-r-none"
                         />
                         <div className="px-4 py-2 bg-muted border border-input border-l-0 rounded-r-md text-muted-foreground text-sm flex items-center min-w-[80px]">
-                          {formData.requestedTokenSymbol || 'Select token'}
+                          SOL
                         </div>
                       </div>
                     </div>
