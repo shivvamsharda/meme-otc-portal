@@ -4,8 +4,7 @@ export interface Listing {
   seller: PublicKey;
   tokenMint: PublicKey;
   tokenAmount: number;
-  pricePerToken: number;
-  totalPrice: number;
+  totalPrice: number; // CHANGED: Direct total price, no pricePerToken
   createdAt: number;
   expiresAt: number;
   isActive: boolean;
@@ -16,7 +15,7 @@ export interface Listing {
 
 export interface CreateListingParams {
   tokenAmount: number;
-  pricePerToken: number;
+  totalPrice: number; // CHANGED: Direct total price
   durationHours: number;
   listingNonce: number;
   tokenMint: string;
@@ -27,8 +26,7 @@ export interface ListingCreatedEvent {
   seller: PublicKey;
   tokenMint: PublicKey;
   tokenAmount: number;
-  pricePerToken: number;
-  totalPrice: number;
+  totalPrice: number; // CHANGED
   expiresAt: number;
 }
 
@@ -37,7 +35,7 @@ export interface ListingPurchasedEvent {
   buyer: PublicKey;
   seller: PublicKey;
   tokenAmount: number;
-  totalPrice: number;
+  totalPrice: number; // CHANGED
   platformFee: number;
 }
 
@@ -46,15 +44,9 @@ export interface ListingCancelledEvent {
   seller: PublicKey;
 }
 
-// Backward compatibility - Deal interface that maps to Listing
-export interface Deal extends Listing {
-  dealId?: string | number; // Now accepts listing address string or legacy number ID
-  maker?: PublicKey;
-  amountOffered?: number;
-  tokenMintOffered?: PublicKey;
-  amountRequested?: number;
-  tokenMintRequested?: PublicKey;
-  status?: any; // Allow both string and object to maintain compatibility
-  expiryTimestamp?: number;
-  completedAt?: number;
-}
+// Helper function to calculate effective price per token for display
+export const calculatePricePerToken = (totalPrice: number, tokenAmount: number, decimals: number = 6): number => {
+  const actualTokens = tokenAmount / Math.pow(10, decimals);
+  const priceInSOL = totalPrice / Math.pow(10, 9);
+  return priceInSOL / actualTokens;
+};
