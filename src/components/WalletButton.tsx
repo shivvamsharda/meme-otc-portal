@@ -1,4 +1,5 @@
 
+import { useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { supabase } from '@/integrations/supabase/client'
@@ -10,6 +11,7 @@ import { toast } from '@/hooks/use-toast'
 export const WalletButton = () => {
   const wallet = useWallet()
   const { user, signOut } = useAuth()
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSolanaSignIn = async () => {
     if (!wallet.connected || !wallet.signMessage || !wallet.publicKey) {
@@ -59,16 +61,26 @@ export const WalletButton = () => {
     }
   }
 
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
+
   // If user is authenticated, show sign out button
   if (user) {
     return (
       <Button
-        onClick={signOut}
+        onClick={handleSignOut}
         variant="outline"
         className="flex items-center gap-2"
+        disabled={isSigningOut}
       >
         <LogOut className="w-4 h-4" />
-        Sign Out
+        {isSigningOut ? "Signing Out..." : "Sign Out"}
       </Button>
     )
   }

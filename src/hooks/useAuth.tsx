@@ -66,7 +66,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [])
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('Sign out error:', error)
+        toast({
+          title: "Sign out failed",
+          description: "There was an issue signing you out. Clearing session locally.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Signed out successfully",
+          description: "You have been signed out of MemeOTC.",
+        })
+      }
+    } catch (error) {
+      console.error('Unexpected sign out error:', error)
+      toast({
+        title: "Sign out failed",
+        description: "There was an unexpected error. Clearing session locally.",
+        variant: "destructive",
+      })
+    } finally {
+      // Force local state cleanup regardless of API response
+      setSession(null)
+      setUser(null)
+      setLoading(false)
+    }
   }
 
   return (
