@@ -37,7 +37,7 @@ const MyDeals = () => {
     loadMyDeals();
   }, [isAuthenticated]);
 
-  const handleCancelDeal = async (dealId: string | number) => {
+  const handleCancelDeal = async (dealId: string) => {
     setCancellingDeal(dealId);
     try {
       await cancelDeal(dealId);
