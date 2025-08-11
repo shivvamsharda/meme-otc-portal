@@ -13,12 +13,12 @@ import {
   createAssociatedTokenAccountInstruction
 } from "@solana/spl-token";
 import { MEMEOTC_CONFIG, PLATFORM_WALLET } from "./config";
-import { CreateListingParams, Listing } from "./types";
+import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 // Import the IDL directly
-import IDL from "./memeotc_platform.json";
+import IDL from "./memeotc_contract.json";
 
 export const useContract = () => {
   const { connection } = useConnection();
@@ -39,7 +39,19 @@ export const useContract = () => {
     );
 
     // Cast IDL properly with the correct type
-    const program = new Program(IDL as Idl, provider);
+    const idlPatched = (() => {
+      const v: any = IDL as any;
+      try {
+        const accounts = v.accounts || [];
+        const listing = accounts.find((a: any) => a.name?.toLowerCase() === "listing");
+        if (listing && !listing.type) {
+          const t = (v.types || []).find((x: any) => x.name === "Listing")?.type;
+          if (t) listing.type = t;
+        }
+      } catch {}
+      return v as Idl;
+    })();
+    const program = new Program(idlPatched as Idl, provider);
     
     console.log("Program created successfully:", program.programId.toString());
     console.log("Program account methods:", Object.keys(program.account || {}));
@@ -155,7 +167,7 @@ export const useContract = () => {
       console.log("Fetching listing account:", listing.toString());
       
       // Fetch listing data
-      const listingAccount = await program.account.listing.fetch(listing);
+      const listingAccount = await (program.account as any).listing.fetch(listing);
       
       console.log("Listing account data:", {
         seller: listingAccount.seller.toString(),
@@ -240,7 +252,7 @@ export const useContract = () => {
       const listing = new PublicKey(listingId);
       
       // Fetch listing data
-      const listingAccount = await program.account.listing.fetch(listing);
+      const listingAccount = await (program.account as any).listing.fetch(listing);
 
       // Generate escrow token account PDA
       const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
@@ -296,12 +308,13 @@ export const useContract = () => {
       console.log("Fetching all listings...");
       
       // Check if program.account.listing exists
-      if (!program.account?.listing) {
+      const listingNs = (program.account as any)?.listing;
+      if (!listingNs) {
         console.error("Program account.listing is undefined");
         return [];
       }
       
-      const listings = await program.account.listing.all();
+      const listings = await listingNs.all();
       
       console.log(`Found ${listings.length} listings`);
       
@@ -334,12 +347,13 @@ export const useContract = () => {
     try {
       const program = getProgram();
       
-      if (!program.account?.listing) {
+      const listingNs = (program.account as any)?.listing;
+      if (!listingNs) {
         console.error("Program account.listing is undefined");
         return [];
       }
       
-      const listings = await program.account.listing.all([
+      const listings = await listingNs.all([
         {
           memcmp: {
             offset: 8, // Skip discriminator
@@ -374,6 +388,12 @@ export const useContract = () => {
     cancelListing,
     getListings,
     getMyListings,
+    // Backward-compat aliases
+    createDeal: createListing,
+    acceptDeal: buyListing,
+    cancelDeal: cancelListing,
+    getDeals: getListings,
+    getMyDeals: getMyListings,
     isLoading,
   };
 };

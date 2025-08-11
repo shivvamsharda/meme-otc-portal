@@ -50,3 +50,15 @@ export const calculatePricePerToken = (totalPrice: number, tokenAmount: number, 
   const priceInSOL = totalPrice / Math.pow(10, 9);
   return priceInSOL / actualTokens;
 };
+
+export interface Deal extends Listing {
+  dealId?: string;
+  maker?: PublicKey;
+  status?: Record<string, unknown>;
+  expiryTimestamp?: number;
+  amountOffered?: number;
+  tokenMintOffered?: PublicKey;
+  amountRequested?: number;
+  tokenMintRequested?: PublicKey;
+  completedAt?: number | null;
+}
