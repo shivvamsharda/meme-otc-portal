@@ -17,6 +17,9 @@ import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+// SOL mint address (native SOL)
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+
 // Import the IDL directly
 import IDL from "./memeotc_contract.json";
 
@@ -57,6 +60,63 @@ export const useContract = () => {
     console.log("Program account methods:", Object.keys(program.account || {}));
     
     return program;
+  };
+
+  // Helper function to generate listing PDA address from listing data
+  const generateListingPDA = (seller: PublicKey, tokenMint: PublicKey, listingNonce: number): string => {
+    try {
+      const program = getProgram();
+      const [listing] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("listing"),
+          seller.toBuffer(),
+          tokenMint.toBuffer(),
+          new BN(listingNonce).toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId
+      );
+      return listing.toString();
+    } catch {
+      return `${seller.toString()}-${tokenMint.toString()}-${listingNonce}`;
+    }
+  };
+
+  // Helper function to derive deal status from listing data
+  const getDealStatus = (listing: Listing): Record<string, unknown> => {
+    const now = Date.now() / 1000;
+    
+    if (!listing.isActive) {
+      return { Open: false, Cancelled: true };
+    }
+    
+    if (listing.expiresAt <= now) {
+      return { Open: false, Expired: true };
+    }
+    
+    return { Open: true };
+  };
+
+  // Adapter function to map Listing to Deal
+  const mapListingToDeal = (listing: Listing): Deal => {
+    const dealId = generateListingPDA(listing.seller, listing.tokenMint, listing.listingNonce);
+    
+    return {
+      ...listing,
+      dealId,
+      maker: listing.seller,
+      status: getDealStatus(listing),
+      expiryTimestamp: listing.expiresAt,
+      amountOffered: listing.tokenAmount,
+      tokenMintOffered: listing.tokenMint,
+      amountRequested: listing.totalPrice,
+      tokenMintRequested: new PublicKey(SOL_MINT),
+      completedAt: null, // Not available in listing data
+    };
+  };
+
+  // Adapter function to map array of Listings to Deals
+  const mapListingsToDeals = (listings: Listing[]): Deal[] => {
+    return listings.map(mapListingToDeal);
   };
 
   const createListing = async (params: CreateListingParams) => {
@@ -301,7 +361,7 @@ export const useContract = () => {
     }
   };
 
-  const getListings = async (): Promise<Listing[]> => {
+  const getListings = async (): Promise<Deal[]> => {
     try {
       const program = getProgram();
       
@@ -320,7 +380,7 @@ export const useContract = () => {
       
       const now = Date.now() / 1000;
       
-      return listings
+      const mappedListings = listings
         .map(listing => ({
           seller: listing.account.seller,
           tokenMint: listing.account.tokenMint,
@@ -335,13 +395,15 @@ export const useContract = () => {
         }))
         .filter(listing => listing.isActive && listing.expiresAt > now);
         
+      return mapListingsToDeals(mappedListings);
+        
     } catch (error) {
       console.error("Error fetching listings:", error);
       return [];
     }
   };
 
-  const getMyListings = async (): Promise<Listing[]> => {
+  const getMyListings = async (): Promise<Deal[]> => {
     if (!wallet.publicKey) return [];
     
     try {
@@ -362,7 +424,7 @@ export const useContract = () => {
         }
       ]);
       
-      return listings.map(listing => ({
+      const mappedListings = listings.map(listing => ({
         seller: listing.account.seller,
         tokenMint: listing.account.tokenMint,
         tokenAmount: listing.account.tokenAmount.toNumber(),
@@ -374,6 +436,8 @@ export const useContract = () => {
         bump: listing.account.bump,
         escrowBump: listing.account.escrowBump,
       }));
+      
+      return mapListingsToDeals(mappedListings);
       
     } catch (error) {
       console.error("Error fetching my listings:", error);
