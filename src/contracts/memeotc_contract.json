@@ -391,7 +391,7 @@
           "type": "u64"
         },
         {
-          "name": "price_per_token",
+          "name": "total_price",
           "type": "u64"
         },
         {
@@ -532,10 +532,6 @@
             "type": "u64"
           },
           {
-            "name": "price_per_token",
-            "type": "u64"
-          },
-          {
             "name": "total_price",
             "type": "u64"
           },
@@ -601,10 +597,6 @@
           },
           {
             "name": "token_amount",
-            "type": "u64"
-          },
-          {
-            "name": "price_per_token",
             "type": "u64"
           },
           {
