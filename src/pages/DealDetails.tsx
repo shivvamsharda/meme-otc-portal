@@ -25,7 +25,7 @@ const DealDetails = () => {
     setLoading(true);
     try {
       const allDeals = await getDeals();
-      const foundDeal = allDeals.find(d => d.dealId === parseInt(id));
+      const foundDeal = allDeals.find(d => d.dealId === id);
       setDeal(foundDeal || null);
     } catch (error) {
       console.error('Failed to load deal:', error);

@@ -1,4 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
+import { NATIVE_MINT } from "@solana/spl-token";
 
 export interface Listing {
   seller: PublicKey;
@@ -44,9 +45,38 @@ export interface ListingCancelledEvent {
   seller: PublicKey;
 }
 
+// UI-facing Deal shape used across pages
+export interface Deal {
+  dealId: string; // Listing PDA as string
+  maker: PublicKey;
+  tokenMintOffered: PublicKey;
+  tokenMintRequested: PublicKey; // WSOL for SOL payments
+  amountOffered: number;
+  amountRequested: number;
+  createdAt: number; // seconds
+  expiryTimestamp: number; // seconds
+  status: { Open?: true; InProgress?: true; Completed?: true; Cancelled?: true };
+  completedAt: number; // 0 if not completed
+}
+
+// Map on-chain listing account to UI Deal
+export const mapListingToDeal = (listingId: PublicKey, listing: Listing): Deal => ({
+  dealId: listingId.toString(),
+  maker: listing.seller,
+  tokenMintOffered: listing.tokenMint,
+  tokenMintRequested: NATIVE_MINT, // represent SOL requests as WSOL mint
+  amountOffered: listing.tokenAmount,
+  amountRequested: listing.totalPrice,
+  createdAt: listing.createdAt,
+  expiryTimestamp: listing.expiresAt,
+  status: listing.isActive ? { Open: true } : { Cancelled: true },
+  completedAt: 0,
+});
+
 // Helper function to calculate effective price per token for display
 export const calculatePricePerToken = (totalPrice: number, tokenAmount: number, decimals: number = 6): number => {
   const actualTokens = tokenAmount / Math.pow(10, decimals);
   const priceInSOL = totalPrice / Math.pow(10, 9);
   return priceInSOL / actualTokens;
 };
+

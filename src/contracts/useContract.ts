@@ -40,7 +40,7 @@ export const useContract = () => {
   const program = useMemo(() => {
     if (!publicKey || !signAllTransactions || !signTransaction) return null;
     const provider = getProvider(connection, { publicKey, signAllTransactions, signTransaction } as any);
-    return new Program(idl as Idl, MEMEOTC_CONFIG.programId, provider);
+    return new (Program as any)(idl as any, MEMEOTC_CONFIG.programId, provider) as any;
   }, [connection, publicKey, signAllTransactions, signTransaction]);
 
   const isAuthenticated = !!publicKey && connected;
@@ -50,8 +50,8 @@ export const useContract = () => {
     if (!program) return [];
     const listings = await program.account.listing.all();
     return listings
-      .map((acc) => mapListingToDeal(acc.publicKey, acc.account as any))
-      .filter((d) => d.isActive);
+      .map((acc: any) => mapListingToDeal(acc.publicKey, acc.account as any))
+      .filter((d) => !!d.status.Open);
   }, [program]);
 
   // Fetch listings belonging to current user
@@ -60,7 +60,7 @@ export const useContract = () => {
     const listings = await program.account.listing.all();
     return listings
       .map((acc) => mapListingToDeal(acc.publicKey, acc.account as any))
-      .filter((d) => d.seller === publicKey.toString());
+      .filter((d) => publicKey ? d.maker.equals(publicKey) : false);
   }, [program, publicKey]);
 
   // Internal helpers to derive PDAs

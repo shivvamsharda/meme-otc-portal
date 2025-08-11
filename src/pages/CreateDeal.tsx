@@ -157,21 +157,16 @@ const CreateDeal = () => {
       console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
       console.log("Requested token:", requestedTokenData.symbol, "with mint:", requestedTokenData.mint);
 
-      // Validate that price per token rounds to at least 1 lamport per base unit
-      const pricePerTokenInt = Math.floor(amountRequestedInBaseUnits / amountOfferedInBaseUnits);
-      if (pricePerTokenInt <= 0) {
-        setStep('error', 'Requested amount is too low for the offered amount. Increase requested amount or reduce offered tokens.');
-        return;
-      }
+      // price-per-token validation removed for flexible pricing
 
       setStep('submitting_tx');
 
       const result = await createDeal({
-        dealId,
-        tokenMintOffered: formData.tokenMintOffered,
-        amountOffered: amountOfferedInBaseUnits,
-        amountRequested: amountRequestedInBaseUnits,
+        tokenMint: formData.tokenMintOffered,
+        tokenAmount: amountOfferedInBaseUnits,
+        totalPrice: amountRequestedInBaseUnits,
         durationHours: expiryDays * 24,
+        listingNonce: Date.now(),
       });
 
       if (result.success) {

@@ -17,7 +17,7 @@ const MyDeals = () => {
   const { getMyDeals, cancelDeal, isAuthenticated } = useContract();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancellingDeal, setCancellingDeal] = useState<string | number | null>(null);
+  const [cancellingDeal, setCancellingDeal] = useState<string | null>(null);
 
   const loadMyDeals = async () => {
     if (!isAuthenticated) return;

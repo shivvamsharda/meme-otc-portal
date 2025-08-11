@@ -40,7 +40,7 @@ const BrowseDeals = () => {
     loadDeals();
   }, []);
 
-  const handleAcceptDeal = async (dealId: string | number) => {
+  const handleAcceptDeal = async (dealId: string) => {
     if (!isAuthenticated) {
       return;
     }
