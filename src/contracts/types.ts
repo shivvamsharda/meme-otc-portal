@@ -1,39 +1,47 @@
 import { PublicKey } from "@solana/web3.js";
 
-export interface Deal {
-  dealId: number;
-  maker: PublicKey;
-  taker: PublicKey;
-  tokenMintOffered: PublicKey;
-  amountOffered: number;
-  tokenMintRequested: PublicKey;
-  amountRequested: number;
-  status: DealStatus;
+export interface Listing {
+  seller: PublicKey;
+  tokenMint: PublicKey;
+  tokenAmount: number;
+  pricePerToken: number;
+  totalPrice: number;
   createdAt: number;
-  expiryTimestamp: number;
-  completedAt: number;
+  expiresAt: number;
+  isActive: boolean;
+  listingNonce: number;
+  bump: number;
   escrowBump: number;
 }
 
-export interface Platform {
-  authority: PublicKey;
-  totalDeals: number;
-  completedDeals: number;
-  platformFeeBps: number;
-  isPaused: boolean;
+export interface CreateListingParams {
+  tokenAmount: number;
+  pricePerToken: number;
+  durationHours: number;
+  listingNonce: number;
+  tokenMint: string;
 }
 
-export type DealStatus = 
-  | { Open: {} }
-  | { InProgress: {} }
-  | { Completed: {} }
-  | { Cancelled: {} };
+export interface ListingCreatedEvent {
+  listingId: PublicKey;
+  seller: PublicKey;
+  tokenMint: PublicKey;
+  tokenAmount: number;
+  pricePerToken: number;
+  totalPrice: number;
+  expiresAt: number;
+}
 
-export interface CreateDealParams {
-  dealId: number;
-  tokenMintOffered: string;
-  amountOffered: number;
-  tokenMintRequested: string;
-  amountRequested: number;
-  expiryTimestamp: number;
+export interface ListingPurchasedEvent {
+  listingId: PublicKey;
+  buyer: PublicKey;
+  seller: PublicKey;
+  tokenAmount: number;
+  totalPrice: number;
+  platformFee: number;
+}
+
+export interface ListingCancelledEvent {
+  listingId: PublicKey;
+  seller: PublicKey;
 }
