@@ -320,6 +320,23 @@ export const useContract = () => {
         wallet.publicKey
       );
 
+      // Ensure buyer ATA exists prior to CPI in program
+      const ataInfo = await connection.getAccountInfo(buyerTokenAccount);
+      const preInstructions: any[] = [];
+      if (!ataInfo) {
+        console.log("Buyer ATA missing, creating:", buyerTokenAccount.toString());
+        preInstructions.push(
+          createAssociatedTokenAccountInstruction(
+            wallet.publicKey, // payer
+            buyerTokenAccount, // ata
+            wallet.publicKey, // owner
+            tokenMintPk, // mint
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        );
+      }
+
       console.log("Buy listing accounts:", {
         listing: listing.toString(),
         buyer: wallet.publicKey.toString(),
@@ -343,6 +360,7 @@ export const useContract = () => {
           rent: SYSVAR_RENT_PUBKEY,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         })
+        .preInstructions(preInstructions)
         .rpc();
 
       toast({
@@ -398,6 +416,23 @@ export const useContract = () => {
         wallet.publicKey
       );
 
+      // Ensure seller ATA exists prior to CPI in program
+      const sellerAtaInfo = await connection.getAccountInfo(sellerTokenAccount);
+      const preInstructions: any[] = [];
+      if (!sellerAtaInfo) {
+        console.log("Seller ATA missing, creating:", sellerTokenAccount.toString());
+        preInstructions.push(
+          createAssociatedTokenAccountInstruction(
+            wallet.publicKey, // payer
+            sellerTokenAccount, // ata
+            wallet.publicKey, // owner (seller)
+            tokenMintForSeller, // mint
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        );
+      }
+
       const tx = await program.methods
         .cancelListing()
         .accounts({
@@ -407,6 +442,7 @@ export const useContract = () => {
           escrowTokenAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
+        .preInstructions(preInstructions)
         .rpc();
 
       toast({
