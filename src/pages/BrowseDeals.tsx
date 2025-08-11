@@ -12,12 +12,14 @@ import { Coins, Clock, TrendingUp, RefreshCw } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useTransactionState } from '@/hooks/useTransactionState';
 import { toast } from '@/hooks/use-toast';
+import { useDatabase } from '@/hooks/useDatabase';
 
 const BrowseDeals = () => {
   const navigate = useNavigate();
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const { getDeals, acceptDeal, isAuthenticated } = useContract();
+  const database = useDatabase();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [tokenDecimalsCache, setTokenDecimalsCache] = useState<Map<string, number>>(new Map());
@@ -26,13 +28,41 @@ const BrowseDeals = () => {
   const loadDeals = async () => {
     setLoading(true);
     try {
-      const openDeals = await getDeals();
-      setDeals(openDeals);
+      // Use database as primary source for faster loading
+      const dbDeals = await database.getDeals(true); // Get only open deals
+      
+      if (dbDeals.length > 0) {
+        const mappedDeals = dbDeals.map(deal => ({
+          seller: { toString: () => deal.maker_address } as any,
+          tokenMint: { toString: () => deal.token_mint_offered } as any,
+          tokenAmount: deal.amount_offered,
+          totalPrice: deal.amount_requested,
+          createdAt: new Date(deal.created_at).getTime() / 1000,
+          expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
+          isActive: deal.status === 'Open',
+          listingNonce: deal.deal_id,
+          bump: deal.escrow_bump || 0,
+          escrowBump: deal.escrow_bump || 0,
+          dealId: deal.deal_id.toString(),
+          status: { [deal.status.toLowerCase()]: {} },
+          expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
+          amountOffered: deal.amount_offered,
+          tokenMintOffered: { toString: () => deal.token_mint_offered } as any,
+          amountRequested: deal.amount_requested,
+          tokenMintRequested: { toString: () => deal.token_mint_requested } as any,
+          completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
+        }));
+        setDeals(mappedDeals);
+      } else {
+        // Fallback to blockchain if database is empty
+        const openDeals = await getDeals();
+        setDeals(openDeals);
+      }
     } catch (error) {
       console.error('Failed to load deals:', error);
       toast({
         title: "Failed to Load Deals",
-        description: "Unable to fetch deals from the blockchain. Please try refreshing.",
+        description: "Unable to fetch deals. Please try refreshing.",
         variant: "destructive",
       });
     } finally {

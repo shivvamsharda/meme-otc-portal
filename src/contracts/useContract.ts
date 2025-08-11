@@ -16,6 +16,7 @@ import { PLATFORM_WALLET } from "./config";
 import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useDatabase } from "@/hooks/useDatabase";
 
 // SOL mint address (native SOL)
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -27,6 +28,7 @@ export const useContract = () => {
   const { connection } = useConnection();
   const wallet = useWallet();
   const [isLoading, setIsLoading] = useState(false);
+  const database = useDatabase();
 
   const isAuthenticated = wallet.connected && wallet.publicKey;
 
@@ -216,6 +218,33 @@ export const useContract = () => {
         throw new Error("Listing account not found after confirmation. Please try again.");
       }
 
+      // Store in database after successful blockchain transaction
+      try {
+        await database.createDeal({
+          dealId: listingNonce,
+          makerAddress: wallet.publicKey.toString(),
+          tokenMintOffered: params.tokenMint,
+          amountOffered: parseInt(params.tokenAmount),
+          tokenMintRequested: "So11111111111111111111111111111111111111112", // SOL mint
+          amountRequested: parseInt(params.totalPrice),
+          expiryTimestamp: Math.floor(Date.now() / 1000) + (params.durationHours * 3600),
+          platformFee: 0
+        });
+
+        await database.logTransaction({
+          dealId: listingNonce,
+          transactionType: 'create',
+          userAddress: wallet.publicKey.toString(),
+          transactionSignature: tx,
+          status: 'confirmed'
+        });
+
+        console.log("Deal stored in database successfully");
+      } catch (dbError) {
+        console.error("Failed to store deal in database:", dbError);
+        // Don't throw - blockchain transaction succeeded
+      }
+
       toast({
         title: "Listing Created Successfully!",
         description: `Transaction: ${tx}`,
@@ -391,9 +420,37 @@ export const useContract = () => {
 
   const getListings = async (): Promise<Deal[]> => {
     try {
-      const program = getReadOnlyProgram();
+      // Try database first (faster and includes metadata)
+      console.log("Fetching deals from database...");
+      const dbDeals = await database.getDeals(true); // Get only open deals
       
-      console.log("Fetching all listings...");
+      if (dbDeals.length > 0) {
+        console.log(`Found ${dbDeals.length} deals in database`);
+        return dbDeals.map(deal => ({
+          seller: new PublicKey(deal.maker_address),
+          tokenMint: new PublicKey(deal.token_mint_offered),
+          tokenAmount: deal.amount_offered,
+          totalPrice: deal.amount_requested,
+          createdAt: new Date(deal.created_at).getTime() / 1000,
+          expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
+          isActive: deal.status === 'Open',
+          listingNonce: deal.deal_id,
+          bump: deal.escrow_bump || 0,
+          escrowBump: deal.escrow_bump || 0,
+          dealId: deal.deal_id.toString(),
+          status: { [deal.status.toLowerCase()]: {} },
+          expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
+          amountOffered: deal.amount_offered,
+          tokenMintOffered: new PublicKey(deal.token_mint_offered),
+          amountRequested: deal.amount_requested,
+          tokenMintRequested: new PublicKey(deal.token_mint_requested),
+          completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
+        }));
+      }
+
+      // Fallback to blockchain if database is empty
+      console.log("No deals in database, fetching from blockchain...");
+      const program = getReadOnlyProgram();
       
       // Check if program.account.listing exists
       const listingNs = (program.account as any)?.listing;
