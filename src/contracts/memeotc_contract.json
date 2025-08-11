@@ -447,7 +447,7 @@
           },
           {
             "name": "is_active",
-            "type": "bool"
+            "type": "u8"
           },
           {
             "name": "listing_nonce",
@@ -590,7 +590,7 @@
           },
           {
             "name": "is_active",
-            "type": "bool"
+            "type": "u8"
           },
           {
             "name": "listing_nonce",
