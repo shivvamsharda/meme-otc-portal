@@ -86,8 +86,13 @@ export const useContract = () => {
 
   // Adapter function to map Listing to Deal
   const mapListingToDeal = (listing: Listing): Deal => {
+    const anyListing = listing as any;
     const dealId = generateListingPDA(listing.seller, listing.tokenMint, listing.listingNonce);
-    
+
+    // Prefer raw string amounts when available to avoid JS number overflow
+    const tokenAmountRaw: string | undefined = anyListing.tokenAmountRaw;
+    const totalPriceRaw: string | undefined = anyListing.totalPriceRaw;
+
     return {
       ...listing,
       dealId,
@@ -95,11 +100,14 @@ export const useContract = () => {
       status: getDealStatus(listing),
       expiryTimestamp: listing.expiresAt,
       amountOffered: listing.tokenAmount,
+      // Expose raw fields for UIs that can handle big integers safely
+      ...(tokenAmountRaw ? { amountOfferedRaw: tokenAmountRaw } : {}),
       tokenMintOffered: listing.tokenMint,
       amountRequested: listing.totalPrice,
+      ...(totalPriceRaw ? { amountRequestedRaw: totalPriceRaw } : {}),
       tokenMintRequested: new PublicKey(SOL_MINT),
-      completedAt: null, // Not available in listing data
-    };
+      completedAt: null,
+    } as any;
   };
 
   // Adapter function to map array of Listings to Deals
@@ -390,18 +398,40 @@ export const useContract = () => {
         .map(listing => {
           const raw = listing.account.is_active as any;
           const isActive = typeof raw === 'number' ? raw !== 0 : !!raw;
+
+          const tokenAmountBn = listing.account.token_amount as BN;
+          let tokenAmountNum = 0;
+          try {
+            tokenAmountNum = tokenAmountBn.toNumber();
+          } catch (e) {
+            console.warn("token_amount exceeds JS safe range; using raw string for UI", {
+              listing: (listing as any).publicKey?.toString?.() || 'unknown',
+            });
+          }
+
+          const totalPriceBn = listing.account.total_price as BN;
+          let totalPriceNum = 0;
+          try {
+            totalPriceNum = totalPriceBn.toNumber();
+          } catch (e) {
+            console.warn("total_price exceeds JS safe range; using raw string for UI");
+          }
+
           return {
             seller: listing.account.seller,
             tokenMint: listing.account.token_mint, // FIXED: snake_case
-            tokenAmount: listing.account.token_amount.toNumber(), // FIXED: snake_case
-            totalPrice: listing.account.total_price.toNumber(), // FIXED: snake_case
+            tokenAmount: tokenAmountNum,
+            totalPrice: totalPriceNum,
             createdAt: listing.account.created_at.toNumber(), // FIXED: snake_case
             expiresAt: listing.account.expires_at.toNumber(), // FIXED: snake_case
             isActive,
             listingNonce: listing.account.listing_nonce.toNumber(), // FIXED: snake_case
             bump: listing.account.bump,
             escrowBump: listing.account.escrow_bump, // FIXED: snake_case
-          };
+            // raw strings for UIs that handle big integers
+            tokenAmountRaw: tokenAmountBn.toString(),
+            totalPriceRaw: totalPriceBn.toString(),
+          } as any;
         })
         .filter(listing => listing.isActive && listing.expiresAt > now);
         
@@ -437,18 +467,37 @@ export const useContract = () => {
       const mappedListings = listings.map(listing => {
         const raw = (listing.account as any).is_active as any;
         const isActive = typeof raw === 'number' ? raw !== 0 : !!raw;
+
+        const tokenAmountBn = listing.account.token_amount as BN;
+        let tokenAmountNum = 0;
+        try {
+          tokenAmountNum = tokenAmountBn.toNumber();
+        } catch (e) {
+          console.warn("token_amount exceeds JS safe range; using raw string for UI (my listings)");
+        }
+
+        const totalPriceBn = listing.account.total_price as BN;
+        let totalPriceNum = 0;
+        try {
+          totalPriceNum = totalPriceBn.toNumber();
+        } catch (e) {
+          console.warn("total_price exceeds JS safe range; using raw string for UI (my listings)");
+        }
+
         return {
           seller: listing.account.seller,
           tokenMint: listing.account.token_mint, // FIXED: snake_case
-          tokenAmount: listing.account.token_amount.toNumber(), // FIXED: snake_case
-          totalPrice: listing.account.total_price.toNumber(), // FIXED: snake_case
+          tokenAmount: tokenAmountNum,
+          totalPrice: totalPriceNum,
           createdAt: listing.account.created_at.toNumber(), // FIXED: snake_case
           expiresAt: listing.account.expires_at.toNumber(), // FIXED: snake_case
           isActive,
           listingNonce: listing.account.listing_nonce.toNumber(), // FIXED: snake_case
           bump: listing.account.bump,
           escrowBump: listing.account.escrow_bump, // FIXED: snake_case
-        };
+          tokenAmountRaw: tokenAmountBn.toString(),
+          totalPriceRaw: totalPriceBn.toString(),
+        } as any;
       });
       
       return mapListingsToDeals(mappedListings);

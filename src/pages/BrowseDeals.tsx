@@ -105,12 +105,33 @@ const BrowseDeals = () => {
     return 9;
   };
 
-  const formatTokenAmount = async (amount: number, mintAddress: string) => {
+  const formatTokenAmount = async (amount: number | string, mintAddress: string) => {
     const decimals = await getTokenDecimals(mintAddress);
-    const displayAmount = amount / Math.pow(10, decimals);
+
+    if (typeof amount === 'string') {
+      try {
+        const base = BigInt(10) ** BigInt(decimals);
+        const amt = BigInt(amount);
+        // scale to 4 decimal places for display without floating point errors
+        const scaled = (amt * 10000n) / base;
+        const intPart = scaled / 10000n;
+        const fracPart = scaled % 10000n;
+        const fracStr = fracPart.toString().padStart(4, '0');
+        const numStr = `${intPart.toString()}.${fracStr}`;
+        return Number(numStr).toLocaleString(undefined, {
+          minimumFractionDigits: 4,
+          maximumFractionDigits: 4,
+        });
+      } catch (e) {
+        console.warn('Failed to format big amount, falling back');
+      }
+    }
+
+    const numeric = typeof amount === 'number' ? amount : Number(amount);
+    const displayAmount = numeric / Math.pow(10, decimals);
     return displayAmount.toLocaleString(undefined, {
       minimumFractionDigits: 4,
-      maximumFractionDigits: 4
+      maximumFractionDigits: 4,
     });
   };
 
@@ -238,7 +259,7 @@ const BrowseDeals = () => {
                     <h4 className="font-semibold text-sm mb-2">Offering</h4>
                     <div className="space-y-1">
                       <TokenAmountDisplay 
-                        amount={deal.amountOffered} 
+                        amount={(deal as any).amountOfferedRaw ?? (deal as any).amountOffered}
                         mintAddress={deal.tokenMintOffered.toString()}
                         formatTokenAmount={formatTokenAmount}
                         getTokenDisplayInfo={getTokenDisplayInfo}
