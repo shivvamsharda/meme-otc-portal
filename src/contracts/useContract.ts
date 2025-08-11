@@ -185,12 +185,12 @@ export const useContract = () => {
             listing: listingPk,
             seller,
             buyer: publicKey,
-            tokenMint,
             escrowTokenAccount,
             buyerTokenAccount,
             platformWallet: new PublicKey(PLATFORM_WALLET),
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
+            rent: SYSVAR_RENT_PUBKEY,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
           .rpc();
@@ -240,11 +240,9 @@ export const useContract = () => {
           .accounts({
             listing: listingPk,
             seller: publicKey,
-            tokenMint,
             sellerTokenAccount,
             escrowTokenAccount,
             tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
           })
           .rpc();
 
