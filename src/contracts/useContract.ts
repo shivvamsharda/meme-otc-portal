@@ -283,17 +283,30 @@ export const useContract = () => {
       
       console.log("Fetching listing account:", listing.toString());
       
-      // Fetch listing data - CORRECTED: Use snake_case field names
+      // Fetch listing data
       const listingAccount = await (program.account as any).listing.fetch(listing);
-      
-      console.log("Listing account data:", {
-        seller: listingAccount.seller.toString(),
-        tokenMint: listingAccount.token_mint.toString(), // FIXED: snake_case
-        tokenAmount: listingAccount.token_amount.toString(), // FIXED: snake_case
-        totalPrice: listingAccount.total_price.toString(), // FIXED: snake_case
-        isActive: listingAccount.is_active, // FIXED: snake_case
-        listingNonce: listingAccount.listing_nonce.toString() // FIXED: snake_case
+
+      // Handle both snake_case and camelCase field names returned by Anchor
+      const sellerPk: PublicKey | undefined = (listingAccount as any)?.seller;
+      const tokenMintPk: PublicKey | undefined = (listingAccount as any)?.token_mint || (listingAccount as any)?.tokenMint;
+      const tokenAmountVal: any = (listingAccount as any)?.token_amount ?? (listingAccount as any)?.tokenAmount;
+      const totalPriceVal: any = (listingAccount as any)?.total_price ?? (listingAccount as any)?.totalPrice;
+      const isActiveVal: any = (listingAccount as any)?.is_active ?? (listingAccount as any)?.isActive;
+      const listingNonceVal: any = (listingAccount as any)?.listing_nonce ?? (listingAccount as any)?.listingNonce;
+
+      console.log("Listing account data (raw):", listingAccount);
+      console.log("Listing account parsed:", {
+        seller: sellerPk ? sellerPk.toString() : "undefined",
+        tokenMint: tokenMintPk ? tokenMintPk.toString() : "undefined",
+        tokenAmount: tokenAmountVal?.toString?.() ?? String(tokenAmountVal),
+        totalPrice: totalPriceVal?.toString?.() ?? String(totalPriceVal),
+        isActive: isActiveVal,
+        listingNonce: listingNonceVal?.toString?.() ?? String(listingNonceVal)
       });
+
+      if (!sellerPk || !tokenMintPk) {
+        throw new Error("Malformed listing account: missing seller or token mint");
+      }
 
       // Generate escrow token account PDA
       const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
@@ -303,14 +316,14 @@ export const useContract = () => {
 
       // Get buyer's token account (will be created automatically)
       const buyerTokenAccount = await getAssociatedTokenAddress(
-        listingAccount.token_mint, // FIXED: Use snake_case
+        tokenMintPk,
         wallet.publicKey
       );
 
       console.log("Buy listing accounts:", {
         listing: listing.toString(),
         buyer: wallet.publicKey.toString(),
-        seller: listingAccount.seller.toString(),
+        seller: sellerPk.toString(),
         buyerTokenAccount: buyerTokenAccount.toString(),
         escrowTokenAccount: escrowTokenAccount.toString(),
         platformWallet: PLATFORM_WALLET
@@ -321,7 +334,7 @@ export const useContract = () => {
         .accounts({
           listing,
           buyer: wallet.publicKey,
-          seller: listingAccount.seller,
+          seller: sellerPk,
           buyerTokenAccount,
           escrowTokenAccount,
           platformWallet: new PublicKey(PLATFORM_WALLET),
@@ -378,8 +391,10 @@ export const useContract = () => {
       );
 
       // Get seller's token account
+      const tokenMintForSeller: PublicKey | undefined = (listingAccount as any)?.token_mint || (listingAccount as any)?.tokenMint;
+      if (!tokenMintForSeller) throw new Error("Malformed listing account: missing token mint");
       const sellerTokenAccount = await getAssociatedTokenAddress(
-        listingAccount.token_mint, // FIXED: Use snake_case
+        tokenMintForSeller,
         wallet.publicKey
       );
 
