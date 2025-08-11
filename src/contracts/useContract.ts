@@ -274,12 +274,14 @@ export const useContract = () => {
       throw new Error("Please connect your wallet first");
     }
 
-    if (isLoading) return;
-    setIsLoading(true);
-
-    try {
-      const program = getProgram();
-      const listing = new PublicKey(listingId);
+     if (isLoading) return;
+     setIsLoading(true);
+ 
+     let dealIdForDb: number | null = null;
+ 
+     try {
+       const program = getProgram();
+       const listing = new PublicKey(listingId);
       
       console.log("Fetching listing account:", listing.toString());
       
@@ -306,6 +308,28 @@ export const useContract = () => {
 
       if (!sellerPk || !tokenMintPk) {
         throw new Error("Malformed listing account: missing seller or token mint");
+      }
+
+      // Resolve DB deal id from listing nonce and log pending tx
+      try {
+        dealIdForDb = typeof listingNonceVal?.toNumber === 'function'
+          ? listingNonceVal.toNumber()
+          : Number(listingNonceVal?.toString?.() ?? listingNonceVal);
+      } catch {
+        dealIdForDb = Number(listingNonceVal as any);
+      }
+
+      try {
+        if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
+          await database.logTransaction({
+            dealId: dealIdForDb,
+            transactionType: 'accept',
+            userAddress: wallet.publicKey.toString(),
+            status: 'pending'
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to log pending accept transaction:', e);
       }
 
       // Generate escrow token account PDA
@@ -363,6 +387,23 @@ export const useContract = () => {
         .preInstructions(preInstructions)
         .rpc();
 
+      // Update database after successful purchase
+      try {
+        if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
+          const nowIso = new Date().toISOString();
+          await database.updateDealStatus(dealIdForDb, 'Completed', {
+            taker_address: wallet.publicKey.toString(),
+            transaction_signature: tx,
+            blockchain_synced: true,
+            completed_at: nowIso,
+          } as any);
+          await database.updateDealWithTransaction(dealIdForDb, tx, true);
+          await database.updateTransactionStatus(dealIdForDb, 'accept', 'confirmed', tx);
+        }
+      } catch (dbErr) {
+        console.error('Failed to update DB after accept:', dbErr);
+      }
+
       toast({
         title: "Listing Purchased Successfully!",
         description: `Transaction: ${tx}`,
@@ -377,6 +418,15 @@ export const useContract = () => {
       setIsLoading(false);
       
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+
+      // Mark transaction failed in DB if we logged it
+      try {
+        if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
+          await database.updateTransactionStatus(dealIdForDb, 'accept', 'failed', undefined, errorMessage);
+        }
+      } catch (e2) {
+        console.warn('Failed to update transaction status to failed:', e2);
+      }
       
       toast({
         title: "Failed to Buy Listing",
@@ -395,12 +445,35 @@ export const useContract = () => {
     if (isLoading) return;
     setIsLoading(true);
 
+    let dealIdForDb: number | null = null;
     try {
       const program = getProgram();
       const listing = new PublicKey(listingId);
       
       // Fetch listing data
       const listingAccount = await (program.account as any).listing.fetch(listing);
+
+      // Resolve DB deal id from listing nonce and log pending tx
+      const listingNonceVal: any = (listingAccount as any)?.listing_nonce ?? (listingAccount as any)?.listingNonce;
+      try {
+        dealIdForDb = typeof listingNonceVal?.toNumber === 'function'
+          ? listingNonceVal.toNumber()
+          : Number(listingNonceVal?.toString?.() ?? listingNonceVal);
+      } catch {
+        dealIdForDb = Number(listingNonceVal as any);
+      }
+      try {
+        if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
+          await database.logTransaction({
+            dealId: dealIdForDb,
+            transactionType: 'cancel',
+            userAddress: wallet.publicKey.toString(),
+            status: 'pending'
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to log pending cancel transaction:', e);
+      }
 
       // Generate escrow token account PDA
       const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
@@ -445,6 +518,20 @@ export const useContract = () => {
         .preInstructions(preInstructions)
         .rpc();
 
+      // Update database after successful cancel
+      try {
+        if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
+          await database.updateDealStatus(dealIdForDb, 'Cancelled', {
+            transaction_signature: tx,
+            blockchain_synced: true,
+          } as any);
+          await database.updateDealWithTransaction(dealIdForDb, tx, true);
+          await database.updateTransactionStatus(dealIdForDb, 'cancel', 'confirmed', tx);
+        }
+      } catch (dbErr) {
+        console.error('Failed to update DB after cancel:', dbErr);
+      }
+
       toast({
         title: "Listing Cancelled Successfully!",
         description: `Transaction: ${tx}`,
@@ -459,6 +546,15 @@ export const useContract = () => {
       setIsLoading(false);
       
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+
+      // Mark transaction failed in DB if we logged it
+      try {
+        if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
+          await database.updateTransactionStatus(dealIdForDb, 'cancel', 'failed', undefined, errorMessage);
+        }
+      } catch (e2) {
+        console.warn('Failed to update transaction status to failed (cancel):', e2);
+      }
       
       toast({
         title: "Failed to Cancel Listing",

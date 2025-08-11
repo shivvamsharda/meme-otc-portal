@@ -112,6 +112,9 @@ const BrowseDeals = () => {
           className: "border-green-200 bg-green-50 text-green-900",
         });
 
+        // Optimistically remove the accepted deal from the UI
+        setDeals(prev => prev.filter(d => (d.dealId as string) !== dealId));
+
         // Refresh deals list after successful transaction
         await loadDeals();
       }
