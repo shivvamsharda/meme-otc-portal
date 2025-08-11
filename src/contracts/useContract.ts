@@ -50,6 +50,20 @@ export const useContract = () => {
     return program;
   };
 
+  // Read-only program for fetching public data without wallet connection
+  const getReadOnlyProgram = () => {
+    const provider = new AnchorProvider(
+      connection,
+      {} as any, // Empty wallet object for read-only operations
+      { commitment: "confirmed" }
+    );
+
+    const program = new Program(IDL as Idl, provider);
+    console.log("Read-only program created successfully:", program.programId.toString());
+    
+    return program;
+  };
+
   // Helper function to generate listing PDA address from listing data
   const generateListingPDA = (seller: PublicKey, tokenMint: PublicKey, listingNonce: number): string => {
     try {
@@ -377,7 +391,7 @@ export const useContract = () => {
 
   const getListings = async (): Promise<Deal[]> => {
     try {
-      const program = getProgram();
+      const program = getReadOnlyProgram();
       
       console.log("Fetching all listings...");
       

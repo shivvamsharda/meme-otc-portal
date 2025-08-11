@@ -26,11 +26,15 @@ const BrowseDeals = () => {
   const loadDeals = async () => {
     setLoading(true);
     try {
-      // Get only open deals from database
       const openDeals = await getDeals();
       setDeals(openDeals);
     } catch (error) {
       console.error('Failed to load deals:', error);
+      toast({
+        title: "Failed to Load Deals",
+        description: "Unable to fetch deals from the blockchain. Please try refreshing.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
