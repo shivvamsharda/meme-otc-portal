@@ -12,7 +12,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction
 } from "@solana/spl-token";
-import { MEMEOTC_CONFIG, PLATFORM_WALLET } from "./config";
+import { MEMEOTC_PROGRAM_ID, PLATFORM_WALLET } from "./config";
 import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -41,20 +41,8 @@ export const useContract = () => {
       { commitment: "confirmed" }
     );
 
-    // Cast IDL properly with the correct type
-    const idlPatched = (() => {
-      const v: any = IDL as any;
-      try {
-        const accounts = v.accounts || [];
-        const listing = accounts.find((a: any) => a.name?.toLowerCase() === "listing");
-        if (listing && !listing.type) {
-          const t = (v.types || []).find((x: any) => x.name === "Listing")?.type;
-          if (t) listing.type = t;
-        }
-      } catch {}
-      return v as Idl;
-    })();
-    const program = new Program(idlPatched as Idl, provider);
+    // Use explicit program ID instead of IDL address
+    const program = new Program(IDL as Idl, new PublicKey(MEMEOTC_PROGRAM_ID), provider);
     
     console.log("Program created successfully:", program.programId.toString());
     console.log("Program account methods:", Object.keys(program.account || {}));
@@ -226,16 +214,16 @@ export const useContract = () => {
       
       console.log("Fetching listing account:", listing.toString());
       
-      // Fetch listing data
+      // Fetch listing data - CORRECTED: Use snake_case field names
       const listingAccount = await (program.account as any).listing.fetch(listing);
       
       console.log("Listing account data:", {
         seller: listingAccount.seller.toString(),
-        tokenMint: listingAccount.tokenMint.toString(),
-        tokenAmount: listingAccount.tokenAmount.toString(),
-        totalPrice: listingAccount.totalPrice.toString(),
-        isActive: listingAccount.isActive,
-        listingNonce: listingAccount.listingNonce.toString()
+        tokenMint: listingAccount.token_mint.toString(), // FIXED: snake_case
+        tokenAmount: listingAccount.token_amount.toString(), // FIXED: snake_case
+        totalPrice: listingAccount.total_price.toString(), // FIXED: snake_case
+        isActive: listingAccount.is_active, // FIXED: snake_case
+        listingNonce: listingAccount.listing_nonce.toString() // FIXED: snake_case
       });
 
       // Generate escrow token account PDA
@@ -246,7 +234,7 @@ export const useContract = () => {
 
       // Get buyer's token account (will be created automatically)
       const buyerTokenAccount = await getAssociatedTokenAddress(
-        listingAccount.tokenMint,
+        listingAccount.token_mint, // FIXED: Use snake_case
         wallet.publicKey
       );
 
@@ -322,7 +310,7 @@ export const useContract = () => {
 
       // Get seller's token account
       const sellerTokenAccount = await getAssociatedTokenAddress(
-        listingAccount.tokenMint,
+        listingAccount.token_mint, // FIXED: Use snake_case
         wallet.publicKey
       );
 
@@ -383,15 +371,15 @@ export const useContract = () => {
       const mappedListings = listings
         .map(listing => ({
           seller: listing.account.seller,
-          tokenMint: listing.account.tokenMint,
-          tokenAmount: listing.account.tokenAmount.toNumber(),
-          totalPrice: listing.account.totalPrice.toNumber(),
-          createdAt: listing.account.createdAt.toNumber(),
-          expiresAt: listing.account.expiresAt.toNumber(),
-          isActive: listing.account.isActive,
-          listingNonce: listing.account.listingNonce.toNumber(),
+          tokenMint: listing.account.token_mint, // FIXED: snake_case
+          tokenAmount: listing.account.token_amount.toNumber(), // FIXED: snake_case
+          totalPrice: listing.account.total_price.toNumber(), // FIXED: snake_case
+          createdAt: listing.account.created_at.toNumber(), // FIXED: snake_case
+          expiresAt: listing.account.expires_at.toNumber(), // FIXED: snake_case
+          isActive: listing.account.is_active, // FIXED: snake_case
+          listingNonce: listing.account.listing_nonce.toNumber(), // FIXED: snake_case
           bump: listing.account.bump,
-          escrowBump: listing.account.escrowBump,
+          escrowBump: listing.account.escrow_bump, // FIXED: snake_case
         }))
         .filter(listing => listing.isActive && listing.expiresAt > now);
         
@@ -426,15 +414,15 @@ export const useContract = () => {
       
       const mappedListings = listings.map(listing => ({
         seller: listing.account.seller,
-        tokenMint: listing.account.tokenMint,
-        tokenAmount: listing.account.tokenAmount.toNumber(),
-        totalPrice: listing.account.totalPrice.toNumber(),
-        createdAt: listing.account.createdAt.toNumber(),
-        expiresAt: listing.account.expiresAt.toNumber(),
-        isActive: listing.account.isActive,
-        listingNonce: listing.account.listingNonce.toNumber(),
+        tokenMint: listing.account.token_mint, // FIXED: snake_case
+        tokenAmount: listing.account.token_amount.toNumber(), // FIXED: snake_case
+        totalPrice: listing.account.total_price.toNumber(), // FIXED: snake_case
+        createdAt: listing.account.created_at.toNumber(), // FIXED: snake_case
+        expiresAt: listing.account.expires_at.toNumber(), // FIXED: snake_case
+        isActive: listing.account.is_active, // FIXED: snake_case
+        listingNonce: listing.account.listing_nonce.toNumber(), // FIXED: snake_case
         bump: listing.account.bump,
-        escrowBump: listing.account.escrowBump,
+        escrowBump: listing.account.escrow_bump, // FIXED: snake_case
       }));
       
       return mapListingsToDeals(mappedListings);
