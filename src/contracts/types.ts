@@ -45,3 +45,16 @@ export interface ListingCancelledEvent {
   listingId: PublicKey;
   seller: PublicKey;
 }
+
+// Backward compatibility - Deal interface that maps to Listing
+export interface Deal extends Listing {
+  dealId?: number;
+  maker?: PublicKey;
+  amountOffered?: number;
+  tokenMintOffered?: PublicKey;
+  amountRequested?: number;
+  tokenMintRequested?: PublicKey;
+  status?: any; // Allow both string and object to maintain compatibility
+  expiryTimestamp?: number;
+  completedAt?: number;
+}

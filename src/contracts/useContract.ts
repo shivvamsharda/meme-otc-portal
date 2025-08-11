@@ -10,16 +10,16 @@ import {
   TOKEN_PROGRAM_ID, 
   getAssociatedTokenAddress,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
-  CloseAccount
+  createAssociatedTokenAccountInstruction
 } from "@solana/spl-token";
 import { MEMEOTC_CONFIG, PLATFORM_WALLET } from "./config";
-import { CreateListingParams, Listing } from "./types";
+import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 // Import the IDL
-import IDL from "./memeotc_platform.json";
+import IDL from "./memeotc_contract.json";
+import { MemeotcPlatform } from "./memeotc_contract";
 
 export const useContract = () => {
   const { connection } = useConnection();
@@ -39,7 +39,7 @@ export const useContract = () => {
       { commitment: "confirmed" }
     );
 
-    const program = new Program(IDL as any, provider);
+    const program = new Program<MemeotcPlatform>(IDL as any, provider);
     return program;
   };
 
@@ -107,7 +107,6 @@ export const useContract = () => {
           new BN(listingNonce)
         )
         .accounts({
-          listing,
           seller: wallet.publicKey,
           tokenMint: new PublicKey(params.tokenMint),
           sellerTokenAccount,
@@ -116,7 +115,7 @@ export const useContract = () => {
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
           rent: SYSVAR_RENT_PUBKEY,
-        })
+        } as any)
         .rpc();
 
       toast({
@@ -208,7 +207,6 @@ export const useContract = () => {
       const buyInstruction = await program.methods
         .buyListing()
         .accounts({
-          listing: listingPda,
           buyer: wallet.publicKey,
           seller: listingAccount.seller,
           buyerTokenAccount,
@@ -218,7 +216,7 @@ export const useContract = () => {
           systemProgram: SystemProgram.programId,
           rent: SYSVAR_RENT_PUBKEY,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        })
+        } as any)
         .instruction();
 
       transaction.add(buyInstruction);
@@ -294,12 +292,11 @@ export const useContract = () => {
       const tx = await program.methods
         .cancelListing()
         .accounts({
-          listing: listingPda,
           seller: wallet.publicKey,
           sellerTokenAccount,
           escrowTokenAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
-        })
+        } as any)
         .rpc();
 
       toast({
@@ -326,7 +323,7 @@ export const useContract = () => {
     }
   };
 
-  const getListings = async (): Promise<Listing[]> => {
+  const getListings = async (): Promise<Deal[]> => {
     try {
       const program = getProgram();
       const listings = await program.account.listing.all();
@@ -334,8 +331,9 @@ export const useContract = () => {
       const now = Date.now() / 1000;
       
       return listings
-        .map(listing => ({
+        .map((listing, index) => ({
           ...listing.account,
+          // Core listing properties
           seller: listing.account.seller,
           tokenMint: listing.account.tokenMint,
           tokenAmount: listing.account.tokenAmount.toNumber(),
@@ -344,6 +342,15 @@ export const useContract = () => {
           createdAt: listing.account.createdAt.toNumber(),
           expiresAt: listing.account.expiresAt.toNumber(),
           listingNonce: listing.account.listingNonce.toNumber(),
+          // Backward compatibility mappings
+          dealId: index,
+          maker: listing.account.seller,
+          amountOffered: listing.account.tokenAmount.toNumber(),
+          tokenMintOffered: listing.account.tokenMint,
+          amountRequested: listing.account.totalPrice.toNumber(),
+          tokenMintRequested: listing.account.tokenMint, // Placeholder - adjust as needed
+          status: listing.account.isActive ? { Open: {} } : { Inactive: {} },
+          expiryTimestamp: listing.account.expiresAt.toNumber(),
         }))
         .filter(listing => listing.isActive && listing.expiresAt > now);
         
@@ -353,7 +360,7 @@ export const useContract = () => {
     }
   };
 
-  const getMyListings = async (): Promise<Listing[]> => {
+  const getMyListings = async (): Promise<Deal[]> => {
     if (!wallet.publicKey) return [];
     
     try {
@@ -367,8 +374,9 @@ export const useContract = () => {
         }
       ]);
       
-      return listings.map(listing => ({
+      return listings.map((listing, index) => ({
         ...listing.account,
+        // Core listing properties
         seller: listing.account.seller,
         tokenMint: listing.account.tokenMint,
         tokenAmount: listing.account.tokenAmount.toNumber(),
@@ -377,6 +385,15 @@ export const useContract = () => {
         createdAt: listing.account.createdAt.toNumber(),
         expiresAt: listing.account.expiresAt.toNumber(),
         listingNonce: listing.account.listingNonce.toNumber(),
+        // Backward compatibility mappings
+        dealId: index,
+        maker: listing.account.seller,
+        amountOffered: listing.account.tokenAmount.toNumber(),
+        tokenMintOffered: listing.account.tokenMint,
+        amountRequested: listing.account.totalPrice.toNumber(),
+        tokenMintRequested: listing.account.tokenMint, // Placeholder - adjust as needed
+        status: listing.account.isActive ? { Open: {} } : { Inactive: {} },
+        expiryTimestamp: listing.account.expiresAt.toNumber(),
       }));
       
     } catch (error) {
@@ -385,6 +402,31 @@ export const useContract = () => {
     }
   };
 
+  // Backward compatibility aliases with parameter adaptation
+  const getDeals = getListings;
+  const acceptDeal = (dealId: number) => {
+    // Convert dealId to listingId - for now use a placeholder approach
+    const listingId = dealId.toString();
+    return buyListing(listingId);
+  };
+  const createDeal = async (params: any) => {
+    // Map old deal params to new listing params
+    const listingParams: CreateListingParams = {
+      tokenAmount: params.amountOffered || params.tokenAmount,
+      pricePerToken: params.pricePerToken || Math.floor((params.amountRequested || 0) / (params.amountOffered || 1)),
+      durationHours: params.durationHours || 24,
+      listingNonce: params.dealId || Date.now(),
+      tokenMint: params.tokenMintOffered || params.tokenMint,
+    };
+    return createListing(listingParams);
+  };
+  const cancelDeal = (dealId: number) => {
+    // Convert dealId to listingId
+    const listingId = dealId.toString();
+    return cancelListing(listingId);
+  };
+  const getMyDeals = getMyListings;
+
   return {
     isAuthenticated,
     createListing,
@@ -392,6 +434,12 @@ export const useContract = () => {
     cancelListing,
     getListings,
     getMyListings,
+    // Backward compatibility
+    getDeals,
+    acceptDeal,
+    createDeal,
+    cancelDeal,
+    getMyDeals,
     isLoading,
   };
 };

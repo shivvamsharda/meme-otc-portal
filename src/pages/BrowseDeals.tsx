@@ -27,7 +27,7 @@ const BrowseDeals = () => {
     setLoading(true);
     try {
       // Get only open deals from database
-      const openDeals = await getDeals(true);
+      const openDeals = await getDeals();
       setDeals(openDeals);
     } catch (error) {
       console.error('Failed to load deals:', error);
@@ -55,7 +55,7 @@ const BrowseDeals = () => {
     setStep('validating');
 
     try {
-      const result = await acceptDeal(dealId, setStep);
+      const result = await acceptDeal(dealId);
       
       if (result.success) {
         setStep('complete', undefined, result.signature);
