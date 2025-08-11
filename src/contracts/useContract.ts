@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AnchorProvider, BN, Idl, Program } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Connection, clusterApiUrl } from "@solana/web3.js";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import idl from "@/contracts/memeotc_contract.json";
 import { MEMEOTC_CONFIG, PLATFORM_WALLET, RPC_URL } from "@/contracts/config";
 import { toast } from "@/hooks/use-toast";
@@ -173,8 +173,8 @@ export const useContract = () => {
       try {
         const listingPk = new PublicKey(listingId);
         const listingAcc = await program.account.listing.fetch(listingPk);
-        const tokenMint = listingAcc.tokenMint as PublicKey;
-        const seller = listingAcc.seller as PublicKey;
+        const tokenMint = (listingAcc as any).tokenMint || (listingAcc as any).token_mint as PublicKey;
+        const seller = (listingAcc as any).seller as PublicKey;
 
         const escrowTokenAccount = deriveEscrowPda(listingPk);
         const buyerTokenAccount = await getAssociatedTokenAddress(tokenMint, publicKey);
@@ -191,6 +191,7 @@ export const useContract = () => {
             platformWallet: new PublicKey(PLATFORM_WALLET),
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
           .rpc();
 
@@ -224,8 +225,8 @@ export const useContract = () => {
       try {
         const listingPk = new PublicKey(listingId);
         const listingAcc = await program.account.listing.fetch(listingPk);
-        const tokenMint = listingAcc.tokenMint as PublicKey;
-        const seller = listingAcc.seller as PublicKey;
+        const tokenMint = (listingAcc as any).tokenMint || (listingAcc as any).token_mint as PublicKey;
+        const seller = (listingAcc as any).seller as PublicKey;
 
         if (!seller.equals(publicKey)) {
           throw new Error("Only the seller can cancel this listing");

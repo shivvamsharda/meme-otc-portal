@@ -59,19 +59,29 @@ export interface Deal {
   completedAt: number; // 0 if not completed
 }
 
-// Map on-chain listing account to UI Deal
-export const mapListingToDeal = (listingId: PublicKey, listing: Listing): Deal => ({
-  dealId: listingId.toString(),
-  maker: listing.seller,
-  tokenMintOffered: listing.tokenMint,
-  tokenMintRequested: NATIVE_MINT, // represent SOL requests as WSOL mint
-  amountOffered: listing.tokenAmount,
-  amountRequested: listing.totalPrice,
-  createdAt: listing.createdAt,
-  expiryTimestamp: listing.expiresAt,
-  status: listing.isActive ? { Open: true } : { Cancelled: true },
-  completedAt: 0,
-});
+// Map on-chain listing account to UI Deal (handles snake_case and camelCase)
+export const mapListingToDeal = (listingId: PublicKey, listing: any): Deal => {
+  const seller = listing.seller as PublicKey;
+  const tokenMint = (listing.tokenMint || listing.token_mint) as PublicKey;
+  const tokenAmount = (listing.tokenAmount || listing.token_amount) as number;
+  const totalPrice = (listing.totalPrice || listing.total_price) as number;
+  const createdAt = (listing.createdAt || listing.created_at) as number;
+  const expiresAt = (listing.expiresAt || listing.expires_at) as number;
+  const isActive = (listing.isActive ?? listing.is_active) as boolean;
+
+  return {
+    dealId: listingId.toString(),
+    maker: seller,
+    tokenMintOffered: tokenMint,
+    tokenMintRequested: NATIVE_MINT, // represent SOL requests as WSOL mint
+    amountOffered: tokenAmount,
+    amountRequested: totalPrice,
+    createdAt,
+    expiryTimestamp: expiresAt,
+    status: isActive ? { Open: true } : { Cancelled: true },
+    completedAt: 0,
+  };
+};
 
 // Helper function to calculate effective price per token for display
 export const calculatePricePerToken = (totalPrice: number, tokenAmount: number, decimals: number = 6): number => {
