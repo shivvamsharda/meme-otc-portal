@@ -17,6 +17,7 @@ import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useDatabase } from "@/hooks/useDatabase";
+import { supabase } from "@/integrations/supabase/client";
 
 // SOL mint address (native SOL)
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -387,21 +388,23 @@ export const useContract = () => {
         .preInstructions(preInstructions)
         .rpc();
 
-      // Update database after successful purchase
+      // Update database after successful purchase via Edge Function (no client auth required)
       try {
         if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
-          const nowIso = new Date().toISOString();
-          await database.updateDealStatus(dealIdForDb, 'Completed', {
-            taker_address: wallet.publicKey.toString(),
-            transaction_signature: tx,
-            blockchain_synced: true,
-            completed_at: nowIso,
-          } as any);
-          await database.updateDealWithTransaction(dealIdForDb, tx, true);
-          await database.updateTransactionStatus(dealIdForDb, 'accept', 'confirmed', tx);
+          const { error: fnErr } = await supabase.functions.invoke('update-deal-status', {
+            body: {
+              deal_id: dealIdForDb,
+              status: 'Completed',
+              taker_address: wallet.publicKey.toString(),
+              transaction_signature: tx,
+              transaction_type: 'accept',
+              user_address: wallet.publicKey.toString(),
+            },
+          });
+          if (fnErr) throw fnErr as any;
         }
       } catch (dbErr) {
-        console.error('Failed to update DB after accept:', dbErr);
+        console.error('Failed to update DB after accept (edge function):', dbErr);
       }
 
       toast({
@@ -518,18 +521,22 @@ export const useContract = () => {
         .preInstructions(preInstructions)
         .rpc();
 
-      // Update database after successful cancel
+      // Update database after successful cancel via Edge Function (no client auth required)
       try {
         if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
-          await database.updateDealStatus(dealIdForDb, 'Cancelled', {
-            transaction_signature: tx,
-            blockchain_synced: true,
-          } as any);
-          await database.updateDealWithTransaction(dealIdForDb, tx, true);
-          await database.updateTransactionStatus(dealIdForDb, 'cancel', 'confirmed', tx);
+          const { error: fnErr } = await supabase.functions.invoke('update-deal-status', {
+            body: {
+              deal_id: dealIdForDb,
+              status: 'Cancelled',
+              transaction_signature: tx,
+              transaction_type: 'cancel',
+              user_address: wallet.publicKey.toString(),
+            },
+          });
+          if (fnErr) throw fnErr as any;
         }
       } catch (dbErr) {
-        console.error('Failed to update DB after cancel:', dbErr);
+        console.error('Failed to update DB after cancel (edge function):', dbErr);
       }
 
       toast({

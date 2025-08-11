@@ -89,6 +89,14 @@ const BrowseDeals = () => {
   // Realtime updates: refresh whenever deals table changes
   useRealtimeDeals(loadDeals);
 
+  // Light auto-refresh every 10s as a safety net
+  useEffect(() => {
+    const id = setInterval(() => {
+      loadDeals();
+    }, 10000);
+    return () => clearInterval(id);
+  }, []);
+
   const handleAcceptDeal = async (dealId: string) => {
     if (!isAuthenticated) {
       return;

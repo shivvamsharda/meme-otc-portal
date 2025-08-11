@@ -1,3 +1,4 @@
+project_id = "ebmiuqrdzzdliupgcqsy"
 
 # The local environment settings
 [api]
@@ -26,3 +27,9 @@ enabled = true
 
 [edge_functions]
 verify_jwt = true
+
+[functions.update-deal-status]
+verify_jwt = false
+
+[functions.reconcile-deals]
+verify_jwt = false
