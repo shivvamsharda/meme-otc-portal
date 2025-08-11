@@ -397,7 +397,7 @@ export type MemeotcPlatform = {
           "type": "u64"
         },
         {
-          "name": "pricePerToken",
+          "name": "totalPrice",
           "type": "u64"
         },
         {
@@ -538,10 +538,6 @@ export type MemeotcPlatform = {
             "type": "u64"
           },
           {
-            "name": "pricePerToken",
-            "type": "u64"
-          },
-          {
             "name": "totalPrice",
             "type": "u64"
           },
@@ -607,10 +603,6 @@ export type MemeotcPlatform = {
           },
           {
             "name": "tokenAmount",
-            "type": "u64"
-          },
-          {
-            "name": "pricePerToken",
             "type": "u64"
           },
           {
