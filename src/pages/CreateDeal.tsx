@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useContract } from '@/contracts/useContract';
 import { toast } from '@/hooks/use-toast';
 import { useTransactionState } from '@/hooks/useTransactionState';
-import { generateUniqueDealId, validateDealParams } from '@/utils/dealUtils';
+import { generateUniqueDealId, validateDealParams, decimalToBaseUnits } from '@/utils/dealUtils';
 import { DEVNET_ACCEPTED_TOKENS, getTokenBySymbol } from '@/contracts/tokens';
 import { ArrowLeft, Coins, Calendar, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -139,15 +139,15 @@ const CreateDeal = () => {
         console.warn("Error fetching token mint info, using default 9 decimals:", error);
       }
       
-      // Convert amounts to base units using appropriate decimals
-      const amountOfferedInBaseUnits = Math.floor(amountOffered * Math.pow(10, offeredTokenDecimals));
-      // Use actual decimals for requested token
-      const amountRequestedInBaseUnits = Math.floor(amountRequested * Math.pow(10, requestedTokenData.decimals));
-      
-      console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
-      console.log("Decimals - Offered token:", offeredTokenDecimals, "Requested token:", requestedTokenData.decimals);
-      console.log("Amounts - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
-      console.log("Requested token:", requestedTokenData.symbol, "with mint:", requestedTokenData.mint);
+// Convert amounts to base units using safe string math
+const amountOfferedInBaseUnits = decimalToBaseUnits(formData.amountOffered, offeredTokenDecimals);
+// Use actual decimals for requested token (e.g., SOL has 9)
+const amountRequestedInBaseUnits = decimalToBaseUnits(formData.amountRequested, requestedTokenData.decimals);
+
+console.log("Creating deal with ID:", dealId, "for wallet:", walletAddress);
+console.log("Decimals - Offered token:", offeredTokenDecimals, "Requested token:", requestedTokenData.decimals);
+console.log("Amounts (base units) - Offered:", amountOfferedInBaseUnits, "Requested:", amountRequestedInBaseUnits);
+console.log("Requested token:", requestedTokenData.symbol, "with mint:", requestedTokenData.mint);
 
       // price-per-token validation removed for flexible pricing
 
@@ -322,25 +322,26 @@ const CreateDeal = () => {
                       </p>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="amountRequested">Amount You Want (SOL)</Label>
-                      <div className="flex">
-                        <Input
-                          id="amountRequested"
-                          type="number"
-                          step="0.000001"
-                          placeholder="0.0"
-                          value={formData.amountRequested}
-                          onChange={(e) => handleInputChange('amountRequested', e.target.value)}
-                          disabled={txState.isLoading}
-                          required
-                          className="rounded-r-none"
-                        />
-                        <div className="px-4 py-2 bg-muted border border-input border-l-0 rounded-r-md text-muted-foreground text-sm flex items-center min-w-[80px]">
-                          SOL
-                        </div>
-                      </div>
-                    </div>
+<div className="space-y-2">
+  <Label htmlFor="amountRequested">Amount You Want (SOL)</Label>
+  <div className="flex">
+    <Input
+      id="amountRequested"
+      type="number"
+      step="0.000001"
+      placeholder="0.0"
+      value={formData.amountRequested}
+      onChange={(e) => handleInputChange('amountRequested', e.target.value)}
+      disabled={txState.isLoading}
+      required
+      className="rounded-r-none"
+    />
+    <div className="px-4 py-2 bg-muted border border-input border-l-0 rounded-r-md text-muted-foreground text-sm flex items-center min-w-[80px]">
+      SOL
+    </div>
+  </div>
+  <p className="text-xs text-muted-foreground">Preview: List {formData.amountOffered || '0'} tokens for {formData.amountRequested || '0'} SOL</p>
+</div>
                   </div>
                 </div>
 

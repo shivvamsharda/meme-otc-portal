@@ -91,3 +91,15 @@ export const getTokenDisplayName = (mintAddress: string): string => {
   const token = DEVNET_ACCEPTED_TOKENS.find(t => t.mint === mintAddress);
   return token ? `${token.symbol} (${token.name})` : `Unknown Token (${mintAddress.slice(0, 8)}...)`;
 };
+
+// Convert a human-readable decimal amount to base units precisely using string math
+export const decimalToBaseUnits = (amount: string | number, decimals: number): string => {
+  const s = String(amount).trim();
+  if (!s || s === '.' || s === '-' || isNaN(Number(s))) return '0';
+  const negative = s.startsWith('-');
+  const [wholeRaw, fracRaw = ''] = (negative ? s.slice(1) : s).split('.');
+  const whole = wholeRaw.replace(/\D/g, '') || '0';
+  const frac = fracRaw.replace(/\D/g, '').slice(0, decimals).padEnd(decimals, '0');
+  const base = (BigInt(whole) * (BigInt(10) ** BigInt(decimals))) + BigInt(frac || '0');
+  return (negative ? '-' : '') + base.toString();
+};

@@ -14,8 +14,8 @@ export interface Listing {
 }
 
 export interface CreateListingParams {
-  tokenAmount: number;
-  totalPrice: number;
+  tokenAmount: string; // base units as string to avoid precision loss
+  totalPrice: string; // lamports as string to avoid float rounding
   durationHours: number;
   listingNonce: number;
   tokenMint: string;
