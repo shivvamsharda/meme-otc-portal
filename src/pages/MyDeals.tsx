@@ -17,7 +17,7 @@ const MyDeals = () => {
   const { getMyDeals, cancelDeal, isAuthenticated } = useContract();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancellingDeal, setCancellingDeal] = useState<number | null>(null);
+  const [cancellingDeal, setCancellingDeal] = useState<string | number | null>(null);
 
   const loadMyDeals = async () => {
     if (!isAuthenticated) return;
@@ -37,7 +37,7 @@ const MyDeals = () => {
     loadMyDeals();
   }, [isAuthenticated]);
 
-  const handleCancelDeal = async (dealId: number) => {
+  const handleCancelDeal = async (dealId: string | number) => {
     setCancellingDeal(dealId);
     try {
       await cancelDeal(dealId);
@@ -169,7 +169,7 @@ const MyDeals = () => {
           {canCancelDeal(deal) && (
             <Button
               variant="destructive"
-              onClick={() => handleCancelDeal(deal.dealId)}
+              onClick={() => handleCancelDeal(deal.dealId as string)}
               disabled={cancellingDeal === deal.dealId}
               className="flex items-center gap-2"
             >

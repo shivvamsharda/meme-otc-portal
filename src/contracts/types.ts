@@ -48,7 +48,7 @@ export interface ListingCancelledEvent {
 
 // Backward compatibility - Deal interface that maps to Listing
 export interface Deal extends Listing {
-  dealId?: number;
+  dealId?: string | number; // Now accepts listing address string or legacy number ID
   maker?: PublicKey;
   amountOffered?: number;
   tokenMintOffered?: PublicKey;

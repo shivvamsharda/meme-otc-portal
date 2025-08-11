@@ -40,7 +40,7 @@ const BrowseDeals = () => {
     loadDeals();
   }, []);
 
-  const handleAcceptDeal = async (dealId: number) => {
+  const handleAcceptDeal = async (dealId: string | number) => {
     if (!isAuthenticated) {
       return;
     }
@@ -267,8 +267,8 @@ const BrowseDeals = () => {
 
                   {/* Action Buttons */}
                   <div className="space-y-2">
-                    <Button
-                      onClick={() => handleAcceptDeal(deal.dealId)}
+                     <Button
+                      onClick={() => handleAcceptDeal(deal.dealId as string)}
                       disabled={!isAuthenticated || txState.isLoading}
                       className="w-full"
                     >

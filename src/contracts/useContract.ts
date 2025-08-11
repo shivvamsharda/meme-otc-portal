@@ -331,7 +331,7 @@ export const useContract = () => {
       const now = Date.now() / 1000;
       
       return listings
-        .map((listing, index) => ({
+        .map((listing) => ({
           ...listing.account,
           // Core listing properties
           seller: listing.account.seller,
@@ -342,13 +342,13 @@ export const useContract = () => {
           createdAt: listing.account.createdAt.toNumber(),
           expiresAt: listing.account.expiresAt.toNumber(),
           listingNonce: listing.account.listingNonce.toNumber(),
-          // Backward compatibility mappings
-          dealId: index,
+          // Backward compatibility mappings - use listing address as dealId
+          dealId: listing.publicKey.toString(),
           maker: listing.account.seller,
           amountOffered: listing.account.tokenAmount.toNumber(),
           tokenMintOffered: listing.account.tokenMint,
           amountRequested: listing.account.totalPrice.toNumber(),
-          tokenMintRequested: listing.account.tokenMint, // Placeholder - adjust as needed
+          tokenMintRequested: new PublicKey("So11111111111111111111111111111111111111112"), // SOL mint for price
           status: listing.account.isActive ? { Open: {} } : { Inactive: {} },
           expiryTimestamp: listing.account.expiresAt.toNumber(),
         }))
@@ -374,7 +374,7 @@ export const useContract = () => {
         }
       ]);
       
-      return listings.map((listing, index) => ({
+      return listings.map((listing) => ({
         ...listing.account,
         // Core listing properties
         seller: listing.account.seller,
@@ -385,13 +385,13 @@ export const useContract = () => {
         createdAt: listing.account.createdAt.toNumber(),
         expiresAt: listing.account.expiresAt.toNumber(),
         listingNonce: listing.account.listingNonce.toNumber(),
-        // Backward compatibility mappings
-        dealId: index,
+        // Backward compatibility mappings - use listing address as dealId
+        dealId: listing.publicKey.toString(),
         maker: listing.account.seller,
         amountOffered: listing.account.tokenAmount.toNumber(),
         tokenMintOffered: listing.account.tokenMint,
         amountRequested: listing.account.totalPrice.toNumber(),
-        tokenMintRequested: listing.account.tokenMint, // Placeholder - adjust as needed
+        tokenMintRequested: new PublicKey("So11111111111111111111111111111111111111112"), // SOL mint for price
         status: listing.account.isActive ? { Open: {} } : { Inactive: {} },
         expiryTimestamp: listing.account.expiresAt.toNumber(),
       }));
@@ -404,9 +404,9 @@ export const useContract = () => {
 
   // Backward compatibility aliases with parameter adaptation
   const getDeals = getListings;
-  const acceptDeal = (dealId: number) => {
-    // Convert dealId to listingId - for now use a placeholder approach
-    const listingId = dealId.toString();
+  const acceptDeal = (dealId: string | number) => {
+    // dealId is now the listing address string
+    const listingId = typeof dealId === 'string' ? dealId : dealId.toString();
     return buyListing(listingId);
   };
   const createDeal = async (params: any) => {
@@ -420,9 +420,9 @@ export const useContract = () => {
     };
     return createListing(listingParams);
   };
-  const cancelDeal = (dealId: number) => {
-    // Convert dealId to listingId
-    const listingId = dealId.toString();
+  const cancelDeal = (dealId: string | number) => {
+    // dealId is now the listing address string
+    const listingId = typeof dealId === 'string' ? dealId : dealId.toString();
     return cancelListing(listingId);
   };
   const getMyDeals = getMyListings;
