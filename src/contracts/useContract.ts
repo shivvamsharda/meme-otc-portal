@@ -12,7 +12,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction
 } from "@solana/spl-token";
-import { PLATFORM_WALLET } from "./config";
+import { PLATFORM_WALLET, MEMEOTC_CONFIG } from "./config";
 import { CreateListingParams, Listing, Deal } from "./types";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -579,6 +579,27 @@ export const useContract = () => {
     }
   };
 
+  // Wallet-independent PDA generator for read-only operations
+  const generateListingPDAReadOnly = (sellerAddress: string, tokenMintAddress: string, listingNonce: number): string | null => {
+    try {
+      const seller = new PublicKey(sellerAddress);
+      const tokenMint = new PublicKey(tokenMintAddress);
+      const [listingPDA] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("listing"),
+          seller.toBuffer(),
+          tokenMint.toBuffer(),
+          new BN(listingNonce).toArrayLike(Buffer, "le", 8)
+        ],
+        MEMEOTC_CONFIG.programId
+      );
+      return listingPDA.toString();
+    } catch (error) {
+      console.error("Error generating listing PDA:", error);
+      return null;
+    }
+  };
+
   return {
     isAuthenticated,
     createListing,
@@ -586,6 +607,7 @@ export const useContract = () => {
     cancelListing,
     getListings,
     getMyListings,
+    generateListingPDAReadOnly,
     // Backward-compat aliases
     createDeal: createListing,
     acceptDeal: buyListing,

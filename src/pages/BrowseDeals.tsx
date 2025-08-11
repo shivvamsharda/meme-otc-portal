@@ -18,7 +18,8 @@ const BrowseDeals = () => {
   const navigate = useNavigate();
   const { connection } = useConnection();
   const { publicKey } = useWallet();
-  const { getDeals, acceptDeal, isAuthenticated } = useContract();
+  const contract = useContract();
+  const { getDeals, acceptDeal, isAuthenticated } = contract;
   const database = useDatabase();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,27 +33,36 @@ const BrowseDeals = () => {
       const dbDeals = await database.getDeals(true); // Get only open deals
       
       if (dbDeals.length > 0) {
-        const mappedDeals = dbDeals.map(deal => ({
-          seller: { toString: () => deal.maker_address } as any,
-          maker: new PublicKey(deal.maker_address),
-          tokenMint: { toString: () => deal.token_mint_offered } as any,
-          tokenAmount: deal.amount_offered,
-          totalPrice: deal.amount_requested,
-          createdAt: new Date(deal.created_at).getTime() / 1000,
-          expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
-          isActive: deal.status === 'Open',
-          listingNonce: deal.deal_id,
-          bump: deal.escrow_bump || 0,
-          escrowBump: deal.escrow_bump || 0,
-          dealId: deal.deal_id.toString(),
-          status: { [deal.status.toLowerCase()]: {} },
+        const mappedDeals = dbDeals.map(deal => {
+          // Generate the proper listing PDA address
+          const listingPDA = contract.generateListingPDAReadOnly(
+            deal.maker_address,
+            deal.token_mint_offered,
+            deal.deal_id
+          );
+          
+          return {
+            seller: { toString: () => deal.maker_address } as any,
+            maker: new PublicKey(deal.maker_address),
+            tokenMint: { toString: () => deal.token_mint_offered } as any,
+            tokenAmount: deal.amount_offered,
+            totalPrice: deal.amount_requested,
+            createdAt: new Date(deal.created_at).getTime() / 1000,
+            expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
+            isActive: deal.status === 'Open',
+            listingNonce: deal.deal_id,
+            bump: deal.escrow_bump || 0,
+            escrowBump: deal.escrow_bump || 0,
+            dealId: listingPDA || deal.deal_id.toString(), // Use PDA or fallback to deal_id
+            status: { [deal.status.toLowerCase()]: {} },
           expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
           amountOffered: deal.amount_offered,
           tokenMintOffered: { toString: () => deal.token_mint_offered } as any,
           amountRequested: deal.amount_requested,
           tokenMintRequested: { toString: () => deal.token_mint_requested } as any,
           completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
-        }));
+          };
+        });
         setDeals(mappedDeals);
       } else {
         // Fallback to blockchain if database is empty
