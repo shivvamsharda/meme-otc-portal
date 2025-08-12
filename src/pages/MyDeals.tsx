@@ -204,14 +204,15 @@ const MyDeals = () => {
               {isMyDeal(deal) ? 'You Offer' : 'You Get'}
             </h4>
             <div className="space-y-1 min-w-0">
-              <div className="min-w-0">
-                <TokenAmountDisplay 
-                  amount={deal.amountOffered}
-                  mintAddress={deal.tokenMintOffered.toString()}
-                  formatTokenAmount={formatTokenAmount}
-                  getTokenDisplayInfo={getTokenDisplayInfo}
-                />
-              </div>
+              <TokenDisplay
+                mintAddress={deal.tokenMintOffered.toString()}
+                amount={`${(deal.amountOffered / Math.pow(10, 9)).toFixed(4)}`}
+                name={(deal as any).tokenOfferedName}
+                symbol={(deal as any).tokenOfferedSymbol}
+                image={(deal as any).tokenOfferedImage}
+                showAmount={true}
+                className="mb-1"
+              />
               <p className="text-xs text-muted-foreground truncate">
                 {truncateAddress(deal.tokenMintOffered.toString())}
               </p>
@@ -223,14 +224,15 @@ const MyDeals = () => {
               {isMyDeal(deal) ? 'You Get' : 'You Pay'}
             </h4>
             <div className="space-y-1 min-w-0">
-              <div className="min-w-0">
-                <TokenAmountDisplay 
-                  amount={deal.amountRequested}
-                  mintAddress={deal.tokenMintRequested.toString()}
-                  formatTokenAmount={formatTokenAmount}
-                  getTokenDisplayInfo={getTokenDisplayInfo}
-                />
-              </div>
+              <TokenDisplay
+                mintAddress={deal.tokenMintRequested.toString()}
+                amount={`${(deal.amountRequested / Math.pow(10, 9)).toFixed(4)}`}
+                name={(deal as any).tokenRequestedName}
+                symbol={(deal as any).tokenRequestedSymbol}
+                image={(deal as any).tokenRequestedImage}
+                showAmount={true}
+                className="mb-1"
+              />
               <p className="text-xs text-muted-foreground truncate">
                 {truncateAddress(deal.tokenMintRequested.toString())}
               </p>
