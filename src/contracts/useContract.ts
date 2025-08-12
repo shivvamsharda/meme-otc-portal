@@ -658,65 +658,74 @@ export const useContract = () => {
 
   const getMyListings = async (): Promise<Deal[]> => {
     if (!wallet.publicKey) return [];
-    
+
     try {
-      const program = getProgram();
-      
-      const listingNs = (program.account as any)?.listing;
-      if (!listingNs) {
-        console.error("Program account.listing is undefined");
-        return [];
-      }
-      
-      const listings = await listingNs.all([
-        {
-          memcmp: {
-            offset: 8, // Skip discriminator
-            bytes: wallet.publicKey.toBase58(),
+      // Read from database for both created and accepted deals
+      const dbDeals = await database.getMyDeals();
+
+      const mapped: Deal[] = dbDeals.map((deal) => {
+        // Derive the canonical listing PDA so actions like cancel work
+        let listingPdaStr: string | null = null;
+        try {
+          const [listingPda] = PublicKey.findProgramAddressSync(
+            [
+              Buffer.from("listing"),
+              new PublicKey(deal.maker_address).toBuffer(),
+              new PublicKey(deal.token_mint_offered).toBuffer(),
+              new BN(deal.deal_id).toArrayLike(Buffer, "le", 8),
+            ],
+            MEMEOTC_CONFIG.programId
+          );
+          listingPdaStr = listingPda.toString();
+        } catch (e) {
+          console.warn("Failed to derive listing PDA, falling back to nonce string", e);
+          listingPdaStr = String(deal.deal_id);
+        }
+
+        const status = (() => {
+          switch (deal.status) {
+            case "Open":
+              return { Open: true } as Record<string, unknown>;
+            case "Cancelled":
+              return { Cancelled: true } as Record<string, unknown>;
+            case "Completed":
+              return { Completed: true } as Record<string, unknown>;
+            case "Expired":
+              return { Expired: true } as Record<string, unknown>;
+            default:
+              return { Unknown: true } as Record<string, unknown>;
           }
-        }
-      ]);
-      
-      const mappedListings = listings.map(listing => {
-        const raw = (listing.account as any).is_active as any;
-        const isActive = typeof raw === 'number' ? raw !== 0 : !!raw;
-
-        const tokenAmountBn = listing.account.token_amount as BN;
-        let tokenAmountNum = 0;
-        try {
-          tokenAmountNum = tokenAmountBn.toNumber();
-        } catch (e) {
-          console.warn("token_amount exceeds JS safe range; using raw string for UI (my listings)");
-        }
-
-        const totalPriceBn = listing.account.total_price as BN;
-        let totalPriceNum = 0;
-        try {
-          totalPriceNum = totalPriceBn.toNumber();
-        } catch (e) {
-          console.warn("total_price exceeds JS safe range; using raw string for UI (my listings)");
-        }
+        })();
 
         return {
-          seller: listing.account.seller,
-          tokenMint: listing.account.token_mint, // FIXED: snake_case
-          tokenAmount: tokenAmountNum,
-          totalPrice: totalPriceNum,
-          createdAt: listing.account.created_at.toNumber(), // FIXED: snake_case
-          expiresAt: listing.account.expires_at.toNumber(), // FIXED: snake_case
-          isActive,
-          listingNonce: listing.account.listing_nonce.toNumber(), // FIXED: snake_case
-          bump: listing.account.bump,
-          escrowBump: listing.account.escrow_bump, // FIXED: snake_case
-          tokenAmountRaw: tokenAmountBn.toString(),
-          totalPriceRaw: totalPriceBn.toString(),
-        } as any;
+          // Listing base (for compatibility with Listing/Deal unions)
+          seller: new PublicKey(deal.maker_address),
+          tokenMint: new PublicKey(deal.token_mint_offered),
+          tokenAmount: Number(deal.amount_offered),
+          totalPrice: Number(deal.amount_requested),
+          createdAt: new Date(deal.created_at).getTime() / 1000,
+          expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
+          isActive: deal.status === "Open",
+          listingNonce: Number(deal.deal_id),
+          bump: deal.escrow_bump || 0,
+          escrowBump: deal.escrow_bump || 0,
+
+          // Deal-specific
+          dealId: listingPdaStr || String(deal.deal_id),
+          maker: new PublicKey(deal.maker_address),
+          status,
+          expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
+          amountOffered: Number(deal.amount_offered),
+          tokenMintOffered: new PublicKey(deal.token_mint_offered),
+          amountRequested: Number(deal.amount_requested),
+          tokenMintRequested: new PublicKey(deal.token_mint_requested),
+          completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null,
+        } as unknown as Deal;
       });
-      
-      return mapListingsToDeals(mappedListings);
-      
+
+      return mapped;
     } catch (error) {
-      console.error("Error fetching my listings:", error);
+      console.error("Error fetching my listings from DB:", error);
       return [];
     }
   };
