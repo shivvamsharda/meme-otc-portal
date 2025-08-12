@@ -14,6 +14,8 @@ import { useTransactionState } from '@/hooks/useTransactionState';
 import { toast } from '@/hooks/use-toast';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
+import { useTokenMetadata } from '@/hooks/useTokenMetadata';
+import TokenDisplay from '@/components/TokenDisplay';
 
 const BrowseDeals = () => {
   const navigate = useNavigate();
@@ -26,6 +28,16 @@ const BrowseDeals = () => {
   const [loading, setLoading] = useState(true);
   
   const { state: txState, setStep, reset: resetTxState, getStepMessage } = useTransactionState();
+
+  // Get unique token mints for metadata fetching
+  const tokenMints = Array.from(
+    new Set([
+      ...deals.map(deal => deal.tokenMintOffered?.toString()).filter(Boolean),
+      ...deals.map(deal => deal.tokenMintRequested?.toString()).filter(Boolean),
+    ])
+  );
+
+  const { metadata: tokenMetadata, loading: metadataLoading } = useTokenMetadata(tokenMints);
 
   const loadDeals = async () => {
     setLoading(true);
@@ -266,30 +278,40 @@ const BrowseDeals = () => {
                   {/* Offering Section */}
                   <div className="p-3 bg-muted/50 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Offering</h4>
-                    <div className="space-y-1 min-w-0">
+                    <div className="space-y-3 min-w-0">
                       <div className="min-w-0">
-                        <p className="text-lg font-bold truncate">
-                          {formatTokenAmount((deal as any).amountOfferedRaw ?? (deal as any).amountOffered, deal.tokenMintOffered.toString())} {getTokenDisplayInfo(deal.tokenMintOffered.toString()).symbol}
+                        <p className="text-lg font-bold truncate mb-2">
+                          {formatTokenAmount((deal as any).amountOfferedRaw ?? (deal as any).amountOffered, deal.tokenMintOffered.toString())}
                         </p>
+                        <TokenDisplay
+                          mintAddress={deal.tokenMintOffered.toString()}
+                          metadata={tokenMetadata.get(deal.tokenMintOffered.toString())}
+                          loading={metadataLoading}
+                          showFullName={true}
+                          showImage={true}
+                          imageSize="md"
+                        />
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {truncateAddress(deal.tokenMintOffered.toString())}
-                      </p>
                     </div>
                   </div>
 
                   {/* Requesting Section */}
                   <div className="p-3 bg-primary/5 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Requesting</h4>
-                    <div className="space-y-1 min-w-0">
+                    <div className="space-y-3 min-w-0">
                       <div className="min-w-0">
-                        <p className="text-lg font-bold truncate">
-                          {formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())} {getTokenDisplayInfo(deal.tokenMintRequested.toString()).symbol}
+                        <p className="text-lg font-bold truncate mb-2">
+                          {formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())}
                         </p>
+                        <TokenDisplay
+                          mintAddress={deal.tokenMintRequested.toString()}
+                          metadata={tokenMetadata.get(deal.tokenMintRequested.toString())}
+                          loading={metadataLoading}
+                          showFullName={true}
+                          showImage={true}
+                          imageSize="md"
+                        />
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {truncateAddress(deal.tokenMintRequested.toString())}
-                      </p>
                     </div>
                   </div>
 
