@@ -24,7 +24,7 @@ const BrowseDeals = () => {
   const database = useDatabase();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tokenDecimalsCache, setTokenDecimalsCache] = useState<Map<string, number>>(new Map());
+  
   const { state: txState, setStep, reset: resetTxState, getStepMessage } = useTransactionState();
 
   const loadDeals = async () => {
@@ -129,54 +129,15 @@ const BrowseDeals = () => {
     }
   };
 
-  // Get token decimals with caching
-  const getTokenDecimals = async (mintAddress: string): Promise<number> => {
-    if (tokenDecimalsCache.has(mintAddress)) {
-      return tokenDecimalsCache.get(mintAddress)!;
-    }
-
-    try {
-      const tokenMintInfo = await connection.getAccountInfo(new PublicKey(mintAddress));
-      if (tokenMintInfo && tokenMintInfo.data.length >= 45) {
-        const decimals = tokenMintInfo.data[44];
-        setTokenDecimalsCache(prev => new Map(prev).set(mintAddress, decimals));
-        return decimals;
-      }
-    } catch (error) {
-      console.warn("Error fetching token decimals:", error);
-    }
-    
-    // Fallback to 9 decimals
-    setTokenDecimalsCache(prev => new Map(prev).set(mintAddress, 9));
-    return 9;
-  };
-
-  const formatTokenAmount = async (amount: number | string, mintAddress: string) => {
-    const decimals = await getTokenDecimals(mintAddress);
-
-    if (typeof amount === 'string') {
-      try {
-        const base = BigInt(10) ** BigInt(decimals);
-        const amt = BigInt(amount);
-        // scale to 4 decimal places for display without floating point errors
-        const scaled = (amt * 10000n) / base;
-        const intPart = scaled / 10000n;
-        const fracPart = scaled % 10000n;
-        const fracStr = fracPart.toString().padStart(4, '0');
-        const numStr = `${intPart.toString()}.${fracStr}`;
-        return Number(numStr).toLocaleString(undefined, {
-          minimumFractionDigits: 4,
-          maximumFractionDigits: 4,
-        });
-      } catch (e) {
-        console.warn('Failed to format big amount, falling back');
-      }
-    }
+  // Simple token amount formatting without network calls
+  const formatTokenAmount = (amount: number | string, mintAddress: string) => {
+    const tokenInfo = getTokenByMint(mintAddress);
+    const decimals = tokenInfo?.decimals || 9; // Use static decimals from registry or default to 9
 
     const numeric = typeof amount === 'number' ? amount : Number(amount);
     const displayAmount = numeric / Math.pow(10, decimals);
     return displayAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 4,
+      minimumFractionDigits: 2,
       maximumFractionDigits: 4,
     });
   };
@@ -307,12 +268,9 @@ const BrowseDeals = () => {
                     <h4 className="font-semibold text-sm mb-2">Offering</h4>
                     <div className="space-y-1 min-w-0">
                       <div className="min-w-0">
-                        <TokenAmountDisplay 
-                          amount={(deal as any).amountOfferedRaw ?? (deal as any).amountOffered}
-                          mintAddress={deal.tokenMintOffered.toString()}
-                          formatTokenAmount={formatTokenAmount}
-                          getTokenDisplayInfo={getTokenDisplayInfo}
-                        />
+                        <p className="text-lg font-bold truncate">
+                          {formatTokenAmount((deal as any).amountOfferedRaw ?? (deal as any).amountOffered, deal.tokenMintOffered.toString())} {getTokenDisplayInfo(deal.tokenMintOffered.toString()).symbol}
+                        </p>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {truncateAddress(deal.tokenMintOffered.toString())}
@@ -325,12 +283,9 @@ const BrowseDeals = () => {
                     <h4 className="font-semibold text-sm mb-2">Requesting</h4>
                     <div className="space-y-1 min-w-0">
                       <div className="min-w-0">
-                        <TokenAmountDisplay 
-                          amount={deal.amountRequested} 
-                          mintAddress={deal.tokenMintRequested.toString()}
-                          formatTokenAmount={formatTokenAmount}
-                          getTokenDisplayInfo={getTokenDisplayInfo}
-                        />
+                        <p className="text-lg font-bold truncate">
+                          {formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())} {getTokenDisplayInfo(deal.tokenMintRequested.toString()).symbol}
+                        </p>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {truncateAddress(deal.tokenMintRequested.toString())}
@@ -381,31 +336,5 @@ const BrowseDeals = () => {
   );
 };
 
-// Component to handle async token amount display
-const TokenAmountDisplay = ({ 
-  amount, 
-  mintAddress, 
-  formatTokenAmount, 
-  getTokenDisplayInfo 
-}: {
-  amount: number | string;
-  mintAddress: string;
-  formatTokenAmount: (amount: number | string, mintAddress: string) => Promise<string>;
-  getTokenDisplayInfo: (mintAddress: string) => { symbol: string; name: string };
-}) => {
-  const [formattedAmount, setFormattedAmount] = useState<string>('...');
-  
-  useEffect(() => {
-    formatTokenAmount(amount, mintAddress).then(setFormattedAmount);
-  }, [amount, mintAddress, formatTokenAmount]);
-  
-  const tokenInfo = getTokenDisplayInfo(mintAddress);
-  
-  return (
-    <p className="text-lg font-bold truncate">
-      {formattedAmount} {tokenInfo.symbol}
-    </p>
-  );
-};
 
 export default BrowseDeals;
