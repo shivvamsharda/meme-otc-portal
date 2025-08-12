@@ -27,7 +27,17 @@ const DealDetails = () => {
     setLoading(true);
     try {
       const allDeals = await getDeals();
-      const foundDeal = allDeals.find(d => d.dealId.toString() === id);
+      console.log('Looking for deal with ID:', id);
+      console.log('All deals:', allDeals.map(d => ({ dealId: d.dealId, deal_id: (d as any).deal_id })));
+      
+      // Try to find deal by both dealId and deal_id fields
+      const foundDeal = allDeals.find(d => {
+        const dealIdMatch = d.dealId && d.dealId.toString() === id;
+        const dealDbIdMatch = (d as any).deal_id && (d as any).deal_id.toString() === id;
+        return dealIdMatch || dealDbIdMatch;
+      });
+      
+      console.log('Found deal:', foundDeal);
       setDeal(foundDeal || null);
     } catch (error) {
       console.error('Failed to load deal:', error);
