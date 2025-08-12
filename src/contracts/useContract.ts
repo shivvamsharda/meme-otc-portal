@@ -568,26 +568,62 @@ export const useContract = () => {
       
       if (dbDeals.length > 0) {
         console.log(`Found ${dbDeals.length} deals in database`);
-        return dbDeals.map(deal => ({
-          seller: new PublicKey(deal.maker_address),
-          tokenMint: new PublicKey(deal.token_mint_offered),
-          tokenAmount: deal.amount_offered,
-          totalPrice: deal.amount_requested,
-          createdAt: new Date(deal.created_at).getTime() / 1000,
-          expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
-          isActive: deal.status === 'Open',
-          listingNonce: deal.deal_id,
-          bump: deal.escrow_bump || 0,
-          escrowBump: deal.escrow_bump || 0,
-          dealId: deal.deal_id.toString(),
-          status: { [deal.status.toLowerCase()]: {} },
-          expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
-          amountOffered: deal.amount_offered,
-          tokenMintOffered: new PublicKey(deal.token_mint_offered),
-          amountRequested: deal.amount_requested,
-          tokenMintRequested: new PublicKey(deal.token_mint_requested),
-          completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
-        }));
+        return dbDeals.map((deal) => {
+          // Derive canonical listing PDA so detail routes use PDA id
+          let listingPdaStr: string | null = null;
+          try {
+            const [listingPda] = PublicKey.findProgramAddressSync(
+              [
+                Buffer.from("listing"),
+                new PublicKey(deal.maker_address).toBuffer(),
+                new PublicKey(deal.token_mint_offered).toBuffer(),
+                new BN(deal.deal_id).toArrayLike(Buffer, "le", 8),
+              ],
+              MEMEOTC_CONFIG.programId
+            );
+            listingPdaStr = listingPda.toString();
+          } catch (e) {
+            console.warn("Failed to derive listing PDA, falling back to nonce string", e);
+            listingPdaStr = String(deal.deal_id);
+          }
+
+          const status = (() => {
+            switch (deal.status) {
+              case "Open":
+                return { Open: true } as Record<string, unknown>;
+              case "Cancelled":
+                return { Cancelled: true } as Record<string, unknown>;
+              case "Completed":
+                return { Completed: true } as Record<string, unknown>;
+              case "Expired":
+                return { Expired: true } as Record<string, unknown>;
+              default:
+                return { Unknown: true } as Record<string, unknown>;
+            }
+          })();
+
+          return {
+            seller: new PublicKey(deal.maker_address),
+            tokenMint: new PublicKey(deal.token_mint_offered),
+            tokenAmount: deal.amount_offered,
+            totalPrice: deal.amount_requested,
+            createdAt: new Date(deal.created_at).getTime() / 1000,
+            expiresAt: new Date(deal.expiry_timestamp).getTime() / 1000,
+            isActive: deal.status === 'Open',
+            listingNonce: deal.deal_id,
+            bump: deal.escrow_bump || 0,
+            escrowBump: deal.escrow_bump || 0,
+            dealId: listingPdaStr || String(deal.deal_id),
+            maker: new PublicKey(deal.maker_address),
+            status,
+            expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
+            amountOffered: deal.amount_offered,
+            tokenMintOffered: new PublicKey(deal.token_mint_offered),
+            amountRequested: deal.amount_requested,
+            tokenMintRequested: new PublicKey(deal.token_mint_requested),
+            completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
+          } as any;
+        });
       }
 
       // Fallback to blockchain if database is empty
