@@ -63,8 +63,10 @@ const LiveListings = () => {
 
   useRealtimeDeals(fetchDeals);
 
-  const handleViewDeal = (dealId: string) => {
-    navigate(`/deal/${dealId}`);
+  const handleViewDeal = (dealId: string | number) => {
+    // Convert scientific notation to string if needed
+    const idString = typeof dealId === 'number' ? dealId.toString() : dealId;
+    navigate(`/deal/${idString}`);
   };
 
   return (
