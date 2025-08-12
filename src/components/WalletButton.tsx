@@ -7,15 +7,18 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { LogOut, Unplug } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-
+import { createSolanaWalletAdapter } from '@/utils/walletAdapter'
 export const WalletButton = () => {
   const wallet = useWallet()
   const { user, signOut } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSolanaSignIn = async () => {
-    if (!wallet.connected || !wallet.signMessage || !wallet.publicKey) {
-      console.error('Wallet not connected or does not support message signing')
+    const hasSignIn = typeof (wallet as any).signIn === 'function'
+    const hasSignMessage = typeof wallet.signMessage === 'function'
+
+    if (!wallet.connected || !wallet.publicKey || (!hasSignIn && !hasSignMessage)) {
+      console.error('Wallet not connected or does not support required signing capabilities')
       toast({
         title: "Wallet Error",
         description: "Please connect your wallet first",
@@ -25,14 +28,11 @@ export const WalletButton = () => {
     }
 
     try {
-      // Use the wallet directly with signInWithWeb3 - Supabase handles the compatibility
+      const adaptedWallet = createSolanaWalletAdapter(wallet as any)
       await supabase.auth.signInWithWeb3({
         chain: 'solana',
         statement: 'I accept the Terms of Service for MemeOTC',
-        wallet: {
-          ...wallet,
-          publicKey: wallet.publicKey.toBytes(),
-        } as any, // Use type assertion to bypass the strict typing
+        wallet: adaptedWallet as any,
       })
     } catch (error) {
       console.error('Error signing in with Solana:', error)
