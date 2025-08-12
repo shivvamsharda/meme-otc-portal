@@ -176,9 +176,11 @@ const MyDeals = () => {
   const DealCard = ({ deal }: { deal: Deal }) => (
     <Card key={deal.dealId} className="hover:shadow-lg transition-shadow">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Deal #{deal.dealId}</CardTitle>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between min-w-0">
+          <CardTitle className="text-lg truncate min-w-0">
+            Deal #{typeof deal.dealId === 'string' ? deal.dealId.slice(0, 8) + '...' : deal.dealId}
+          </CardTitle>
+          <div className="flex items-center gap-2 flex-shrink-0">
             {getStatusBadge(deal.status)}
             {'Open' in deal.status && (
               <Badge variant="outline" className="flex items-center gap-1">
@@ -188,43 +190,47 @@ const MyDeals = () => {
             )}
           </div>
         </div>
-        <CardDescription>
+        <CardDescription className="truncate">
           {isMyDeal(deal) ? 'Created by you' : `Accepted from ${truncateAddress(deal.maker.toString())}`}
         </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4">
         {/* Deal Details */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-muted/50 rounded-lg">
+        <div className="grid grid-cols-2 gap-4 min-w-0">
+          <div className="p-3 bg-muted/50 rounded-lg min-w-0">
             <h4 className="font-semibold text-sm mb-2">
               {isMyDeal(deal) ? 'You Offer' : 'You Get'}
             </h4>
-            <div className="space-y-1">
-              <TokenAmountDisplay 
-                amount={deal.amountOffered}
-                mintAddress={deal.tokenMintOffered.toString()}
-                formatTokenAmount={formatTokenAmount}
-                getTokenDisplayInfo={getTokenDisplayInfo}
-              />
-              <p className="text-xs text-muted-foreground break-all">
+            <div className="space-y-1 min-w-0">
+              <div className="min-w-0">
+                <TokenAmountDisplay 
+                  amount={deal.amountOffered}
+                  mintAddress={deal.tokenMintOffered.toString()}
+                  formatTokenAmount={formatTokenAmount}
+                  getTokenDisplayInfo={getTokenDisplayInfo}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
                 {truncateAddress(deal.tokenMintOffered.toString())}
               </p>
             </div>
           </div>
 
-          <div className="p-3 bg-primary/5 rounded-lg">
+          <div className="p-3 bg-primary/5 rounded-lg min-w-0">
             <h4 className="font-semibold text-sm mb-2">
               {isMyDeal(deal) ? 'You Get' : 'You Pay'}
             </h4>
-            <div className="space-y-1">
-              <TokenAmountDisplay 
-                amount={deal.amountRequested}
-                mintAddress={deal.tokenMintRequested.toString()}
-                formatTokenAmount={formatTokenAmount}
-                getTokenDisplayInfo={getTokenDisplayInfo}
-              />
-              <p className="text-xs text-muted-foreground break-all">
+            <div className="space-y-1 min-w-0">
+              <div className="min-w-0">
+                <TokenAmountDisplay 
+                  amount={deal.amountRequested}
+                  mintAddress={deal.tokenMintRequested.toString()}
+                  formatTokenAmount={formatTokenAmount}
+                  getTokenDisplayInfo={getTokenDisplayInfo}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
                 {truncateAddress(deal.tokenMintRequested.toString())}
               </p>
             </div>
@@ -236,9 +242,9 @@ const MyDeals = () => {
           <Button
             variant="outline"
             onClick={() => navigate(`/deal/${deal.dealId}`)}
-            className="flex-1"
+            className="flex-1 min-w-0"
           >
-            View Details
+            <span className="truncate">View Details</span>
           </Button>
           
           {canCancelDeal(deal) && (
@@ -246,7 +252,7 @@ const MyDeals = () => {
               variant="destructive"
               onClick={() => handleCancelDeal(deal.dealId as string)}
               disabled={cancellingDeal === deal.dealId}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 flex-shrink-0"
             >
               <X className="w-4 h-4" />
               {cancellingDeal === deal.dealId ? 'Cancelling...' : 'Cancel'}
@@ -374,7 +380,7 @@ const TokenAmountDisplay = ({
   const tokenInfo = getTokenDisplayInfo(mintAddress);
   
   return (
-    <p className="text-lg font-bold">
+    <p className="text-lg font-bold truncate">
       {formattedAmount} {tokenInfo.symbol}
     </p>
   );

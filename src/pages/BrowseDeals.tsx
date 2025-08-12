@@ -287,46 +287,52 @@ const BrowseDeals = () => {
             {visibleDeals.map((deal) => (
               <Card key={deal.dealId} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Deal #{deal.dealId}</CardTitle>
-                    <Badge variant="secondary" className="flex items-center gap-1">
+                  <div className="flex items-center justify-between min-w-0">
+                    <CardTitle className="text-lg truncate min-w-0">
+                      Deal #{typeof deal.dealId === 'string' ? deal.dealId.slice(0, 8) + '...' : deal.dealId}
+                    </CardTitle>
+                    <Badge variant="secondary" className="flex items-center gap-1 flex-shrink-0">
                       <Clock className="w-3 h-3" />
                       {formatTimeRemaining(deal.expiryTimestamp)}
                     </Badge>
                   </div>
-                  <CardDescription>
+                  <CardDescription className="truncate">
                     Maker: {truncateAddress(deal.maker.toString())}
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
                   {/* Offering Section */}
-                  <div className="p-3 bg-muted/50 rounded-lg">
+                  <div className="p-3 bg-muted/50 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Offering</h4>
-                    <div className="space-y-1">
-                      <TokenAmountDisplay 
-                        amount={(deal as any).amountOfferedRaw ?? (deal as any).amountOffered}
-                        mintAddress={deal.tokenMintOffered.toString()}
-                        formatTokenAmount={formatTokenAmount}
-                        getTokenDisplayInfo={getTokenDisplayInfo}
-                      />
-                      <p className="text-xs text-muted-foreground break-all">
+                    <div className="space-y-1 min-w-0">
+                      <div className="min-w-0">
+                        <TokenAmountDisplay 
+                          amount={(deal as any).amountOfferedRaw ?? (deal as any).amountOffered}
+                          mintAddress={deal.tokenMintOffered.toString()}
+                          formatTokenAmount={formatTokenAmount}
+                          getTokenDisplayInfo={getTokenDisplayInfo}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
                         {truncateAddress(deal.tokenMintOffered.toString())}
                       </p>
                     </div>
                   </div>
 
                   {/* Requesting Section */}
-                  <div className="p-3 bg-primary/5 rounded-lg">
+                  <div className="p-3 bg-primary/5 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Requesting</h4>
-                    <div className="space-y-1">
-                      <TokenAmountDisplay 
-                        amount={deal.amountRequested} 
-                        mintAddress={deal.tokenMintRequested.toString()}
-                        formatTokenAmount={formatTokenAmount}
-                        getTokenDisplayInfo={getTokenDisplayInfo}
-                      />
-                      <p className="text-xs text-muted-foreground break-all">
+                    <div className="space-y-1 min-w-0">
+                      <div className="min-w-0">
+                        <TokenAmountDisplay 
+                          amount={deal.amountRequested} 
+                          mintAddress={deal.tokenMintRequested.toString()}
+                          formatTokenAmount={formatTokenAmount}
+                          getTokenDisplayInfo={getTokenDisplayInfo}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
                         {truncateAddress(deal.tokenMintRequested.toString())}
                       </p>
                     </div>
@@ -337,17 +343,19 @@ const BrowseDeals = () => {
                      <Button
                       onClick={() => handleAcceptDeal(deal.dealId as string)}
                       disabled={!isAuthenticated || txState.isLoading}
-                      className="w-full"
+                      className="w-full min-w-0"
                     >
-                      {txState.isLoading ? getStepMessage(txState.step) : 'Accept Deal'}
+                      <span className="truncate">
+                        {txState.isLoading ? getStepMessage(txState.step) : 'Accept Deal'}
+                      </span>
                     </Button>
                     
                     <Button
                       variant="outline"
                       onClick={() => navigate(`/deal/${deal.dealId}`)}
-                      className="w-full"
+                      className="w-full min-w-0"
                     >
-                      View Details
+                      <span className="truncate">View Details</span>
                     </Button>
                   </div>
 
@@ -359,7 +367,7 @@ const BrowseDeals = () => {
 
                   {/* Transaction Progress */}
                   {txState.isLoading && (
-                    <div className="text-xs text-center text-muted-foreground">
+                    <div className="text-xs text-center text-muted-foreground truncate">
                       {getStepMessage(txState.step)}
                     </div>
                   )}
@@ -394,7 +402,7 @@ const TokenAmountDisplay = ({
   const tokenInfo = getTokenDisplayInfo(mintAddress);
   
   return (
-    <p className="text-lg font-bold">
+    <p className="text-lg font-bold truncate">
       {formattedAmount} {tokenInfo.symbol}
     </p>
   );
