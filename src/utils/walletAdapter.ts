@@ -9,7 +9,6 @@ export const createSolanaWalletAdapter = (wallet: WalletContextState) => {
 
   const adapted: any = {
     ...wallet,
-    publicKey: new Uint8Array(wallet.publicKey.toBytes()),
     connected: wallet.connected,
   }
 
