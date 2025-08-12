@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
-import TokenDisplay from '@/components/TokenDisplay'; // Fixed import
+import { useTokenMetadata } from '@/hooks/useTokenMetadata';
+import TokenDisplay from '@/components/TokenDisplay';
 
 const LiveListings = () => {
   const navigate = useNavigate();
@@ -18,6 +19,14 @@ const LiveListings = () => {
     successRate: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // Extract unique mint addresses for metadata fetching
+  const mintAddresses = deals.flatMap(deal => [
+    deal.token_mint_offered,
+    deal.token_mint_requested
+  ]).filter(Boolean);
+
+  const { metadata: tokenMetadata } = useTokenMetadata(mintAddresses);
 
   const fetchDeals = async () => {
     try {
@@ -106,11 +115,13 @@ const LiveListings = () => {
                       <TableCell>
                         <TokenDisplay
                           mintAddress={deal.token_mint_offered}
+                          metadata={tokenMetadata.get(deal.token_mint_offered)}
                           storedSymbol={deal.token_offered_symbol}
                           storedName={deal.token_offered_name}
                           storedImage={deal.token_offered_image}
                           showImage={true}
-                          showFullName={false}
+                          showFullName={true}
+                          imageSize="md"
                         />
                       </TableCell>
                       <TableCell className="font-medium">
@@ -119,11 +130,13 @@ const LiveListings = () => {
                       <TableCell>
                         <TokenDisplay
                           mintAddress={deal.token_mint_requested}
+                          metadata={tokenMetadata.get(deal.token_mint_requested)}
                           storedSymbol={deal.token_requested_symbol}
                           storedName={deal.token_requested_name}
                           storedImage={deal.token_requested_image}
                           showImage={true}
-                          showFullName={false}
+                          showFullName={true}
+                          imageSize="md"
                         />
                       </TableCell>
                       <TableCell className="font-medium">
