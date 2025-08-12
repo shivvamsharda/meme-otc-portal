@@ -149,8 +149,8 @@ const LiveListings = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            console.log('Navigating to deal:', deal.deal_id, 'Type:', typeof deal.deal_id);
-                            handleViewDeal(deal.deal_id);
+                            console.log('Navigating to deal with PDA:', deal.dealId, 'Type:', typeof deal.dealId);
+                            handleViewDeal(deal.dealId);
                           }}
                         >
                           View Deal

@@ -62,6 +62,7 @@ export const calculatePricePerToken = (totalPrice: number, tokenAmount: number, 
 
 export interface Deal extends Listing {
   dealId?: string;
+  deal_id?: number; // Database numeric ID for fallback lookup
   maker?: PublicKey;
   status?: Record<string, unknown>;
   expiryTimestamp?: number;

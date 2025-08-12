@@ -622,6 +622,7 @@ export const useContract = () => {
             bump: deal.escrow_bump || 0,
             escrowBump: deal.escrow_bump || 0,
             dealId: listingPdaStr || String(deal.deal_id),
+            deal_id: deal.deal_id, // Expose numeric database ID for fallback
             maker: new PublicKey(deal.maker_address),
             status,
             expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
