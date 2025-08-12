@@ -6,11 +6,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
 import { useTokenMetadata } from '@/hooks/useTokenMetadata';
+import { useContract } from '@/contracts/useContract';
 import TokenDisplay from '@/components/TokenDisplay';
 
 const LiveListings = () => {
   const navigate = useNavigate();
   const { getDeals } = useDatabase();
+  const { generateListingPDAReadOnly } = useContract();
   const [deals, setDeals] = useState<any[]>([]);
   const [stats, setStats] = useState({
     activeListings: 0,
@@ -32,7 +34,21 @@ const LiveListings = () => {
     try {
       const openDeals = await getDeals(true); // Only open deals
       const recentDeals = openDeals.slice(0, 5); // Limit to 5
-      setDeals(recentDeals);
+      
+      // Map deals to include PDA-based dealId like BrowseDeals does
+      const mappedDeals = recentDeals.map(deal => {
+        const listingPDA = generateListingPDAReadOnly(
+          deal.maker_address,
+          deal.token_mint_offered,
+          deal.deal_id
+        );
+        return {
+          ...deal,
+          dealId: listingPDA || deal.deal_id.toString()
+        };
+      });
+      
+      setDeals(mappedDeals);
       
       // Calculate stats
       const allDeals = await getDeals(false);
@@ -148,10 +164,7 @@ const LiveListings = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            console.log('Navigating to deal with PDA:', deal.dealId, 'Type:', typeof deal.dealId);
-                            handleViewDeal(deal.dealId);
-                          }}
+                          onClick={() => handleViewDeal(deal.dealId)}
                         >
                           View Deal
                         </Button>
