@@ -623,7 +623,9 @@ export const useContract = () => {
             tokenMintOffered: new PublicKey(deal.token_mint_offered),
             amountRequested: deal.amount_requested,
             tokenMintRequested: new PublicKey(deal.token_mint_requested),
-            completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
+            completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null,
+            amountOfferedDisplay: deal.amount_offered_display,
+            amountRequestedDisplay: deal.amount_requested_display
           } as any;
         });
       }

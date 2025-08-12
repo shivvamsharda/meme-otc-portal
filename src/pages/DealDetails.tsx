@@ -242,7 +242,7 @@ const DealDetails = () => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl font-bold">
-                            {(deal as any).amountOfferedDisplay ?? getDisplayAmount(deal.amountOffered)}
+                            {deal.amountOfferedDisplay ?? getDisplayAmount(deal.amountOffered)}
                           </span>
                           <TokenDisplay
                             mintAddress={deal.tokenMintOffered.toString()}
@@ -266,7 +266,7 @@ const DealDetails = () => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl font-bold text-green-600">
-                            {(deal as any).amountRequestedDisplay ?? getDisplayAmount(deal.amountRequested)}
+                            {deal.amountRequestedDisplay ?? getDisplayAmount(deal.amountRequested)}
                           </span>
                           <TokenDisplay
                             mintAddress={deal.tokenMintRequested.toString()}
@@ -292,8 +292,8 @@ const DealDetails = () => {
                     <p className="text-lg">
                       1 {metadata.get(deal.tokenMintOffered.toString())?.symbol || 'Token'} = {
                         (() => {
-                          const offeredAmount = (deal as any).amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered));
-                          const requestedAmount = (deal as any).amountRequestedDisplay ?? parseFloat(getDisplayAmount(deal.amountRequested));
+                          const offeredAmount = deal.amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered));
+                          const requestedAmount = deal.amountRequestedDisplay ?? parseFloat(getDisplayAmount(deal.amountRequested));
                           return (requestedAmount / offeredAmount).toFixed(6);
                         })()
                       } {metadata.get(deal.tokenMintRequested.toString())?.symbol || 'Tokens'}

@@ -63,4 +63,6 @@ export interface Deal extends Listing {
   amountRequested?: number;
   tokenMintRequested?: PublicKey;
   completedAt?: number | null;
+  amountOfferedDisplay?: number;
+  amountRequestedDisplay?: number;
 }
