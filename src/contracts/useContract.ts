@@ -388,23 +388,18 @@ export const useContract = () => {
         .preInstructions(preInstructions)
         .rpc();
 
-      // Update database after successful purchase via Edge Function (no client auth required)
+      // Update database directly after successful purchase
       try {
         if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
-          const { error: fnErr } = await supabase.functions.invoke('update-deal-status', {
-            body: {
-              deal_id: dealIdForDb,
-              status: 'Completed',
-              taker_address: wallet.publicKey.toString(),
-              transaction_signature: tx,
-              transaction_type: 'accept',
-              user_address: wallet.publicKey.toString(),
-            },
+          await database.updateDealStatus(dealIdForDb, 'Completed', {
+            taker_address: wallet.publicKey.toString(),
+            completed_at: new Date().toISOString(),
           });
-          if (fnErr) throw fnErr as any;
+          await database.updateDealWithTransaction(dealIdForDb, tx, true);
+          await database.updateTransactionStatus(dealIdForDb, 'accept', 'confirmed', tx);
         }
       } catch (dbErr) {
-        console.error('Failed to update DB after accept (edge function):', dbErr);
+        console.error('Failed to update DB after accept:', dbErr);
       }
 
       toast({
@@ -521,22 +516,15 @@ export const useContract = () => {
         .preInstructions(preInstructions)
         .rpc();
 
-      // Update database after successful cancel via Edge Function (no client auth required)
+      // Update database directly after successful cancel
       try {
         if (typeof dealIdForDb === 'number' && !Number.isNaN(dealIdForDb)) {
-          const { error: fnErr } = await supabase.functions.invoke('update-deal-status', {
-            body: {
-              deal_id: dealIdForDb,
-              status: 'Cancelled',
-              transaction_signature: tx,
-              transaction_type: 'cancel',
-              user_address: wallet.publicKey.toString(),
-            },
-          });
-          if (fnErr) throw fnErr as any;
+          await database.updateDealStatus(dealIdForDb, 'Cancelled');
+          await database.updateDealWithTransaction(dealIdForDb, tx, true);
+          await database.updateTransactionStatus(dealIdForDb, 'cancel', 'confirmed', tx);
         }
       } catch (dbErr) {
-        console.error('Failed to update DB after cancel (edge function):', dbErr);
+        console.error('Failed to update DB after cancel:', dbErr);
       }
 
       toast({
