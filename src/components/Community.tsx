@@ -6,7 +6,6 @@ const Community = () => {
       icon: Twitter,
       name: "Twitter",
       handle: "@meme_otc",
-      followers: "12.4K",
       color: "primary",
       link: "https://x.com/meme_otc"
     },
@@ -14,32 +13,11 @@ const Community = () => {
       icon: Send,
       name: "Telegram",
       handle: "t.me/meme_otc", 
-      followers: "8.9K",
       color: "accent",
       link: "https://t.me/meme_otc"
     }
   ];
 
-  const leaderboards = [
-    {
-      title: "Most Traded Tokens",
-      items: [
-        { name: "BONK", volume: "420K SOL", rank: 1 },
-        { name: "PEPE", volume: "380K SOL", rank: 2 },
-        { name: "DOGE", volume: "310K SOL", rank: 3 },
-        { name: "SHIB", volume: "280K SOL", rank: 4 }
-      ]
-    },
-    {
-      title: "Biggest OTC Buys",
-      items: [
-        { name: "degen_ape.sol", volume: "125 SOL", rank: 1 },
-        { name: "meme_lord.sol", volume: "98 SOL", rank: 2 },
-        { name: "bonk_king.sol", volume: "87 SOL", rank: 3 },
-        { name: "pepe_chad.sol", volume: "76 SOL", rank: 4 }
-      ]
-    }
-  ];
 
   const getGradientClass = (color: string) => {
     switch (color) {
@@ -85,7 +63,6 @@ const Community = () => {
                       {social.name}
                     </h3>
                     <p className="text-muted-foreground mt-1">{social.handle}</p>
-                    <p className="text-sm font-semibold mt-2">{social.followers} members</p>
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
@@ -98,38 +75,27 @@ const Community = () => {
           })}
         </div>
 
-        {/* Leaderboards */}
+        {/* Community Stats */}
         <div className="grid lg:grid-cols-2 gap-8 mb-20">
-          {leaderboards.map((board, boardIndex) => (
-            <div 
-              key={boardIndex}
-              className="card-glow p-8 rounded-3xl animate-on-scroll"
-              style={{ animationDelay: `${boardIndex * 200}ms` }}
-            >
-              <h3 className="text-2xl font-bold mb-6 gradient-text-primary">
-                {board.title}
-              </h3>
-              
-              <div className="space-y-4">
-                {board.items.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        item.rank === 1 ? 'bg-gradient-primary text-white' :
-                        item.rank === 2 ? 'bg-gradient-secondary text-white' :
-                        item.rank === 3 ? 'bg-gradient-accent text-white' :
-                        'bg-muted text-foreground'
-                      }`}>
-                        {item.rank}
-                      </div>
-                      <span className="font-semibold">{item.name}</span>
-                    </div>
-                    <span className="text-muted-foreground font-medium">{item.volume}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="card-glow p-8 rounded-3xl animate-on-scroll text-center">
+            <h3 className="text-2xl font-bold mb-6 gradient-text-primary">
+              Most Traded Tokens
+            </h3>
+            <div className="text-muted-foreground">
+              <p className="text-lg mb-2">Coming Soon</p>
+              <p className="text-sm">Real trading data will appear here once the platform goes live</p>
             </div>
-          ))}
+          </div>
+          
+          <div className="card-glow p-8 rounded-3xl animate-on-scroll text-center">
+            <h3 className="text-2xl font-bold mb-6 gradient-text-primary">
+              Biggest OTC Buys
+            </h3>
+            <div className="text-muted-foreground">
+              <p className="text-lg mb-2">Coming Soon</p>
+              <p className="text-sm">Top traders will be featured here once deals are completed</p>
+            </div>
+          </div>
         </div>
 
         {/* Footer Quote */}
