@@ -1,24 +1,28 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useContract } from '@/contracts/useContract';
 import { Deal } from '@/contracts/types';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { getTokenByMint } from '@/contracts/tokens';
 import { Coins, Clock, RefreshCw, TrendingUp, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
 
 const MyDeals = () => {
   const navigate = useNavigate();
+  const { connection } = useConnection();
   const { publicKey } = useWallet();
   const { getMyDeals, cancelDeal, isAuthenticated } = useContract();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingDeal, setCancellingDeal] = useState<string | null>(null);
+  const [tokenDecimalsCache, setTokenDecimalsCache] = useState<Map<string, number>>(new Map());
 
   const loadMyDeals = async () => {
     if (!isAuthenticated) return;
@@ -53,8 +57,65 @@ const MyDeals = () => {
     }
   };
 
-  const formatTokenAmount = (amount: number) => {
-    return (amount / 1e9).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  // Get token decimals with caching
+  const getTokenDecimals = async (mintAddress: string): Promise<number> => {
+    if (tokenDecimalsCache.has(mintAddress)) {
+      return tokenDecimalsCache.get(mintAddress)!;
+    }
+
+    try {
+      const tokenMintInfo = await connection.getAccountInfo(new PublicKey(mintAddress));
+      if (tokenMintInfo && tokenMintInfo.data.length >= 45) {
+        const decimals = tokenMintInfo.data[44];
+        setTokenDecimalsCache(prev => new Map(prev).set(mintAddress, decimals));
+        return decimals;
+      }
+    } catch (error) {
+      console.warn("Error fetching token decimals:", error);
+    }
+    
+    // Fallback to 9 decimals
+    setTokenDecimalsCache(prev => new Map(prev).set(mintAddress, 9));
+    return 9;
+  };
+
+  const formatTokenAmount = async (amount: number | string, mintAddress: string) => {
+    const decimals = await getTokenDecimals(mintAddress);
+
+    if (typeof amount === 'string') {
+      try {
+        const base = BigInt(10) ** BigInt(decimals);
+        const amt = BigInt(amount);
+        // scale to 4 decimal places for display without floating point errors
+        const scaled = (amt * 10000n) / base;
+        const intPart = scaled / 10000n;
+        const fracPart = scaled % 10000n;
+        const fracStr = fracPart.toString().padStart(4, '0');
+        const numStr = `${intPart.toString()}.${fracStr}`;
+        return Number(numStr).toLocaleString(undefined, {
+          minimumFractionDigits: 4,
+          maximumFractionDigits: 4,
+        });
+      } catch (e) {
+        console.warn('Failed to format big amount, falling back');
+      }
+    }
+
+    const numeric = typeof amount === 'number' ? amount : Number(amount);
+    const displayAmount = numeric / Math.pow(10, decimals);
+    return displayAmount.toLocaleString(undefined, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    });
+  };
+
+  // Get token display info
+  const getTokenDisplayInfo = (mintAddress: string) => {
+    const tokenInfo = getTokenByMint(mintAddress);
+    return {
+      symbol: tokenInfo?.symbol || truncateAddress(mintAddress),
+      name: tokenInfo?.name || 'Unknown Token'
+    };
   };
 
   const formatTimeRemaining = (expiryTimestamp: number) => {
@@ -140,7 +201,12 @@ const MyDeals = () => {
               {isMyDeal(deal) ? 'You Offer' : 'You Get'}
             </h4>
             <div className="space-y-1">
-              <p className="text-lg font-bold">{formatTokenAmount(deal.amountOffered)}</p>
+              <TokenAmountDisplay 
+                amount={deal.amountOffered}
+                mintAddress={deal.tokenMintOffered.toString()}
+                formatTokenAmount={formatTokenAmount}
+                getTokenDisplayInfo={getTokenDisplayInfo}
+              />
               <p className="text-xs text-muted-foreground break-all">
                 {truncateAddress(deal.tokenMintOffered.toString())}
               </p>
@@ -152,7 +218,12 @@ const MyDeals = () => {
               {isMyDeal(deal) ? 'You Get' : 'You Pay'}
             </h4>
             <div className="space-y-1">
-              <p className="text-lg font-bold">{formatTokenAmount(deal.amountRequested)}</p>
+              <TokenAmountDisplay 
+                amount={deal.amountRequested}
+                mintAddress={deal.tokenMintRequested.toString()}
+                formatTokenAmount={formatTokenAmount}
+                getTokenDisplayInfo={getTokenDisplayInfo}
+              />
               <p className="text-xs text-muted-foreground break-all">
                 {truncateAddress(deal.tokenMintRequested.toString())}
               </p>
@@ -279,6 +350,33 @@ const MyDeals = () => {
         </Tabs>
       </div>
     </div>
+  );
+};
+
+// Component to handle async token amount display
+const TokenAmountDisplay = ({ 
+  amount, 
+  mintAddress, 
+  formatTokenAmount, 
+  getTokenDisplayInfo 
+}: {
+  amount: number | string;
+  mintAddress: string;
+  formatTokenAmount: (amount: number | string, mintAddress: string) => Promise<string>;
+  getTokenDisplayInfo: (mintAddress: string) => { symbol: string; name: string };
+}) => {
+  const [formattedAmount, setFormattedAmount] = useState<string>('...');
+  
+  useEffect(() => {
+    formatTokenAmount(amount, mintAddress).then(setFormattedAmount);
+  }, [amount, mintAddress, formatTokenAmount]);
+  
+  const tokenInfo = getTokenDisplayInfo(mintAddress);
+  
+  return (
+    <p className="text-lg font-bold">
+      {formattedAmount} {tokenInfo.symbol}
+    </p>
   );
 };
 
