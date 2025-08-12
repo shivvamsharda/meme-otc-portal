@@ -1,5 +1,6 @@
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 const FloatingPaths = ({
   position
 }: {
@@ -30,6 +31,16 @@ const FloatingPaths = ({
     </div>;
 };
 const Hero = () => {
+  const navigate = useNavigate();
+
+  const handleCreateDeal = () => {
+    navigate('/create-deal');
+  };
+
+  const handleBrowseDeals = () => {
+    navigate('/deals');
+  };
+
   return <section className="relative min-h-screen flex items-start justify-center overflow-hidden bg-background pt-20 md:pt-24">
       {/* Clean dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
@@ -79,14 +90,20 @@ const Hero = () => {
 
           {/* CTA Buttons - styled like reference */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <button className="group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3">
-              <span>Start Trading</span>
+            <button 
+              onClick={handleCreateDeal}
+              className="group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3"
+            >
+              <span>Create Deal</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
             </button>
             
-            <button className="group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3">
-              <Play className="w-5 h-5" />
-              <span>View Demo</span>
+            <button 
+              onClick={handleBrowseDeals}
+              className="group px-10 py-4 bg-card/80 backdrop-blur-xl border border-border rounded-2xl font-semibold text-lg text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 flex items-center gap-3"
+            >
+              <Search className="w-5 h-5" />
+              <span>Browse Deals</span>
             </button>
           </div>
 
