@@ -1,6 +1,28 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useDatabase } from '@/hooks/useDatabase';
+import { useEffect, useState } from 'react';
+import { TokenDisplay } from '@/components/TokenDisplay';
+import { Button } from '@/components/ui/button';
 
 const LiveListings = () => {
+  const { getDeals } = useDatabase();
+  const [deals, setDeals] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDeals = async () => {
+      try {
+        const data = await getDeals(true); // Only open deals
+        setDeals(data.slice(0, 5)); // Show first 5 deals
+      } catch (error) {
+        console.error('Error loading deals:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDeals();
+  }, []);
 
   return (
     <section className="py-32 relative">
@@ -21,21 +43,65 @@ const LiveListings = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Token</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>24h Change</TableHead>
+                <TableHead>Offering</TableHead>
+                <TableHead>Requesting</TableHead>
+                <TableHead>Deal ID</TableHead>
+                <TableHead>Maker</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-12">
-                  <div className="text-muted-foreground">
-                    No active listings yet. Create your first deal to get started.
-                  </div>
-                </TableCell>
-              </TableRow>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="text-muted-foreground">Loading deals...</div>
+                  </TableCell>
+                </TableRow>
+              ) : deals.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="text-muted-foreground">
+                      No active listings yet. Create your first deal to get started.
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                deals.map((deal) => (
+                  <TableRow key={deal.id}>
+                    <TableCell>
+                      <TokenDisplay
+                        mintAddress={deal.token_mint_offered}
+                        amount={`${(deal.amount_offered / Math.pow(10, 9)).toFixed(2)}`}
+                        name={deal.token_offered_name}
+                        symbol={deal.token_offered_symbol}
+                        image={deal.token_offered_image}
+                        showAmount={false}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TokenDisplay
+                        mintAddress={deal.token_mint_requested}
+                        amount={`${(deal.amount_requested / Math.pow(10, 9)).toFixed(2)}`}
+                        name={deal.token_requested_name}
+                        symbol={deal.token_requested_symbol}
+                        image={deal.token_requested_image}
+                        showAmount={false}
+                      />
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      #{deal.deal_id.toString().slice(0, 8)}...
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {deal.maker_address.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="outline">
+                        View Deal
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
@@ -44,7 +110,7 @@ const LiveListings = () => {
         <div className="glass-effect rounded-2xl p-6 animate-on-scroll">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-2xl font-bold gradient-text-primary">0</div>
+              <div className="text-2xl font-bold gradient-text-primary">{deals.length}</div>
               <div className="text-sm text-muted-foreground">Active Listings</div>
             </div>
             <div>

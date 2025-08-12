@@ -5,6 +5,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { TokenDisplay } from '@/components/TokenDisplay';
 import { useContract } from '@/contracts/useContract';
 import { Deal } from '@/contracts/types';
 import { getTokenByMint } from '@/contracts/tokens';
