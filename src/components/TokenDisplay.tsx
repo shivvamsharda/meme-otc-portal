@@ -11,6 +11,10 @@ interface TokenDisplayProps {
   showImage?: boolean;
   imageSize?: 'sm' | 'md' | 'lg';
   className?: string;
+  // Stored metadata from database (higher priority)
+  storedSymbol?: string;
+  storedName?: string;
+  storedImage?: string;
 }
 
 const TokenDisplay = ({
@@ -21,16 +25,20 @@ const TokenDisplay = ({
   showImage = true,
   imageSize = 'sm',
   className = '',
+  storedSymbol,
+  storedName,
+  storedImage,
 }: TokenDisplayProps) => {
   const [imageError, setImageError] = useState(false);
   
   // Fallback to static token registry
   const staticToken = getTokenByMint(mintAddress);
   
-  const displayData = metadata || {
-    symbol: staticToken?.symbol || `${mintAddress.slice(0, 4)}...${mintAddress.slice(-4)}`,
-    name: staticToken?.name || 'Unknown Token',
-    logoURI: undefined,
+  // Priority: stored metadata > fetched metadata > static token > fallback
+  const displayData = {
+    symbol: storedSymbol || metadata?.symbol || staticToken?.symbol || `${mintAddress.slice(0, 4)}...${mintAddress.slice(-4)}`,
+    name: storedName || metadata?.name || staticToken?.name || 'Unknown Token',
+    logoURI: storedImage || metadata?.logoURI || undefined,
   };
 
   const truncateAddress = (address: string) => {

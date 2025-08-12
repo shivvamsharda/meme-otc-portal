@@ -227,9 +227,15 @@ export const useContract = () => {
           tokenMintOffered: params.tokenMint,
           amountOffered: parseInt(params.tokenAmount),
           amountOfferedDisplay: params.amountOfferedDisplay || parseInt(params.tokenAmount) / 1e9,
+          tokenOfferedName: params.tokenOfferedName,
+          tokenOfferedSymbol: params.tokenOfferedSymbol,
+          tokenOfferedImage: params.tokenOfferedImage,
           tokenMintRequested: "So11111111111111111111111111111111111111112", // SOL mint
           amountRequested: parseInt(params.totalPrice),
           amountRequestedDisplay: params.amountRequestedDisplay || parseInt(params.totalPrice) / 1e9,
+          tokenRequestedName: params.tokenRequestedName,
+          tokenRequestedSymbol: params.tokenRequestedSymbol,
+          tokenRequestedImage: params.tokenRequestedImage,
           expiryTimestamp: Math.floor(Date.now() / 1000) + (params.durationHours * 3600),
           platformFee: 0
         });

@@ -247,7 +247,11 @@ const DealDetails = () => {
                           <TokenDisplay
                             mintAddress={deal.tokenMintOffered.toString()}
                             metadata={metadata.get(deal.tokenMintOffered.toString())}
+                            storedSymbol={deal.tokenOfferedSymbol}
+                            storedName={deal.tokenOfferedName}
+                            storedImage={deal.tokenOfferedImage}
                             showFullName={true}
+                            imageSize="md"
                           />
                         </div>
                         <div className="space-y-1">
@@ -271,7 +275,11 @@ const DealDetails = () => {
                           <TokenDisplay
                             mintAddress={deal.tokenMintRequested.toString()}
                             metadata={metadata.get(deal.tokenMintRequested.toString())}
+                            storedSymbol={deal.tokenRequestedSymbol}
+                            storedName={deal.tokenRequestedName}
+                            storedImage={deal.tokenRequestedImage}
                             showFullName={true}
+                            imageSize="md"
                           />
                         </div>
                         <div className="space-y-1">
@@ -290,13 +298,13 @@ const DealDetails = () => {
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
                     <h4 className="font-semibold mb-2">Exchange Rate</h4>
                     <p className="text-lg">
-                      1 {metadata.get(deal.tokenMintOffered.toString())?.symbol || 'Token'} = {
+                      1 {deal.tokenOfferedSymbol || metadata.get(deal.tokenMintOffered.toString())?.symbol || 'Token'} = {
                         (() => {
                           const offeredAmount = deal.amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered));
                           const requestedAmount = deal.amountRequestedDisplay ?? parseFloat(getDisplayAmount(deal.amountRequested));
                           return (requestedAmount / offeredAmount).toFixed(6);
                         })()
-                      } {metadata.get(deal.tokenMintRequested.toString())?.symbol || 'Tokens'}
+                      } {deal.tokenRequestedSymbol || metadata.get(deal.tokenMintRequested.toString())?.symbol || 'Tokens'}
                     </p>
                   </div>
                 </CardContent>
@@ -452,7 +460,7 @@ const DealDetails = () => {
                     </p>
                     <p>
                       Fee amount: <strong>
-                        {((deal as any).amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered)) * 0.005).toFixed(6)} {metadata.get(deal.tokenMintOffered.toString())?.symbol || 'tokens'}
+                        {((deal.amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered))) * 0.005).toFixed(6)} {deal.tokenOfferedSymbol || metadata.get(deal.tokenMintOffered.toString())?.symbol || 'tokens'}
                       </strong>
                     </p>
                   </div>

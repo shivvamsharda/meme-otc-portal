@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { useTransactionState } from '@/hooks/useTransactionState';
 import { generateUniqueDealId, validateDealParams, decimalToBaseUnits } from '@/utils/dealUtils';
 import { getTokenBySymbol } from '@/contracts/tokens';
+import { tokenMetadataService } from '@/services/tokenMetadata';
 import { ArrowLeft, Coins, Calendar, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
@@ -97,6 +98,21 @@ const CreateDeal = () => {
 
       setStep('updating_db');
 
+      // Fetch token metadata for both offered and requested tokens
+      const [offeredTokenMetadata, requestedTokenMetadata] = await Promise.all([
+        tokenMetadataService.getTokenMetadata(formData.tokenMintOffered),
+        Promise.resolve({
+          symbol: requestedTokenData.symbol,
+          name: requestedTokenData.name,
+          logoURI: undefined
+        })
+      ]);
+
+      console.log('Fetched token metadata:', {
+        offered: offeredTokenMetadata,
+        requested: requestedTokenMetadata
+      });
+
       // Generate unique deal ID using actual wallet address
       const walletAddress = publicKey.toString();
       const dealId = generateUniqueDealId(walletAddress);
@@ -162,6 +178,13 @@ console.log("Requested token:", requestedTokenData.symbol, "with mint:", request
         // Pass display amounts for database storage
         amountOfferedDisplay: amountOffered,
         amountRequestedDisplay: amountRequested,
+        // Pass token metadata for database storage
+        tokenOfferedName: offeredTokenMetadata?.name,
+        tokenOfferedSymbol: offeredTokenMetadata?.symbol,
+        tokenOfferedImage: offeredTokenMetadata?.logoURI,
+        tokenRequestedName: requestedTokenMetadata.name,
+        tokenRequestedSymbol: requestedTokenMetadata.symbol,
+        tokenRequestedImage: requestedTokenMetadata.logoURI,
       });
 
       if (result.success) {

@@ -285,14 +285,17 @@ const BrowseDeals = () => {
                          <p className="text-lg font-bold truncate mb-2">
                            {(deal as any).amountOfferedDisplay ?? formatTokenAmount((deal as any).amountOfferedRaw ?? (deal as any).amountOffered, deal.tokenMintOffered.toString())}
                          </p>
-                        <TokenDisplay
-                          mintAddress={deal.tokenMintOffered.toString()}
-                          metadata={tokenMetadata.get(deal.tokenMintOffered.toString())}
-                          loading={metadataLoading}
-                          showFullName={true}
-                          showImage={true}
-                          imageSize="md"
-                        />
+                         <TokenDisplay
+                           mintAddress={deal.tokenMintOffered.toString()}
+                           metadata={tokenMetadata.get(deal.tokenMintOffered.toString())}
+                           storedSymbol={deal.tokenOfferedSymbol}
+                           storedName={deal.tokenOfferedName}
+                           storedImage={deal.tokenOfferedImage}
+                           loading={metadataLoading}
+                           showFullName={true}
+                           showImage={true}
+                           imageSize="md"
+                         />
                       </div>
                     </div>
                   </div>
@@ -305,14 +308,17 @@ const BrowseDeals = () => {
                          <p className="text-lg font-bold truncate mb-2">
                            {(deal as any).amountRequestedDisplay ?? formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())}
                          </p>
-                        <TokenDisplay
-                          mintAddress={deal.tokenMintRequested.toString()}
-                          metadata={tokenMetadata.get(deal.tokenMintRequested.toString())}
-                          loading={metadataLoading}
-                          showFullName={true}
-                          showImage={true}
-                          imageSize="md"
-                        />
+                         <TokenDisplay
+                           mintAddress={deal.tokenMintRequested.toString()}
+                           metadata={tokenMetadata.get(deal.tokenMintRequested.toString())}
+                           storedSymbol={deal.tokenRequestedSymbol}
+                           storedName={deal.tokenRequestedName}
+                           storedImage={deal.tokenRequestedImage}
+                           loading={metadataLoading}
+                           showFullName={true}
+                           showImage={true}
+                           imageSize="md"
+                         />
                       </div>
                     </div>
                   </div>

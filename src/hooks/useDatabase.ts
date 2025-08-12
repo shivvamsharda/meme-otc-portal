@@ -10,9 +10,15 @@ interface DatabaseDeal {
   token_mint_offered: string;
   amount_offered: number;
   amount_offered_display: number;
+  token_offered_name: string | null;
+  token_offered_symbol: string | null;
+  token_offered_image: string | null;
   token_mint_requested: string;
   amount_requested: number;
   amount_requested_display: number;
+  token_requested_name: string | null;
+  token_requested_symbol: string | null;
+  token_requested_image: string | null;
   status: string;
   created_at: string;
   expiry_timestamp: string;
@@ -45,9 +51,15 @@ export const useDatabase = () => {
     tokenMintOffered: string;
     amountOffered: number;
     amountOfferedDisplay: number;
+    tokenOfferedName?: string;
+    tokenOfferedSymbol?: string;
+    tokenOfferedImage?: string;
     tokenMintRequested: string;
     amountRequested: number;
     amountRequestedDisplay: number;
+    tokenRequestedName?: string;
+    tokenRequestedSymbol?: string;
+    tokenRequestedImage?: string;
     expiryTimestamp: number;
     platformFee?: number;
   }) => {
@@ -59,9 +71,15 @@ export const useDatabase = () => {
         token_mint_offered: dealData.tokenMintOffered,
         amount_offered: dealData.amountOffered,
         amount_offered_display: dealData.amountOfferedDisplay,
+        token_offered_name: dealData.tokenOfferedName,
+        token_offered_symbol: dealData.tokenOfferedSymbol,
+        token_offered_image: dealData.tokenOfferedImage,
         token_mint_requested: dealData.tokenMintRequested,
         amount_requested: dealData.amountRequested,
         amount_requested_display: dealData.amountRequestedDisplay,
+        token_requested_name: dealData.tokenRequestedName,
+        token_requested_symbol: dealData.tokenRequestedSymbol,
+        token_requested_image: dealData.tokenRequestedImage,
         expiry_timestamp: new Date(dealData.expiryTimestamp * 1000).toISOString(),
         platform_fee: dealData.platformFee || 0,
         status: 'Open'

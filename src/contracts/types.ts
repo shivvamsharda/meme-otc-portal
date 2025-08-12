@@ -21,6 +21,13 @@ export interface CreateListingParams {
   tokenMint: string;
   amountOfferedDisplay?: number;
   amountRequestedDisplay?: number;
+  // Token metadata for database storage
+  tokenOfferedName?: string;
+  tokenOfferedSymbol?: string;
+  tokenOfferedImage?: string;
+  tokenRequestedName?: string;
+  tokenRequestedSymbol?: string;
+  tokenRequestedImage?: string;
 }
 
 export interface ListingCreatedEvent {
@@ -65,4 +72,10 @@ export interface Deal extends Listing {
   completedAt?: number | null;
   amountOfferedDisplay?: number;
   amountRequestedDisplay?: number;
+  tokenOfferedName?: string;
+  tokenOfferedSymbol?: string;
+  tokenOfferedImage?: string;
+  tokenRequestedName?: string;
+  tokenRequestedSymbol?: string;
+  tokenRequestedImage?: string;
 }
