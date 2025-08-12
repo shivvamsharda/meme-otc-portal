@@ -12,7 +12,7 @@ import { useContract } from '@/contracts/useContract';
 import { toast } from '@/hooks/use-toast';
 import { useTransactionState } from '@/hooks/useTransactionState';
 import { generateUniqueDealId, validateDealParams, decimalToBaseUnits } from '@/utils/dealUtils';
-import { DEVNET_ACCEPTED_TOKENS, getTokenBySymbol } from '@/contracts/tokens';
+import { getTokenBySymbol } from '@/contracts/tokens';
 import { ArrowLeft, Coins, Calendar, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 

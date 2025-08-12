@@ -1,6 +1,6 @@
 
 import { PublicKey } from '@solana/web3.js';
-import { DEVNET_ACCEPTED_TOKENS } from '@/contracts/tokens';
+import { getTokenByMint } from '@/contracts/tokens';
 
 // Generate a more robust unique deal ID with validation
 export const generateUniqueDealId = (walletAddress: string): number => {
@@ -82,13 +82,13 @@ export const validateDealParams = (params: {
 
 // Get token symbol from mint address
 export const getTokenSymbol = (mintAddress: string): string => {
-  const token = DEVNET_ACCEPTED_TOKENS.find(t => t.mint === mintAddress);
+  const token = getTokenByMint(mintAddress);
   return token ? token.symbol : 'Unknown Token';
 };
 
 // Get token display name from mint address
 export const getTokenDisplayName = (mintAddress: string): string => {
-  const token = DEVNET_ACCEPTED_TOKENS.find(t => t.mint === mintAddress);
+  const token = getTokenByMint(mintAddress);
   return token ? `${token.symbol} (${token.name})` : `Unknown Token (${mintAddress.slice(0, 8)}...)`;
 };
 
