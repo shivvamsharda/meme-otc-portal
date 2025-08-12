@@ -27,6 +27,7 @@ const BrowseDeals = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [tokenDecimalsCache, setTokenDecimalsCache] = useState<Map<string, number>>(new Map());
+  const [backfillAttempted, setBackfillAttempted] = useState(false);
   const { state: txState, setStep, reset: resetTxState, getStepMessage } = useTransactionState();
   const { backfillTokenMetadata, isBackfilling } = useTokenBackfill();
 
@@ -36,17 +37,23 @@ const BrowseDeals = () => {
       // Load deals from database only
       const dbDeals = await database.getDeals(true); // only 'Open' deals
       
-      // Check if any deals lack metadata and trigger backfill
+      // Check if any deals lack metadata and trigger backfill (only once per session)
       const needsBackfill = dbDeals.some(deal => 
         !deal.token_offered_name || !deal.token_offered_symbol || 
         !deal.token_requested_name || !deal.token_requested_symbol
       );
       
-      if (needsBackfill && !isBackfilling) {
+      if (needsBackfill && !isBackfilling && !backfillAttempted) {
         console.log('Some deals lack metadata, triggering backfill...');
-        backfillTokenMetadata().then(() => {
-          // Reload deals after backfill completes
-          setTimeout(loadDeals, 1000);
+        setBackfillAttempted(true);
+        backfillTokenMetadata().then((success) => {
+          if (success) {
+            // Only reload deals if backfill was successful
+            setTimeout(loadDeals, 1000);
+          }
+        }).catch(() => {
+          // Don't retry on error to prevent infinite loop
+          console.log('Backfill failed, will not retry automatically');
         });
       }
         const mappedDeals = dbDeals.map(deal => {

@@ -5,8 +5,8 @@ import { toast } from '@/hooks/use-toast';
 export const useTokenBackfill = () => {
   const [isBackfilling, setIsBackfilling] = useState(false);
 
-  const backfillTokenMetadata = async () => {
-    if (isBackfilling) return;
+  const backfillTokenMetadata = async (): Promise<boolean> => {
+    if (isBackfilling) return false;
     
     setIsBackfilling(true);
     
