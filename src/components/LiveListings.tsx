@@ -14,12 +14,6 @@ const LiveListings = () => {
   const { getDeals } = useDatabase();
   const { generateListingPDAReadOnly } = useContract();
   const [deals, setDeals] = useState<any[]>([]);
-  const [stats, setStats] = useState({
-    activeListings: 0,
-    volume24h: 0,
-    avgSettlement: 0,
-    successRate: 0
-  });
   const [loading, setLoading] = useState(true);
 
   // Extract unique mint addresses for metadata fetching
@@ -49,23 +43,6 @@ const LiveListings = () => {
       });
       
       setDeals(mappedDeals);
-      
-      // Calculate stats
-      const allDeals = await getDeals(false);
-      const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      
-      const completedDeals = allDeals.filter(deal => deal.status === 'Completed');
-      const recentCompleted = completedDeals.filter(deal => 
-        new Date(deal.completed_at || deal.updated_at) > yesterday
-      );
-      
-      setStats({
-        activeListings: openDeals.length,
-        volume24h: recentCompleted.length,
-        avgSettlement: 0, // Could calculate average time if needed
-        successRate: allDeals.length > 0 ? Math.round((completedDeals.length / allDeals.length) * 100) : 0
-      });
     } catch (error) {
       console.error('Error fetching deals:', error);
     } finally {
@@ -177,27 +154,6 @@ const LiveListings = () => {
           </ScrollArea>
         </div>
 
-        {/* Live Stats Bar */}
-        <div className="glass-effect rounded-2xl p-6 animate-on-scroll">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className="text-2xl font-bold gradient-text-primary">{stats.activeListings}</div>
-              <div className="text-sm text-muted-foreground">Active Listings</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold gradient-text-accent">{stats.volume24h}</div>
-              <div className="text-sm text-muted-foreground">24h Completions</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold gradient-text-meme">{stats.avgSettlement}min</div>
-              <div className="text-sm text-muted-foreground">Avg Settlement</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-success">{stats.successRate}%</div>
-              <div className="text-sm text-muted-foreground">Success Rate</div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
