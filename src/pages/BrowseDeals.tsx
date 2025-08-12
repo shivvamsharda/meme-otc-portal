@@ -68,8 +68,10 @@ const BrowseDeals = () => {
           status: { [deal.status.toLowerCase()]: {} },
           expiryTimestamp: new Date(deal.expiry_timestamp).getTime() / 1000,
           amountOffered: deal.amount_offered,
+          amountOfferedDisplay: deal.amount_offered_display,
           tokenMintOffered: { toString: () => deal.token_mint_offered } as any,
           amountRequested: deal.amount_requested,
+          amountRequestedDisplay: deal.amount_requested_display,
           tokenMintRequested: { toString: () => deal.token_mint_requested } as any,
           completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
         };
@@ -279,10 +281,10 @@ const BrowseDeals = () => {
                   <div className="p-3 bg-muted/50 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Offering</h4>
                     <div className="space-y-3 min-w-0">
-                      <div className="min-w-0">
-                        <p className="text-lg font-bold truncate mb-2">
-                          {formatTokenAmount((deal as any).amountOfferedRaw ?? (deal as any).amountOffered, deal.tokenMintOffered.toString())}
-                        </p>
+                       <div className="min-w-0">
+                         <p className="text-lg font-bold truncate mb-2">
+                           {(deal as any).amountOfferedDisplay ?? formatTokenAmount((deal as any).amountOfferedRaw ?? (deal as any).amountOffered, deal.tokenMintOffered.toString())}
+                         </p>
                         <TokenDisplay
                           mintAddress={deal.tokenMintOffered.toString()}
                           metadata={tokenMetadata.get(deal.tokenMintOffered.toString())}
@@ -299,10 +301,10 @@ const BrowseDeals = () => {
                   <div className="p-3 bg-primary/5 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Requesting</h4>
                     <div className="space-y-3 min-w-0">
-                      <div className="min-w-0">
-                        <p className="text-lg font-bold truncate mb-2">
-                          {formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())}
-                        </p>
+                       <div className="min-w-0">
+                         <p className="text-lg font-bold truncate mb-2">
+                           {(deal as any).amountRequestedDisplay ?? formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())}
+                         </p>
                         <TokenDisplay
                           mintAddress={deal.tokenMintRequested.toString()}
                           metadata={tokenMetadata.get(deal.tokenMintRequested.toString())}

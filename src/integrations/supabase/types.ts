@@ -61,7 +61,9 @@ export type Database = {
       deals: {
         Row: {
           amount_offered: number
+          amount_offered_display: number | null
           amount_requested: number
+          amount_requested_display: number | null
           blockchain_synced: boolean | null
           completed_at: string | null
           created_at: string
@@ -75,12 +77,20 @@ export type Database = {
           taker_address: string | null
           token_mint_offered: string
           token_mint_requested: string
+          token_offered_image: string | null
+          token_offered_name: string | null
+          token_offered_symbol: string | null
+          token_requested_image: string | null
+          token_requested_name: string | null
+          token_requested_symbol: string | null
           transaction_signature: string | null
           updated_at: string
         }
         Insert: {
           amount_offered: number
+          amount_offered_display?: number | null
           amount_requested: number
+          amount_requested_display?: number | null
           blockchain_synced?: boolean | null
           completed_at?: string | null
           created_at?: string
@@ -94,12 +104,20 @@ export type Database = {
           taker_address?: string | null
           token_mint_offered: string
           token_mint_requested: string
+          token_offered_image?: string | null
+          token_offered_name?: string | null
+          token_offered_symbol?: string | null
+          token_requested_image?: string | null
+          token_requested_name?: string | null
+          token_requested_symbol?: string | null
           transaction_signature?: string | null
           updated_at?: string
         }
         Update: {
           amount_offered?: number
+          amount_offered_display?: number | null
           amount_requested?: number
+          amount_requested_display?: number | null
           blockchain_synced?: boolean | null
           completed_at?: string | null
           created_at?: string
@@ -113,6 +131,12 @@ export type Database = {
           taker_address?: string | null
           token_mint_offered?: string
           token_mint_requested?: string
+          token_offered_image?: string | null
+          token_offered_name?: string | null
+          token_offered_symbol?: string | null
+          token_requested_image?: string | null
+          token_requested_name?: string | null
+          token_requested_symbol?: string | null
           transaction_signature?: string | null
           updated_at?: string
         }

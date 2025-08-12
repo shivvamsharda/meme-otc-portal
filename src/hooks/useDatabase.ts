@@ -9,8 +9,10 @@ interface DatabaseDeal {
   taker_address: string | null;
   token_mint_offered: string;
   amount_offered: number;
+  amount_offered_display: number;
   token_mint_requested: string;
   amount_requested: number;
+  amount_requested_display: number;
   status: string;
   created_at: string;
   expiry_timestamp: string;
@@ -42,8 +44,10 @@ export const useDatabase = () => {
     makerAddress: string;
     tokenMintOffered: string;
     amountOffered: number;
+    amountOfferedDisplay: number;
     tokenMintRequested: string;
     amountRequested: number;
+    amountRequestedDisplay: number;
     expiryTimestamp: number;
     platformFee?: number;
   }) => {
@@ -54,8 +58,10 @@ export const useDatabase = () => {
         maker_address: dealData.makerAddress,
         token_mint_offered: dealData.tokenMintOffered,
         amount_offered: dealData.amountOffered,
+        amount_offered_display: dealData.amountOfferedDisplay,
         token_mint_requested: dealData.tokenMintRequested,
         amount_requested: dealData.amountRequested,
+        amount_requested_display: dealData.amountRequestedDisplay,
         expiry_timestamp: new Date(dealData.expiryTimestamp * 1000).toISOString(),
         platform_fee: dealData.platformFee || 0,
         status: 'Open'

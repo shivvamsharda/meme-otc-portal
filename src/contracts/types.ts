@@ -19,6 +19,8 @@ export interface CreateListingParams {
   durationHours: number;
   listingNonce: number;
   tokenMint: string;
+  amountOfferedDisplay?: number;
+  amountRequestedDisplay?: number;
 }
 
 export interface ListingCreatedEvent {

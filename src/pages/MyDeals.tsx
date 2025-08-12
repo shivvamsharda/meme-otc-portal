@@ -166,7 +166,7 @@ const MyDeals = () => {
             <div className="space-y-1 min-w-0">
               <div className="min-w-0">
                 <p className="text-lg font-bold truncate">
-                  {formatTokenAmount(deal.amountOffered, deal.tokenMintOffered.toString())} {getTokenDisplayInfo(deal.tokenMintOffered.toString()).symbol}
+                  {(deal as any).amountOfferedDisplay ?? formatTokenAmount(deal.amountOffered, deal.tokenMintOffered.toString())} {getTokenDisplayInfo(deal.tokenMintOffered.toString()).symbol}
                 </p>
               </div>
               <p className="text-xs text-muted-foreground truncate">
@@ -182,7 +182,7 @@ const MyDeals = () => {
             <div className="space-y-1 min-w-0">
               <div className="min-w-0">
                 <p className="text-lg font-bold truncate">
-                  {formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())} {getTokenDisplayInfo(deal.tokenMintRequested.toString()).symbol}
+                  {(deal as any).amountRequestedDisplay ?? formatTokenAmount(deal.amountRequested, deal.tokenMintRequested.toString())} {getTokenDisplayInfo(deal.tokenMintRequested.toString()).symbol}
                 </p>
               </div>
               <p className="text-xs text-muted-foreground truncate">

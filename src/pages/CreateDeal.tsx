@@ -159,6 +159,9 @@ console.log("Requested token:", requestedTokenData.symbol, "with mint:", request
         totalPrice: amountRequestedInBaseUnits,
         durationHours: expiryDays * 24,
         listingNonce: Date.now(),
+        // Pass display amounts for database storage
+        amountOfferedDisplay: amountOffered,
+        amountRequestedDisplay: amountRequested,
       });
 
       if (result.success) {

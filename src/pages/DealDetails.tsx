@@ -9,7 +9,7 @@ import { Deal } from '@/contracts/types';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ArrowLeft, Clock, User, Coins, Calendar, CheckCircle, X, RefreshCw } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import { TokenAmountDisplay } from '@/components/TokenAmountDisplay';
+import TokenDisplay from '@/components/TokenDisplay';
 import { useTokenMetadata } from '@/hooks/useTokenMetadata';
 
 const DealDetails = () => {
@@ -71,13 +71,13 @@ const DealDetails = () => {
     deal ? [deal.tokenMintOffered.toString(), deal.tokenMintRequested.toString()] : []
   );
 
-  const formatTokenAmountWithDecimals = (amount: number, mintAddress: string) => {
-    const tokenMetadata = metadata.get(mintAddress);
-    const decimals = tokenMetadata?.decimals || 9;
-    const divisor = Math.pow(10, decimals);
-    const formatted = (amount / divisor).toFixed(decimals);
-    // Remove trailing zeros
-    return parseFloat(formatted).toString();
+  const getDisplayAmount = (amount: number, isDisplay?: boolean) => {
+    // If we have display amount, use it directly
+    if (isDisplay !== undefined) {
+      return amount.toString();
+    }
+    // Fallback to base units conversion (legacy deals)
+    return (amount / 1e9).toString();
   };
 
   const formatDate = (timestamp: number) => {
@@ -240,12 +240,16 @@ const DealDetails = () => {
                         {isMyDeal() ? 'You Offer' : 'Maker Offers'}
                       </h3>
                       <div className="space-y-2">
-                        <TokenAmountDisplay
-                          amount={deal.amountOffered}
-                          mintAddress={deal.tokenMintOffered.toString()}
-                          size="lg"
-                          className="text-primary"
-                        />
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-bold">
+                            {(deal as any).amountOfferedDisplay ?? getDisplayAmount(deal.amountOffered)}
+                          </span>
+                          <TokenDisplay
+                            mintAddress={deal.tokenMintOffered.toString()}
+                            metadata={metadata.get(deal.tokenMintOffered.toString())}
+                            showFullName={true}
+                          />
+                        </div>
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">Token Mint:</p>
                           <p className="text-sm font-mono break-all bg-muted p-2 rounded">
@@ -260,12 +264,16 @@ const DealDetails = () => {
                         {isMyDeal() ? 'You Request' : 'Maker Requests'}
                       </h3>
                       <div className="space-y-2">
-                        <TokenAmountDisplay
-                          amount={deal.amountRequested}
-                          mintAddress={deal.tokenMintRequested.toString()}
-                          size="lg"
-                          className="text-green-600"
-                        />
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-bold text-green-600">
+                            {(deal as any).amountRequestedDisplay ?? getDisplayAmount(deal.amountRequested)}
+                          </span>
+                          <TokenDisplay
+                            mintAddress={deal.tokenMintRequested.toString()}
+                            metadata={metadata.get(deal.tokenMintRequested.toString())}
+                            showFullName={true}
+                          />
+                        </div>
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">Token Mint:</p>
                           <p className="text-sm font-mono break-all bg-muted p-2 rounded">
@@ -284,10 +292,8 @@ const DealDetails = () => {
                     <p className="text-lg">
                       1 {metadata.get(deal.tokenMintOffered.toString())?.symbol || 'Token'} = {
                         (() => {
-                          const offeredDecimals = metadata.get(deal.tokenMintOffered.toString())?.decimals || 9;
-                          const requestedDecimals = metadata.get(deal.tokenMintRequested.toString())?.decimals || 9;
-                          const offeredAmount = deal.amountOffered / Math.pow(10, offeredDecimals);
-                          const requestedAmount = deal.amountRequested / Math.pow(10, requestedDecimals);
+                          const offeredAmount = (deal as any).amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered));
+                          const requestedAmount = (deal as any).amountRequestedDisplay ?? parseFloat(getDisplayAmount(deal.amountRequested));
                           return (requestedAmount / offeredAmount).toFixed(6);
                         })()
                       } {metadata.get(deal.tokenMintRequested.toString())?.symbol || 'Tokens'}
@@ -446,7 +452,7 @@ const DealDetails = () => {
                     </p>
                     <p>
                       Fee amount: <strong>
-                        {formatTokenAmountWithDecimals(deal.amountOffered * 0.005, deal.tokenMintOffered.toString())} {metadata.get(deal.tokenMintOffered.toString())?.symbol || 'tokens'}
+                        {((deal as any).amountOfferedDisplay ?? parseFloat(getDisplayAmount(deal.amountOffered)) * 0.005).toFixed(6)} {metadata.get(deal.tokenMintOffered.toString())?.symbol || 'tokens'}
                       </strong>
                     </p>
                   </div>
