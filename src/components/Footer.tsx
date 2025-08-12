@@ -3,24 +3,6 @@ import { Twitter, Send } from 'lucide-react';
 const Footer = () => {
   const footerLinks = [
     {
-      title: "Platform",
-      links: [
-        { name: "Trading", href: "#" },
-        { name: "Analytics", href: "#" },
-        { name: "Supported Tokens", href: "#" },
-        { name: "API Docs", href: "#" }
-      ]
-    },
-    {
-      title: "Resources",
-      links: [
-        { name: "Documentation", href: "#" },
-        { name: "Help Center", href: "#" },
-        { name: "Security", href: "#" },
-        { name: "Terms of Service", href: "#" }
-      ]
-    },
-    {
       title: "Community",
       links: [
         { name: "Telegram", href: "https://t.me/meme_otc" },
