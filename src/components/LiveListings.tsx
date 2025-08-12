@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
-import TokenDisplay from '@/components/TokenDisplay';
+import TokenDisplay from '@/components/TokenDisplay'; // Fixed import
 
 const LiveListings = () => {
   const navigate = useNavigate();
