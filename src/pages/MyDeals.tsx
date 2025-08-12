@@ -54,7 +54,7 @@ const MyDeals = () => {
   };
 
   const formatTokenAmount = (amount: number) => {
-    return (amount / 1e9).toFixed(4);
+    return (amount / 1e9).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
   };
 
   const formatTimeRemaining = (expiryTimestamp: number) => {
