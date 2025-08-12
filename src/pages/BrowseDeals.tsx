@@ -5,7 +5,6 @@ import { PublicKey } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TokenDisplay } from '@/components/TokenDisplay';
 import { useContract } from '@/contracts/useContract';
 import { Deal } from '@/contracts/types';
 import { getTokenByMint } from '@/contracts/tokens';
@@ -15,7 +14,6 @@ import { useTransactionState } from '@/hooks/useTransactionState';
 import { toast } from '@/hooks/use-toast';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRealtimeDeals } from '@/hooks/useRealtimeDeals';
-import { useTokenBackfill } from '@/hooks/useTokenBackfill';
 
 const BrowseDeals = () => {
   const navigate = useNavigate();
@@ -27,36 +25,14 @@ const BrowseDeals = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [tokenDecimalsCache, setTokenDecimalsCache] = useState<Map<string, number>>(new Map());
-  const [backfillAttempted, setBackfillAttempted] = useState(false);
   const { state: txState, setStep, reset: resetTxState, getStepMessage } = useTransactionState();
-  const { backfillTokenMetadata, isBackfilling } = useTokenBackfill();
 
   const loadDeals = async () => {
     setLoading(true);
     try {
       // Load deals from database only
       const dbDeals = await database.getDeals(true); // only 'Open' deals
-      
-      // Check if any deals lack metadata and trigger backfill (only once per session)
-      const needsBackfill = dbDeals.some(deal => 
-        !deal.token_offered_name || !deal.token_offered_symbol || 
-        !deal.token_requested_name || !deal.token_requested_symbol
-      );
-      
-      if (needsBackfill && !isBackfilling && !backfillAttempted) {
-        console.log('Some deals lack metadata, triggering backfill...');
-        setBackfillAttempted(true);
-        backfillTokenMetadata().then((success) => {
-          if (success) {
-            // Only reload deals if backfill was successful
-            setTimeout(loadDeals, 1000);
-          }
-        }).catch(() => {
-          // Don't retry on error to prevent infinite loop
-          console.log('Backfill failed, will not retry automatically');
-        });
-      }
-        const mappedDeals = dbDeals.map(deal => {
+      const mappedDeals = dbDeals.map(deal => {
         // Generate the proper listing PDA address
         const listingPDA = contract.generateListingPDAReadOnly(
           deal.maker_address,
@@ -83,14 +59,7 @@ const BrowseDeals = () => {
           tokenMintOffered: { toString: () => deal.token_mint_offered } as any,
           amountRequested: deal.amount_requested,
           tokenMintRequested: { toString: () => deal.token_mint_requested } as any,
-          completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null,
-          // Include stored metadata
-          tokenOfferedName: deal.token_offered_name,
-          tokenOfferedSymbol: deal.token_offered_symbol,
-          tokenOfferedImage: deal.token_offered_image,
-          tokenRequestedName: deal.token_requested_name,
-          tokenRequestedSymbol: deal.token_requested_symbol,
-          tokenRequestedImage: deal.token_requested_image
+          completedAt: deal.completed_at ? new Date(deal.completed_at).getTime() / 1000 : null
         };
       });
       setDeals(mappedDeals);
@@ -337,15 +306,14 @@ const BrowseDeals = () => {
                   <div className="p-3 bg-muted/50 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Offering</h4>
                     <div className="space-y-1 min-w-0">
-                      <TokenDisplay
-                        mintAddress={deal.tokenMintOffered.toString()}
-                        amount={`${(deal.amountOffered / Math.pow(10, 9)).toFixed(4)}`}
-                        name={(deal as any).tokenOfferedName}
-                        symbol={(deal as any).tokenOfferedSymbol}
-                        image={(deal as any).tokenOfferedImage}
-                        showAmount={true}
-                        className="mb-1"
-                      />
+                      <div className="min-w-0">
+                        <TokenAmountDisplay 
+                          amount={(deal as any).amountOfferedRaw ?? (deal as any).amountOffered}
+                          mintAddress={deal.tokenMintOffered.toString()}
+                          formatTokenAmount={formatTokenAmount}
+                          getTokenDisplayInfo={getTokenDisplayInfo}
+                        />
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {truncateAddress(deal.tokenMintOffered.toString())}
                       </p>
@@ -356,15 +324,14 @@ const BrowseDeals = () => {
                   <div className="p-3 bg-primary/5 rounded-lg min-w-0">
                     <h4 className="font-semibold text-sm mb-2">Requesting</h4>
                     <div className="space-y-1 min-w-0">
-                      <TokenDisplay
-                        mintAddress={deal.tokenMintRequested.toString()}
-                        amount={`${(deal.amountRequested / Math.pow(10, 9)).toFixed(4)}`}
-                        name={(deal as any).tokenRequestedName}
-                        symbol={(deal as any).tokenRequestedSymbol}
-                        image={(deal as any).tokenRequestedImage}
-                        showAmount={true}
-                        className="mb-1"
-                      />
+                      <div className="min-w-0">
+                        <TokenAmountDisplay 
+                          amount={deal.amountRequested} 
+                          mintAddress={deal.tokenMintRequested.toString()}
+                          formatTokenAmount={formatTokenAmount}
+                          getTokenDisplayInfo={getTokenDisplayInfo}
+                        />
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {truncateAddress(deal.tokenMintRequested.toString())}
                       </p>

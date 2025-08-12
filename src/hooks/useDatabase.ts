@@ -20,12 +20,6 @@ interface DatabaseDeal {
   blockchain_synced: boolean;
   transaction_signature: string | null;
   updated_at: string;
-  token_offered_name?: string;
-  token_offered_symbol?: string;
-  token_offered_image?: string;
-  token_requested_name?: string;
-  token_requested_symbol?: string;
-  token_requested_image?: string;
 }
 
 interface DatabaseTransaction {
@@ -43,25 +37,6 @@ interface DatabaseTransaction {
 export const useDatabase = () => {
   const { publicKey } = useWallet();
 
-  const fetchTokenMetadata = async (mintAddresses: string[]) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('fetch-token-metadata', {
-        body: { mintAddresses }
-      });
-      
-      if (error) throw error;
-      return data.tokens;
-    } catch (error) {
-      console.error('Error fetching token metadata:', error);
-      return mintAddresses.map(mint => ({
-        mintAddress: mint,
-        name: `Token ${mint.slice(0, 8)}...`,
-        symbol: `${mint.slice(0, 4)}...`,
-        image: undefined
-      }));
-    }
-  };
-
   const createDeal = async (dealData: {
     dealId: number;
     makerAddress: string;
@@ -72,12 +47,6 @@ export const useDatabase = () => {
     expiryTimestamp: number;
     platformFee?: number;
   }) => {
-    // Fetch token metadata for both tokens
-    const uniqueMints = Array.from(new Set([dealData.tokenMintOffered, dealData.tokenMintRequested]));
-    const metadata = await fetchTokenMetadata(uniqueMints);
-    
-    const offeredMetadata = metadata.find((m: any) => m.mintAddress === dealData.tokenMintOffered);
-    const requestedMetadata = metadata.find((m: any) => m.mintAddress === dealData.tokenMintRequested);
     const { data, error } = await supabase
       .from('deals')
       .insert({
@@ -89,13 +58,7 @@ export const useDatabase = () => {
         amount_requested: dealData.amountRequested,
         expiry_timestamp: new Date(dealData.expiryTimestamp * 1000).toISOString(),
         platform_fee: dealData.platformFee || 0,
-        status: 'Open',
-        token_offered_name: offeredMetadata?.name,
-        token_offered_symbol: offeredMetadata?.symbol,
-        token_offered_image: offeredMetadata?.image,
-        token_requested_name: requestedMetadata?.name,
-        token_requested_symbol: requestedMetadata?.symbol,
-        token_requested_image: requestedMetadata?.image
+        status: 'Open'
       })
       .select()
       .single();
@@ -263,6 +226,5 @@ export const useDatabase = () => {
     getMyDeals,
     getDealById,
     getDealTransactions,
-    fetchTokenMetadata,
   };
 };
