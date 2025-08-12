@@ -1,30 +1,22 @@
-import { Twitter, MessageCircle, Github, ExternalLink } from 'lucide-react';
+import { Twitter, Send, ExternalLink } from 'lucide-react';
 
 const Community = () => {
   const socials = [
     {
       icon: Twitter,
       name: "Twitter",
-      handle: "@MemeOTC",
+      handle: "@meme_otc",
       followers: "12.4K",
       color: "primary",
-      link: "#"
+      link: "https://x.com/meme_otc"
     },
     {
-      icon: MessageCircle,
+      icon: Send,
       name: "Telegram",
-      handle: "MemeOTC Community", 
+      handle: "t.me/meme_otc", 
       followers: "8.9K",
       color: "accent",
-      link: "#"
-    },
-    {
-      icon: MessageCircle,
-      name: "Discord",
-      handle: "MemeOTC Hub",
-      followers: "15.2K", 
-      color: "meme",
-      link: "#"
+      link: "https://t.me/meme_otc"
     }
   ];
 
@@ -73,7 +65,7 @@ const Community = () => {
         </div>
 
         {/* Social Links */}
-        <div className="grid md:grid-cols-3 gap-6 mb-20">
+        <div className="grid md:grid-cols-2 gap-6 mb-20">
           {socials.map((social, index) => {
             const Icon = social.icon;
             return (

@@ -1,4 +1,4 @@
-import { Github, Twitter, MessageCircle } from 'lucide-react';
+import { Twitter, Send } from 'lucide-react';
 
 const Footer = () => {
   const footerLinks = [
@@ -23,10 +23,8 @@ const Footer = () => {
     {
       title: "Community",
       links: [
-        { name: "Discord", href: "#" },
-        { name: "Telegram", href: "#" },
-        { name: "Twitter", href: "#" },
-        { name: "Blog", href: "#" }
+        { name: "Telegram", href: "https://t.me/meme_otc" },
+        { name: "Twitter", href: "https://x.com/meme_otc" }
       ]
     }
   ];
@@ -50,22 +48,18 @@ const Footer = () => {
             {/* Social Links */}
             <div className="flex items-center gap-4">
               <a 
-                href="#" 
+                href="https://x.com/meme_otc" 
                 className="w-10 h-10 rounded-lg bg-muted hover:bg-primary/20 flex items-center justify-center transition-colors group"
+                aria-label="Follow on Twitter"
               >
                 <Twitter className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
               </a>
               <a 
-                href="#" 
+                href="https://t.me/meme_otc" 
                 className="w-10 h-10 rounded-lg bg-muted hover:bg-primary/20 flex items-center justify-center transition-colors group"
+                aria-label="Join Telegram"
               >
-                <MessageCircle className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 rounded-lg bg-muted hover:bg-primary/20 flex items-center justify-center transition-colors group"
-              >
-                <Github className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
+                <Send className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
               </a>
             </div>
           </div>
