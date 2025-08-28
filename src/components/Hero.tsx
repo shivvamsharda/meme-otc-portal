@@ -1,35 +1,6 @@
 import { ArrowRight, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-const FloatingPaths = ({
-  position
-}: {
-  position: number;
-}) => {
-  const paths = Array.from({
-    length: 36
-  }, (_, i) => ({
-    id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    width: 0.5 + i * 0.03
-  }));
-  return <div className="absolute inset-0 pointer-events-none z-0">
-      <svg className="w-full h-full text-white/30" viewBox="0 0 696 316" fill="none">
-        {paths.map(path => <motion.path key={path.id} d={path.d} stroke="currentColor" strokeWidth={path.width * 2} strokeOpacity={0.15 + path.id * 0.02} initial={{
-        pathLength: 0.3,
-        opacity: 0.6
-      }} animate={{
-        pathLength: 1,
-        opacity: [0.3, 0.7, 0.3],
-        pathOffset: [0, 1, 0]
-      }} transition={{
-        duration: 20 + Math.random() * 10,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "linear"
-      }} />)}
-      </svg>
-    </div>;
-};
+import PrismaticBurst from '@/components/ui/PrismaticBurst';
 const Hero = () => {
   const navigate = useNavigate();
 
@@ -45,10 +16,20 @@ const Hero = () => {
       {/* Clean dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
       
-      {/* Animated Background Paths */}
+      {/* Prismatic Burst Background */}
       <div className="absolute inset-0">
-        <FloatingPaths position={1} />
-        <FloatingPaths position={-1} />
+        <PrismaticBurst
+          animationType="rotate3d"
+          intensity={1.5}
+          speed={0.3}
+          distort={1.0}
+          paused={false}
+          offset={{ x: 0, y: 0 }}
+          hoverDampness={0.25}
+          rayCount={24}
+          mixBlendMode="lighten"
+          colors={['#ff007a', '#4d3dff', '#ffffff']}
+        />
       </div>
       
 
