@@ -70,7 +70,7 @@ const Hero = () => {
           </div>
 
           {/* CTA Buttons - styled like reference */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-1">
             <button 
               onClick={handleCreateDeal}
               className="group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3"
