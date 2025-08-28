@@ -12,7 +12,7 @@ const Hero = () => {
     navigate('/deals');
   };
 
-  return <section className="relative min-h-screen flex items-start justify-center overflow-hidden bg-background pt-20 md:pt-24">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* Clean dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
       
