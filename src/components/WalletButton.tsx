@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { LogOut, Unplug } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { createSolanaWalletAdapter } from '@/utils/walletAdapter'
+import '@/components/ui/wallet-button-styles.css'
 export const WalletButton = () => {
   const wallet = useWallet()
   const { user, signOut } = useAuth()
@@ -91,7 +92,7 @@ export const WalletButton = () => {
       <div className="flex items-center gap-3">
         <Button
           onClick={handleSolanaSignIn}
-          className="relative px-8 py-3 bg-gradient-to-r from-primary to-purple-500 rounded-xl font-semibold text-sm text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          className="relative px-8 py-3 bg-white rounded-2xl font-semibold text-sm text-black shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
         >
           Sign in with Solana
         </Button>

@@ -73,7 +73,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center -translate-y-6 sm:-translate-y-8 md:-translate-y-10">
             <button 
               onClick={handleCreateDeal}
-              className="group relative px-10 py-4 bg-gradient-to-r from-primary to-purple-500 rounded-2xl font-semibold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3"
+              className="group relative px-10 py-4 bg-white rounded-2xl font-semibold text-lg text-black shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3"
             >
               <span>Create Deal</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
