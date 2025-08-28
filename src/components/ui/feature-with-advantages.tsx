@@ -5,11 +5,11 @@ function Feature() {
   return (
     <div className="w-full py-20 lg:py-40">
       <div className="container mx-auto">
-        <div className="flex gap-4 flex-col items-start">
+        <div className="flex gap-4 flex-col items-center">
           <div>
             <Badge>How it works</Badge>
           </div>
-          <div className="flex gap-2 flex-col">
+          <div className="flex gap-2 flex-col text-center">
             <h2 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular">
               Secure OTC Trading Made Simple
             </h2>
