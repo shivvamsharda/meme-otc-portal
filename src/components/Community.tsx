@@ -5,16 +5,16 @@ const Community = () => {
     {
       icon: Twitter,
       name: "Twitter",
-      handle: "@meme_otc",
+      handle: "@neo_otc",
       color: "primary",
-      link: "https://x.com/meme_otc"
+      link: "https://x.com/neo_otc"
     },
     {
       icon: Send,
       name: "Telegram",
-      handle: "t.me/meme_otc", 
+      handle: "t.me/neo_otc", 
       color: "accent",
-      link: "https://t.me/meme_otc"
+      link: "https://t.me/neo_otc"
     }
   ];
 
@@ -35,7 +35,7 @@ const Community = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Join the <span className="gradient-text-meme">Degens</span>
+            Join the <span className="text-white">Degens</span>
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
             Connect with the most active memecoin trading community on Solana.
@@ -59,7 +59,7 @@ const Community = () => {
                   </div>
                   
                   <div>
-                    <h3 className={`text-2xl font-bold ${getGradientClass(social.color)}`}>
+                    <h3 className="text-2xl font-bold text-white">
                       {social.name}
                     </h3>
                     <p className="text-muted-foreground mt-1">{social.handle}</p>
@@ -78,7 +78,7 @@ const Community = () => {
         {/* Community Stats */}
         <div className="grid lg:grid-cols-2 gap-8 mb-20">
           <div className="card-glow p-8 rounded-3xl animate-on-scroll text-center">
-            <h3 className="text-2xl font-bold mb-6 gradient-text-primary">
+            <h3 className="text-2xl font-bold mb-6 text-white">
               Most Traded Tokens
             </h3>
             <div className="text-muted-foreground">
@@ -88,7 +88,7 @@ const Community = () => {
           </div>
           
           <div className="card-glow p-8 rounded-3xl animate-on-scroll text-center">
-            <h3 className="text-2xl font-bold mb-6 gradient-text-primary">
+            <h3 className="text-2xl font-bold mb-6 text-white">
               Biggest OTC Buys
             </h3>
             <div className="text-muted-foreground">
@@ -101,11 +101,11 @@ const Community = () => {
         {/* Footer Quote */}
         <div className="text-center animate-on-scroll">
           <blockquote className="text-2xl md:text-3xl font-bold mb-6">
-            "Built on <span className="gradient-text-primary">Solana</span>. 
-            Fuelled by <span className="gradient-text-meme">memes</span>. 
-            Powered by <span className="gradient-text-accent">you</span>."
+            "Built on <span className="text-white">Solana</span>. 
+            Fuelled by <span className="text-white">crypto</span>. 
+            Powered by <span className="text-white">you</span>."
           </blockquote>
-          <p className="text-muted-foreground">— The MemeOTC Team</p>
+          <p className="text-muted-foreground">— The NeoOTC Team</p>
         </div>
       </div>
     </section>

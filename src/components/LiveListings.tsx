@@ -69,7 +69,7 @@ const LiveListings = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Live <span className="gradient-text-accent">OTC Listings</span>
+            Live <span className="text-white">OTC Listings</span>
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
             Real-time peer-to-peer deals happening now. Join the action.

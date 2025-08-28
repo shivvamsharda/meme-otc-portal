@@ -9,7 +9,7 @@ const HowItWorks = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            How <span className="gradient-text-primary">MemeOTC</span> Works
+            How <span className="text-white">NeoOTC</span> Works
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
             Three simple steps to privately exchange any Solana memecoin with zero slippage, no front-running, and full escrow protection.

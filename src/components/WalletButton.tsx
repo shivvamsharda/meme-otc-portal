@@ -32,7 +32,7 @@ export const WalletButton = () => {
       const adaptedWallet = createSolanaWalletAdapter(wallet as any)
       await supabase.auth.signInWithWeb3({
         chain: 'solana',
-        statement: 'I accept the Terms of Service for MemeOTC',
+        statement: 'I accept the Terms of Service for NeoOTC',
         wallet: adaptedWallet as any,
       })
     } catch (error) {

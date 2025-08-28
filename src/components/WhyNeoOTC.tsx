@@ -1,5 +1,5 @@
 import { Shield, Eye, Coins, Scale } from 'lucide-react';
-const WhyMemeOTC = () => {
+const WhyNeoOTC = () => {
   const features = [{
     icon: Shield,
     title: "Escrow-Backed Trust",
@@ -12,8 +12,8 @@ const WhyMemeOTC = () => {
     color: "accent"
   }, {
     icon: Coins,
-    title: "Memecoin-Centric Infrastructure",
-    description: "Purpose-built for the memecoin meta. Any SPL token. Any deal size. No gatekeeping.",
+    title: "Token-Centric Infrastructure",
+    description: "Purpose-built for the crypto meta. Any SPL token. Any deal size. No gatekeeping.",
     color: "meme"
   }, {
     icon: Scale,
@@ -24,13 +24,13 @@ const WhyMemeOTC = () => {
   const getGradientClass = (color: string) => {
     switch (color) {
       case 'primary':
-        return 'gradient-text-primary';
+        return 'text-white';
       case 'accent':
-        return 'gradient-text-accent';
+        return 'text-white';
       case 'meme':
-        return 'gradient-text-meme';
+        return 'text-white';
       default:
-        return 'gradient-text-primary';
+        return 'text-white';
     }
   };
   const getIconBg = (color: string) => {
@@ -54,10 +54,10 @@ const WhyMemeOTC = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Why Serious <span className="gradient-text-meme">Memecoin Holders</span> Use MemeOTC
+            Why Serious <span className="text-white">Traders</span> Use NeoOTC
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            The go-to OTC desk for private, direct Solana memecoin deals — no noise, no middlemen, just clean peer-to-peer execution.
+            The go-to OTC desk for private, direct Solana token deals — no noise, no middlemen, just clean peer-to-peer execution.
           </p>
         </div>
 
@@ -99,4 +99,4 @@ const WhyMemeOTC = () => {
       </div>
     </section>;
 };
-export default WhyMemeOTC;
+export default WhyNeoOTC;

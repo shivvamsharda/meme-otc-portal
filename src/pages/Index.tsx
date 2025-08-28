@@ -3,7 +3,7 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import { Feature } from '@/components/ui/feature-with-advantages';
 import LiveListings from '@/components/LiveListings';
-import WhyMemeOTC from '@/components/WhyMemeOTC';
+import WhyNeoOTC from '@/components/WhyNeoOTC';
 import Community from '@/components/Community';
 import Footer from '@/components/Footer';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -17,7 +17,7 @@ const Index = () => {
       <Hero />
       <Feature />
       <LiveListings />
-      <WhyMemeOTC />
+      <WhyNeoOTC />
       <Community />
       <Footer />
     </div>
