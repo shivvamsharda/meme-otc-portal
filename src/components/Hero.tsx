@@ -64,8 +64,7 @@ const Hero = () => {
           {/* Subheadline - cleaner spacing */}
           <div className="max-w-2xl mx-auto">
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed font-light">
-              Secure, private, and efficient OTC trading for Solana memecoins. 
-              Access exclusive liquidity and competitive pricing.
+              Built for Solana. Scaled for the future of decentralized finance.
             </p>
           </div>
 
