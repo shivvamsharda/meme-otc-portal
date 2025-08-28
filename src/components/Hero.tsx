@@ -28,7 +28,7 @@ const Hero = () => {
           hoverDampness={0.25}
           rayCount={24}
           mixBlendMode="lighten"
-          colors={['#ff007a', '#4d3dff', '#ffffff']}
+          colors={['#ffffff', '#ffffff', '#ffffff']}
         />
       </div>
       
