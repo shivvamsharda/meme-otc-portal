@@ -24,7 +24,7 @@ const Navbar = () => {
               <img 
                 src="https://ebmiuqrdzzdliupgcqsy.supabase.co/storage/v1/object/public/logos/NeoOTC_WEB%20(1).png" 
                 alt="NeoOTC Logo" 
-                className="h-16 w-auto"
+                className="h-11 w-auto"
               />
             </a>
           </div>
