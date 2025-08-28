@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import HowItWorks from '@/components/HowItWorks';
+import { Feature } from '@/components/ui/feature-with-advantages';
 import LiveListings from '@/components/LiveListings';
 import WhyMemeOTC from '@/components/WhyMemeOTC';
 import Community from '@/components/Community';
@@ -15,7 +15,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <Hero />
-      <HowItWorks />
+      <Feature />
       <LiveListings />
       <WhyMemeOTC />
       <Community />
