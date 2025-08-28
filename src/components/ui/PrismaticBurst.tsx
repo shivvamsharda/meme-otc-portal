@@ -28,8 +28,8 @@ void main() {
 `;
 
 const fragmentShader = `#version 300 es
-precision highp float;
-precision highp int;
+precision mediump float;
+precision mediump int;
 
 out vec4 fragColor;
 
@@ -59,11 +59,9 @@ float layeredNoise(vec2 fragPx){
     vec2 p = mod(fragPx + vec2(uTime * 30.0, -uTime * 21.0), 1024.0);
     vec2 q = rot30() * p;
     float n = 0.0;
-    n += 0.40 * hash21(q);
-    n += 0.25 * hash21(q * 2.0 + 17.0);
+    n += 0.50 * hash21(q);
+    n += 0.30 * hash21(q * 2.0 + 17.0);
     n += 0.20 * hash21(q * 4.0 + 47.0);
-    n += 0.10 * hash21(q * 8.0 + 113.0);
-    n += 0.05 * hash21(q * 16.0 + 191.0);
     return n;
 }
 
@@ -130,7 +128,7 @@ void main(){
       hoverMat = rotY(ang.y) * rotX(ang.x);
     }
 
-    for (int i = 0; i < 44; ++i) {
+    for (int i = 0; i < 22; ++i) {
         vec3 P = marchT * dir;
         P.z -= 2.0;
         float rad = length(P);
@@ -250,8 +248,13 @@ const PrismaticBurst = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const renderer = new Renderer({ dpr, alpha: false, antialias: false });
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const renderer = new Renderer({ 
+      dpr, 
+      alpha: false, 
+      antialias: false,
+      powerPreference: "high-performance"
+    });
     rendererRef.current = renderer;
 
     const gl = renderer.gl;
@@ -293,7 +296,7 @@ const PrismaticBurst = ({
         uDistort: { value: 0 },
         uOffset: { value: [0, 0] as [number, number] },
         uGradient: { value: gradientTex },
-        uNoiseAmount: { value: 0.8 },
+        uNoiseAmount: { value: 0.6 },
         uRayCount: { value: 0 },
       },
     });

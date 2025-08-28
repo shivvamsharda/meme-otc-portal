@@ -20,13 +20,13 @@ const Hero = () => {
       <div className="absolute inset-0">
         <PrismaticBurst
           animationType="rotate3d"
-          intensity={1.5}
-          speed={0.3}
-          distort={1.0}
+          intensity={1.8}
+          speed={0.25}
+          distort={6}
           paused={false}
           offset={{ x: 0, y: 0 }}
-          hoverDampness={0.25}
-          rayCount={24}
+          hoverDampness={0.2}
+          rayCount={16}
           mixBlendMode="lighten"
           colors={['#ffffff', '#ffffff', '#ffffff']}
         />
