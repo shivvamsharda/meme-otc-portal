@@ -45,15 +45,15 @@ const Hero = () => {
 
           {/* Main Headline - Matching reference typography */}
           <div className="space-y-4">
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-inter-tight font-bold leading-[0.9] tracking-tight">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-inter-tight font-bold leading-[0.9] tracking-tight text-white">
               The{' '}
-              <span className="bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent">
+              <span className="text-white">
                 OTC Platform
               </span>
               <br />
               powering the
               <br />
-              <span className="bg-gradient-to-r from-primary via-accent to-orange-400 bg-clip-text text-transparent">
+              <span className="text-white">
                 Solana memecoin
               </span>
               <br />
