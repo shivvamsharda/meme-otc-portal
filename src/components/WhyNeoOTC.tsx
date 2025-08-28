@@ -34,20 +34,11 @@ const WhyNeoOTC = () => {
     }
   };
   const getIconBg = (color: string) => {
-    switch (color) {
-      case 'primary':
-        return 'bg-gradient-primary shadow-glow-primary';
-      case 'accent':
-        return 'bg-gradient-secondary shadow-glow-accent';
-      case 'meme':
-        return 'bg-gradient-meme shadow-glow-blue';
-      default:
-        return 'bg-gradient-primary shadow-glow-primary';
-    }
+    return 'bg-black shadow-lg';
   };
   return <section className="py-32 relative">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+      <div className="absolute inset-0 bg-gradient-to-br from-black/5 via-transparent to-white/5" />
       
       <div className="container mx-auto px-6 relative">
         
@@ -88,7 +79,7 @@ const WhyNeoOTC = () => {
                   </p>
                   
                   {/* Hover Glow Effect */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
+                  <div className="absolute inset-0 rounded-3xl bg-black opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
                 </div>
               </div>;
         })}

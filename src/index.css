@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* MemeOTC Design System - Refined Dark Theme */
+/* NeoOTC Design System - Black and White Theme */
 
 @layer base {
   :root {
@@ -21,11 +21,11 @@
     --popover: 240 10% 8%;
     --popover-foreground: 0 0% 92%;
 
-    /* Brand Colors - Pastel Purple Scheme */
-    --primary: 270 35% 80%;
-    --primary-foreground: 270 20% 15%;
-    --primary-glow: 270 30% 85%;
-    --brand-text: 270 25% 85%;
+    /* Brand Colors - Black and White Scheme */
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 0% 20%;
+    --brand-text: 0 0% 100%;
 
     --secondary: 240 8% 15%;
     --secondary-foreground: 0 0% 85%;
@@ -33,9 +33,9 @@
     --muted: 240 10% 18%;
     --muted-foreground: 240 8% 60%;
 
-    --accent: 35 45% 75%;
-    --accent-foreground: 35 30% 20%;
-    --accent-glow: 35 40% 80%;
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 0%;
+    --accent-glow: 0 0% 90%;
 
     /* Status Colors - Pastel versions */
     --destructive: 0 40% 75%;
@@ -112,38 +112,18 @@
 }
 
 @layer components {
-  /* Refined gradient text effects - Pastel */
-  .gradient-text-primary {
-    background: linear-gradient(135deg, hsl(270 35% 80%), hsl(260 30% 85%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .gradient-text-meme {
-    background: linear-gradient(135deg, hsl(270 35% 80%), hsl(35 45% 75%), hsl(200 40% 75%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .gradient-text-accent {
-    background: linear-gradient(135deg, hsl(200 40% 75%), hsl(270 35% 80%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Refined button styles - Pastel */
+  /* Black and white button styles */
   .btn-gradient {
-    background: linear-gradient(135deg, hsl(270 35% 80%), hsl(260 30% 85%));
+    background: hsl(0 0% 0%);
+    color: hsl(0 0% 100%);
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px hsl(270 35% 80% / 0.15);
+    box-shadow: 0 4px 20px hsl(0 0% 0% / 0.15);
   }
 
   .btn-gradient:hover {
+    background: hsl(0 0% 10%);
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 40px hsl(270 35% 80% / 0.25);
+    box-shadow: 0 8px 40px hsl(0 0% 0% / 0.25);
   }
 
   .btn-dark {

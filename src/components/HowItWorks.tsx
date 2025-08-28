@@ -39,7 +39,7 @@ const HowItWorks = () => {
             <Card className="relative col-span-full overflow-hidden sm:col-span-3 lg:col-span-2">
               <CardContent className="pt-6">
                 <div className="relative mx-auto flex aspect-square size-32 rounded-full border before:absolute before:-inset-2 before:rounded-full before:border dark:border-white/10 dark:before:border-white/5">
-                  <div className="w-16 h-16 mx-auto my-auto rounded-2xl bg-gradient-primary p-4 shadow-glow-primary">
+                  <div className="w-16 h-16 mx-auto my-auto rounded-2xl bg-black p-4 shadow-lg">
                     <Shield className="w-full h-full text-white" />
                   </div>
                 </div>
@@ -54,7 +54,7 @@ const HowItWorks = () => {
             <Card className="relative col-span-full overflow-hidden sm:col-span-3 lg:col-span-2">
               <CardContent className="pt-6">
                 <div className="relative mx-auto flex aspect-square size-32 rounded-full border before:absolute before:-inset-2 before:rounded-full before:border dark:border-white/10 dark:before:border-white/5">
-                  <div className="w-16 h-16 mx-auto my-auto rounded-2xl bg-gradient-primary p-4 shadow-glow-primary">
+                  <div className="w-16 h-16 mx-auto my-auto rounded-2xl bg-black p-4 shadow-lg">
                     <Zap className="w-full h-full text-white" />
                   </div>
                 </div>
@@ -72,7 +72,7 @@ const HowItWorks = () => {
                   <p className="text-lg text-muted-foreground">
                     Specify your SPL token, amount, and asking price in SOL. Your offer is now live for OTC buyers.
                   </p>
-                  <button className="btn-gradient px-8 py-4 rounded-2xl font-semibold text-lg text-black">
+                  <button className="btn-gradient px-8 py-4 rounded-2xl font-semibold text-lg text-white">
                     Create Your First Listing
                   </button>
                 </div>

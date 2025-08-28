@@ -54,7 +54,7 @@ const Community = () => {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-primary p-4 shadow-glow-primary group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-16 h-16 rounded-2xl bg-black p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
                     <Icon className="w-full h-full text-white" />
                   </div>
                   
