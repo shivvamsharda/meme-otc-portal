@@ -46,18 +46,9 @@ const Hero = () => {
           {/* Main Headline - Matching reference typography */}
           <div className="space-y-4">
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-inter-tight font-bold leading-[0.9] tracking-tight text-white">
-              The{' '}
-              <span className="text-white">
-                OTC Platform
-              </span>
+              Trustless. Transparent.
               <br />
-              powering the
-              <br />
-              <span className="text-white">
-                Solana memecoin
-              </span>
-              <br />
-              future
+              OTC on Solana
             </h1>
           </div>
 
