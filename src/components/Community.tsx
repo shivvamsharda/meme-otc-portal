@@ -5,16 +5,16 @@ const Community = () => {
     {
       icon: Twitter,
       name: "Twitter",
-      handle: "@neo_otc",
+      handle: "@NEOOTC",
       color: "primary",
-      link: "https://x.com/neo_otc"
+      link: "https://x.com/NEOOTC"
     },
     {
       icon: Send,
       name: "Telegram",
-      handle: "t.me/neo_otc", 
+      handle: "t.me/NEO_OTC", 
       color: "accent",
-      link: "https://t.me/neo_otc"
+      link: "https://t.me/NEO_OTC"
     }
   ];
 

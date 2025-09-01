@@ -5,8 +5,8 @@ const Footer = () => {
     {
       title: "Community",
       links: [
-        { name: "Telegram", href: "https://t.me/neo_otc" },
-        { name: "Twitter", href: "https://x.com/neo_otc" }
+        { name: "Telegram", href: "https://t.me/NEO_OTC" },
+        { name: "Twitter", href: "https://x.com/NEOOTC" }
       ]
     }
   ];
@@ -30,14 +30,14 @@ const Footer = () => {
             {/* Social Links */}
             <div className="flex items-center gap-4">
               <a 
-                href="https://x.com/neo_otc" 
+                href="https://x.com/NEOOTC" 
                 className="w-10 h-10 rounded-lg bg-muted hover:bg-primary/20 flex items-center justify-center transition-colors group"
                 aria-label="Follow on Twitter"
               >
                 <Twitter className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
               </a>
               <a 
-                href="https://t.me/neo_otc" 
+                href="https://t.me/NEO_OTC" 
                 className="w-10 h-10 rounded-lg bg-muted hover:bg-primary/20 flex items-center justify-center transition-colors group"
                 aria-label="Join Telegram"
               >
