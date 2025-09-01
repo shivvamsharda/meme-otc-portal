@@ -1,4 +1,4 @@
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, Twitter, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PrismaticBurst from '@/components/ui/PrismaticBurst';
 const Hero = () => {
@@ -78,8 +78,27 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Stats - matching reference layout */}
-          
+          {/* Social Media Links */}
+          <div className="flex justify-center items-center gap-4 pt-8">
+            <a 
+              href="https://x.com/NEOOTC" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+              aria-label="Follow on Twitter"
+            >
+              <Twitter className="w-5 h-5 text-white/80 group-hover:text-white" />
+            </a>
+            <a 
+              href="https://t.me/NEO_OTC" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+              aria-label="Join Telegram"
+            >
+              <Send className="w-5 h-5 text-white/80 group-hover:text-white" />
+            </a>
+          </div>
         </div>
       </div>
     </section>;
