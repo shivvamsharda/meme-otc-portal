@@ -4,38 +4,38 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NeoOTC Design System - Black and White Theme */
+/* MemeOTC Design System - Refined Dark Theme */
 
 @layer base {
   :root {
     /* Core Dark Theme - Softer backgrounds */
-    --background: 0 0% 6%;
+    --background: 240 8% 6%;
     --foreground: 0 0% 96%;
 
     /* Card System */
-    --card: 0 0% 12%;
+    --card: 240 12% 12%;
     --card-foreground: 0 0% 92%;
-    --card-border: 0 0% 20%;
+    --card-border: 240 15% 20%;
 
     /* Interactive Elements */
-    --popover: 0 0% 8%;
+    --popover: 240 10% 8%;
     --popover-foreground: 0 0% 92%;
 
-    /* Brand Colors - Black and White Scheme */
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 0 0% 20%;
-    --brand-text: 0 0% 100%;
+    /* Brand Colors - Pastel Purple Scheme */
+    --primary: 270 35% 80%;
+    --primary-foreground: 270 20% 15%;
+    --primary-glow: 270 30% 85%;
+    --brand-text: 270 25% 85%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 240 8% 15%;
     --secondary-foreground: 0 0% 85%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 240 10% 18%;
+    --muted-foreground: 240 8% 60%;
 
-    --accent: 0 0% 100%;
-    --accent-foreground: 0 0% 0%;
-    --accent-glow: 0 0% 90%;
+    --accent: 35 45% 75%;
+    --accent-foreground: 35 30% 20%;
+    --accent-glow: 35 40% 80%;
 
     /* Status Colors - Pastel versions */
     --destructive: 0 40% 75%;
@@ -45,20 +45,20 @@
     --success-foreground: 142 20% 15%;
 
     /* Borders & Inputs - Softer */
-    --border: 0 0% 25%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 80%;
+    --border: 240 15% 25%;
+    --input: 240 12% 20%;
+    --ring: 270 35% 80%;
 
     --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 26%;
-    --sidebar-primary: 0 0% 10%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 91%;
-    --sidebar-ring: 0 0% 60%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -112,18 +112,38 @@
 }
 
 @layer components {
-  /* Black and white button styles */
+  /* Refined gradient text effects - Pastel */
+  .gradient-text-primary {
+    background: linear-gradient(135deg, hsl(270 35% 80%), hsl(260 30% 85%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-meme {
+    background: linear-gradient(135deg, hsl(270 35% 80%), hsl(35 45% 75%), hsl(200 40% 75%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-accent {
+    background: linear-gradient(135deg, hsl(200 40% 75%), hsl(270 35% 80%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Refined button styles - Pastel */
   .btn-gradient {
-    background: hsl(0 0% 0%);
-    color: hsl(0 0% 100%);
+    background: linear-gradient(135deg, hsl(270 35% 80%), hsl(260 30% 85%));
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px hsl(0 0% 0% / 0.15);
+    box-shadow: 0 4px 20px hsl(270 35% 80% / 0.15);
   }
 
   .btn-gradient:hover {
-    background: hsl(0 0% 10%);
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 40px hsl(0 0% 0% / 0.25);
+    box-shadow: 0 8px 40px hsl(270 35% 80% / 0.25);
   }
 
   .btn-dark {

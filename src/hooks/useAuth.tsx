@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (event === 'SIGNED_IN' && session?.user) {
           toast({
             title: "Successfully signed in!",
-            description: `Welcome to NeoOTC`,
+            description: `Welcome to MemeOTC`,
             className: "border-green-200 bg-green-50 text-green-900",
           })
         }
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } else {
         toast({
           title: "Signed out successfully",
-          description: "You have been signed out of NeoOTC.",
+          description: "You have been signed out of MemeOTC.",
         })
       }
     } catch (error) {

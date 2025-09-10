@@ -1,5 +1,5 @@
 import { Shield, Eye, Coins, Scale } from 'lucide-react';
-const WhyNeoOTC = () => {
+const WhyMemeOTC = () => {
   const features = [{
     icon: Shield,
     title: "Escrow-Backed Trust",
@@ -12,8 +12,8 @@ const WhyNeoOTC = () => {
     color: "accent"
   }, {
     icon: Coins,
-    title: "Token-Centric Infrastructure",
-    description: "Purpose-built for the crypto meta. Any SPL token. Any deal size. No gatekeeping.",
+    title: "Memecoin-Centric Infrastructure",
+    description: "Purpose-built for the memecoin meta. Any SPL token. Any deal size. No gatekeeping.",
     color: "meme"
   }, {
     icon: Scale,
@@ -24,31 +24,40 @@ const WhyNeoOTC = () => {
   const getGradientClass = (color: string) => {
     switch (color) {
       case 'primary':
-        return 'text-white';
+        return 'gradient-text-primary';
       case 'accent':
-        return 'text-white';
+        return 'gradient-text-accent';
       case 'meme':
-        return 'text-white';
+        return 'gradient-text-meme';
       default:
-        return 'text-white';
+        return 'gradient-text-primary';
     }
   };
   const getIconBg = (color: string) => {
-    return 'bg-black shadow-lg';
+    switch (color) {
+      case 'primary':
+        return 'bg-gradient-primary shadow-glow-primary';
+      case 'accent':
+        return 'bg-gradient-secondary shadow-glow-accent';
+      case 'meme':
+        return 'bg-gradient-meme shadow-glow-blue';
+      default:
+        return 'bg-gradient-primary shadow-glow-primary';
+    }
   };
   return <section className="py-32 relative">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/5 via-transparent to-white/5" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="container mx-auto px-6 relative">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Why Serious <span className="text-white">Traders</span> Use NeoOTC
+            Why Serious <span className="gradient-text-meme">Memecoin Holders</span> Use MemeOTC
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            The go-to OTC desk for private, direct Solana token deals — no noise, no middlemen, just clean peer-to-peer execution.
+            The go-to OTC desk for private, direct Solana memecoin deals — no noise, no middlemen, just clean peer-to-peer execution.
           </p>
         </div>
 
@@ -79,7 +88,7 @@ const WhyNeoOTC = () => {
                   </p>
                   
                   {/* Hover Glow Effect */}
-                  <div className="absolute inset-0 rounded-3xl bg-black opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
                 </div>
               </div>;
         })}
@@ -90,4 +99,4 @@ const WhyNeoOTC = () => {
       </div>
     </section>;
 };
-export default WhyNeoOTC;
+export default WhyMemeOTC;

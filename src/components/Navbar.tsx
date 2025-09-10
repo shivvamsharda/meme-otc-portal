@@ -20,12 +20,15 @@ const Navbar = () => {
           
           {/* Logo - refined */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center">
+            <a href="/" className="flex items-center space-x-2">
               <img 
-                src="https://ebmiuqrdzzdliupgcqsy.supabase.co/storage/v1/object/public/logos/NeoOTC_WEB%20(1).png" 
-                alt="NeoOTC Logo" 
-                className="h-11 w-auto"
+                src="https://ebmiuqrdzzdliupgcqsy.supabase.co/storage/v1/object/public/logos//memeotc_logo%20(1).png" 
+                alt="MEMEOTC Logo" 
+                className="h-16 w-16"
               />
+              <span className="text-2xl font-bold" style={{ color: '#a37eef' }}>
+                MEMEOTC
+              </span>
             </a>
           </div>
 

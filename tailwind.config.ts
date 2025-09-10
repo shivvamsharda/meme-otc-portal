@@ -145,15 +145,15 @@ export default {
 				'fade-in-scale': 'fade-in-scale 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
 			},
 			backgroundImage: {
-				'gradient-primary': 'linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 10%))',
-				'gradient-secondary': 'linear-gradient(135deg, hsl(0 0% 15%), hsl(0 0% 25%))',
-				'gradient-accent': 'linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 95%))',
-				'gradient-meme': 'linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 10%))'
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-secondary': 'var(--gradient-secondary)',
+				'gradient-accent': 'var(--gradient-accent)',
+				'gradient-meme': 'var(--gradient-meme)'
 			},
 			boxShadow: {
-				'glow-primary': '0 0 20px hsl(0 0% 0% / 0.3)',
-				'glow-accent': '0 0 20px hsl(0 0% 100% / 0.1)',
-				'glow-blue': '0 0 20px hsl(0 0% 20% / 0.3)'
+				'glow-primary': 'var(--glow-primary)',
+				'glow-accent': 'var(--glow-accent)',
+				'glow-blue': 'var(--glow-blue)'
 			}
 		}
 	},

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import { Feature } from '@/components/ui/feature-with-advantages';
+import HowItWorks from '@/components/HowItWorks';
 import LiveListings from '@/components/LiveListings';
-import WhyNeoOTC from '@/components/WhyNeoOTC';
+import WhyMemeOTC from '@/components/WhyMemeOTC';
 import Community from '@/components/Community';
 import Footer from '@/components/Footer';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -15,9 +15,9 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <Hero />
-      <Feature />
+      <HowItWorks />
       <LiveListings />
-      <WhyNeoOTC />
+      <WhyMemeOTC />
       <Community />
       <Footer />
     </div>
