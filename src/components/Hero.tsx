@@ -1,4 +1,4 @@
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, Twitter, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 const FloatingPaths = ({
@@ -107,8 +107,26 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Stats - matching reference layout */}
-          
+          {/* Social Media Links */}
+          <div className="flex justify-center items-center gap-6 pt-8">
+            <a 
+              href="https://twitter.com/memeotc" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group p-3 rounded-full bg-card/40 backdrop-blur-xl border border-border hover:border-primary/30 transition-all duration-300 hover:bg-card/60"
+            >
+              <Twitter className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
+            </a>
+            
+            <a 
+              href="https://t.me/memeotc" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group p-3 rounded-full bg-card/40 backdrop-blur-xl border border-border hover:border-primary/30 transition-all duration-300 hover:bg-card/60"
+            >
+              <Send className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
+            </a>
+          </div>
         </div>
       </div>
     </section>;
