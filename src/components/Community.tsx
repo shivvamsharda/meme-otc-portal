@@ -7,7 +7,7 @@ const Community = () => {
       name: "Twitter",
       handle: "@meme_otc",
       color: "primary",
-      link: "https://x.com/meme_otc"
+      link: "https://x.com/memeotc_"
     },
     {
       icon: Send,

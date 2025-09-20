@@ -110,8 +110,8 @@ const Hero = () => {
           {/* Social Media Links */}
           <div className="flex justify-center items-center gap-6 pt-8">
             <a 
-              href="https://twitter.com/memeotc" 
-              target="_blank" 
+              href="https://x.com/memeotc_" 
+              target="_blank"
               rel="noopener noreferrer"
               className="group p-3 rounded-full bg-card/40 backdrop-blur-xl border border-border hover:border-primary/30 transition-all duration-300 hover:bg-card/60"
             >
